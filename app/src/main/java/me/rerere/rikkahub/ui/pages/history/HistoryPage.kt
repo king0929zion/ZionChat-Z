@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,7 +32,6 @@ import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,8 +49,10 @@ import kotlinx.coroutines.launch
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.model.Conversation
-import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
+import me.rerere.rikkahub.ui.components.ui.PageTopBar
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.utils.navigateToChatPage
 import me.rerere.rikkahub.utils.plus
 import me.rerere.rikkahub.utils.toLocalDateTime
@@ -69,37 +69,29 @@ fun HistoryPage(vm: HistoryVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(stringResource(R.string.history_page_title))
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            navController.navigate(Screen.MessageSearch)
-                        }
-                    ) {
-                        Icon(
-                            HugeIcons.GlobalSearch,
+            PageTopBar(
+                title = stringResource(R.string.history_page_title),
+                onBack = { navController.popBackStack() },
+                trailing = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        HeaderActionButton(
+                            onClick = { navController.navigate(Screen.MessageSearch) },
+                            icon = HugeIcons.GlobalSearch,
                             contentDescription = stringResource(R.string.history_page_search_messages)
                         )
-                    }
-                    IconButton(
-                        onClick = {
-                            showDeleteAllDialog = true
-                        }
-                    ) {
-                        Icon(HugeIcons.Delete01, contentDescription = stringResource(R.string.history_page_delete_all))
+                        HeaderActionButton(
+                            onClick = { showDeleteAllDialog = true },
+                            icon = HugeIcons.Delete01,
+                            contentDescription = stringResource(R.string.history_page_delete_all)
+                        )
                     }
                 }
             )
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
-        }
+        },
+        containerColor = ZionBackground
     ) { contentPadding ->
         val snackMessageDeleted = stringResource(R.string.history_page_conversation_deleted)
         val snackMessageUndo = stringResource(R.string.history_page_undo)

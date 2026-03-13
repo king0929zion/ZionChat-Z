@@ -174,18 +174,28 @@ object CustomColors {
 
     val topBarColors: TopAppBarColors
         @Composable get() {
-            return if (!LocalDarkMode.current) TopAppBarDefaults.topAppBarColors(
-                containerColor = colorScheme.surfaceContainer,
-                scrolledContainerColor = colorScheme.surfaceContainer
-            ) else TopAppBarDefaults.topAppBarColors()
+            return TopAppBarDefaults.topAppBarColors(
+                containerColor = ZionBackground,
+                scrolledContainerColor = ZionBackground,
+                titleContentColor = ZionTextPrimary,
+                navigationIconContentColor = ZionTextPrimary,
+                actionIconContentColor = ZionTextPrimary
+            )
         }
 
     val cardColors: CardColors
-        @Composable get() = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer)
+        @Composable get() = CardDefaults.cardColors(containerColor = ZionSurface)
 
     val cardColorsOnSurfaceContainer: CardColors
-        @Composable get() = CardDefaults.cardColors(containerColor = colorScheme.surfaceBright)
+        @Composable get() = CardDefaults.cardColors(containerColor = ZionSurface)
 
     val listItemColors: ListItemColors
-        @Composable get() = ListItemDefaults.colors(containerColor = colorScheme.surfaceBright)
+        @Composable get() = ListItemDefaults.colors(
+            containerColor = ZionSectionItem,
+            headlineColor = ZionTextPrimary,
+            supportingColor = ZionTextSecondary,
+            overlineColor = ZionTextSecondary,
+            leadingIconColor = ZionTextSecondary,
+            trailingIconColor = ZionTextSecondary
+        )
 }

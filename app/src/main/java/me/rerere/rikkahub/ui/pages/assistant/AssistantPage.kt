@@ -26,8 +26,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +35,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,8 +59,9 @@ import me.rerere.rikkahub.data.datastore.DEFAULT_ASSISTANTS_IDS
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.AssistantMemory
-import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
 import me.rerere.rikkahub.ui.components.ui.FormItem
+import me.rerere.rikkahub.ui.components.ui.PageTopBar
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
@@ -75,7 +72,7 @@ import me.rerere.rikkahub.ui.hooks.heroAnimation
 import me.rerere.rikkahub.ui.hooks.useEditState
 import me.rerere.rikkahub.ui.modifier.onClick
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantImporter
-import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.theme.ZionBackground
 import org.koin.androidx.compose.koinViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -89,7 +86,6 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
         vm.addAssistant(it)
     }
     val navController = LocalNavController.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     // 搜索关键词状态
     var searchQuery by remember { mutableStateOf("") }
@@ -111,27 +107,19 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = {
-                    Text(stringResource(R.string.assistant_page_title))
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            createState.open(Assistant())
-                        }) {
-                        Icon(HugeIcons.Add01, stringResource(R.string.assistant_page_add))
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = CustomColors.topBarColors,
+            PageTopBar(
+                title = stringResource(R.string.assistant_page_title),
+                onBack = { navController.popBackStack() },
+                trailing = {
+                    HeaderActionButton(
+                        onClick = { createState.open(Assistant()) },
+                        icon = HugeIcons.Add01,
+                        contentDescription = stringResource(R.string.assistant_page_add)
+                    )
+                }
             )
         },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = CustomColors.topBarColors.containerColor,
+        containerColor = ZionBackground,
     ) {
         Column(
             modifier = Modifier

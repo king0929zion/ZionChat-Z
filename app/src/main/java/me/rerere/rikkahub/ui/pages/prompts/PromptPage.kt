@@ -48,7 +48,6 @@ import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
@@ -59,7 +58,6 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -73,7 +71,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -89,15 +86,17 @@ import me.rerere.rikkahub.data.export.rememberImporter
 import me.rerere.rikkahub.data.model.InjectionPosition
 import me.rerere.rikkahub.data.model.Lorebook
 import me.rerere.rikkahub.data.model.PromptInjection
-import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.ExportDialog
 import me.rerere.rikkahub.ui.components.ui.FormItem
+import me.rerere.rikkahub.ui.components.ui.PageTopBar
 import me.rerere.rikkahub.ui.components.ui.Select
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
+import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.hooks.useEditState
-import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.theme.ZionBackground
+import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.utils.plus
 import org.koin.androidx.compose.koinViewModel
 import sh.calvin.reorderable.ReorderableItem
@@ -108,19 +107,17 @@ fun PromptPage(vm: PromptVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val navController = LocalNavController.current
 
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                navigationIcon = { BackButton() },
-                title = { Text(stringResource(R.string.prompt_page_title)) },
-                scrollBehavior = scrollBehavior,
-                colors = CustomColors.topBarColors,
+            PageTopBar(
+                title = stringResource(R.string.prompt_page_title),
+                onBack = { navController.popBackStack() }
             )
         },
         bottomBar = {
-            NavigationBar {
+            NavigationBar(containerColor = ZionSurface) {
                 NavigationBarItem(
                     selected = pagerState.currentPage == 0,
                     label = { Text(stringResource(R.string.prompt_page_mode_injection_tab)) },
@@ -139,8 +136,7 @@ fun PromptPage(vm: PromptVM = koinViewModel()) {
                 )
             }
         },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = CustomColors.topBarColors.containerColor,
+        containerColor = ZionBackground,
     ) { innerPadding ->
         HorizontalPager(
             state = pagerState,

@@ -17,15 +17,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -33,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -64,8 +60,9 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.isNotConfigured
 import me.rerere.rikkahub.data.files.FilesManager
-import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.CardGroup
+import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
+import me.rerere.rikkahub.ui.components.ui.PageTopBar
 import me.rerere.rikkahub.ui.components.ui.Select
 import me.rerere.rikkahub.ui.components.ui.icons.DiscordIcon
 import me.rerere.rikkahub.ui.components.ui.icons.TencentQQIcon
@@ -74,6 +71,7 @@ import me.rerere.rikkahub.ui.context.Navigator
 import me.rerere.rikkahub.ui.hooks.rememberColorMode
 import me.rerere.rikkahub.ui.theme.ColorMode
 import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.utils.joinQQGroup
 import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.plus
@@ -82,7 +80,6 @@ import org.koin.compose.koinInject
 
 @Composable
 fun SettingPage(vm: SettingVM = koinViewModel()) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val navController = LocalNavController.current
     val settings by vm.settings.collectAsStateWithLifecycle()
     val filesManager: FilesManager = koinInject()
@@ -115,30 +112,21 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.settings))
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                scrollBehavior = scrollBehavior,
-                actions = {
-                    if(settings.developerMode) {
-                        IconButton(
-                            onClick = {
-                                navController.navigate(Screen.Developer)
-                            }
-                        ) {
-                            Icon(HugeIcons.Developer, "Developer")
-                        }
+            PageTopBar(
+                title = stringResource(R.string.settings),
+                onBack = { navController.popBackStack() },
+                trailing = {
+                    if (settings.developerMode) {
+                        HeaderActionButton(
+                            onClick = { navController.navigate(Screen.Developer) },
+                            icon = HugeIcons.Developer,
+                            contentDescription = "Developer"
+                        )
                     }
-                },
-                colors = CustomColors.topBarColors
+                }
             )
         },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = CustomColors.topBarColors.containerColor
+        containerColor = ZionBackground
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

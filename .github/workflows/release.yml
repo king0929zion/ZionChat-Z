@@ -1,50 +1,126 @@
-name: Release Build
+name: Android Signed Build
 
 on:
+  push:
+    branches:
+      - master
+      - main
   workflow_dispatch:
+
+concurrency:
+  group: signed-build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: "17"
 
-      - name: Gradle cache
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
-      - name: Prepare build files
+      - name: Prepare signing and Firebase files
+        shell: bash
         run: |
-          # 解码base64编码的keystore文件
-          echo "${{ secrets.KEY_BASE64 }}" | base64 -d > app/app.key
-          
-          # 写入签名配置到local.properties
-          echo "${{ secrets.SIGNING_CONFIG }}" > local.properties
-          
-          # 写入Google Services配置
-          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+          if [ -z "${{ secrets.KEY_BASE64 }}" ]; then
+            echo "Missing required secret: KEY_BASE64"
+            exit 1
+          fi
 
-      - name: Gradle Build
+          if [ -z "${{ secrets.SIGNING_STORE_PASSWORD }}" ]; then
+            echo "Missing required secret: SIGNING_STORE_PASSWORD"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.SIGNING_KEY_ALIAS }}" ]; then
+            echo "Missing required secret: SIGNING_KEY_ALIAS"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.SIGNING_KEY_PASSWORD }}" ]; then
+            echo "Missing required secret: SIGNING_KEY_PASSWORD"
+            exit 1
+          fi
+
+          echo "${{ secrets.KEY_BASE64 }}" | base64 -d > app/app.key
+
+          cat > local.properties <<'EOF'
+          storeFile=app/app.key
+          storePassword=${{ secrets.SIGNING_STORE_PASSWORD }}
+          keyAlias=${{ secrets.SIGNING_KEY_ALIAS }}
+          keyPassword=${{ secrets.SIGNING_KEY_PASSWORD }}
+          EOF
+
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            cat > app/google-services.json <<'EOF'
+          ${{ secrets.GOOGLE_SERVICES_JSON }}
+          EOF
+          else
+            cat > app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "1234567890",
+              "project_id": "zionchat-z-placeholder",
+              "storage_bucket": "zionchat-z-placeholder.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:1234567890:android:1234567890abcdef123456",
+                  "android_client_info": {
+                    "package_name": "me.rerere.rikkahub"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  {
+                    "current_key": "AIzaSyD-placeholder-ZionChatZ"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+          fi
+
+      - name: Build signed release APK and AAB
+        shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease bundleRelease
 
-      - name: Upload artifacts
+      - name: Upload signed artifacts
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: artifacts
-          path: app/build/outputs/apk/release/*.apk
+          name: signed-release-${{ github.run_number }}
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+            app/build/outputs/mapping/release/**
+          if-no-files-found: error

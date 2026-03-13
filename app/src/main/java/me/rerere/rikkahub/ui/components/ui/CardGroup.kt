@@ -1,10 +1,7 @@
 package me.rerere.rikkahub.ui.components.ui
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,29 +10,32 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemColors
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
-import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.theme.SourceSans3
+import me.rerere.rikkahub.ui.theme.ZionBackground
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionSurface
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 
-private val CardGroupCorner = 20.dp
+private val CardGroupCorner = 26.dp
 private val CardGroupItemSpacing = 2.dp
-private val CardGroupInnerCorner = 4.dp
+private val CardGroupInnerCorner = 10.dp
 
 data class CardGroupItem(
     val onClick: (() -> Unit)?,
@@ -86,44 +86,82 @@ private fun CardGroupListItem(
     val isLast = index == count - 1
 
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    val topCorner by animateDpAsState(
-        targetValue = if (isPressed || count == 1 || isFirst) CardGroupCorner else CardGroupInnerCorner,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-    )
-    val bottomCorner by animateDpAsState(
-        targetValue = if (isPressed || count == 1 || isLast) CardGroupCorner else CardGroupInnerCorner,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+    val shape = RoundedCornerShape(
+        topStart = if (count == 1 || isFirst) CardGroupCorner else CardGroupInnerCorner,
+        topEnd = if (count == 1 || isFirst) CardGroupCorner else CardGroupInnerCorner,
+        bottomStart = if (count == 1 || isLast) CardGroupCorner else CardGroupInnerCorner,
+        bottomEnd = if (count == 1 || isLast) CardGroupCorner else CardGroupInnerCorner,
     )
 
-    ListItem(
-        headlineContent = item.headlineContent,
+    Box(
         modifier = item.modifier
             .fillMaxWidth()
-            .clip(
-                RoundedCornerShape(
-                    topStart = topCorner,
-                    topEnd = topCorner,
-                    bottomStart = bottomCorner,
-                    bottomEnd = bottomCorner,
-                )
-            )
+            .clip(shape)
+            .background(ZionSectionItem, shape)
             .then(
                 if (item.onClick != null) {
-                    Modifier.clickable(
+                    Modifier.pressableScale(
                         interactionSource = interactionSource,
-                        indication = LocalIndication.current,
-                        onClick = item.onClick,
+                        onClick = item.onClick
                     )
-                } else Modifier
+                } else {
+                    Modifier
+                }
+            )
+    ) {
+        ListItem(
+            headlineContent = {
+                androidx.compose.material3.ProvideTextStyle(
+                    TextStyle(
+                        fontFamily = SourceSans3,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 18.sp,
+                        color = ZionTextPrimary
+                    )
+                ) {
+                    item.headlineContent()
+                }
+            },
+            overlineContent = item.overlineContent?.let { content ->
+                {
+                    androidx.compose.material3.ProvideTextStyle(
+                        TextStyle(
+                            fontFamily = SourceSans3,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = ZionTextSecondary
+                        )
+                    ) {
+                        content()
+                    }
+                }
+            },
+            supportingContent = item.supportingContent?.let { content ->
+                {
+                    androidx.compose.material3.ProvideTextStyle(
+                        TextStyle(
+                            fontFamily = SourceSans3,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 15.sp,
+                            color = ZionTextSecondary
+                        )
+                    ) {
+                        content()
+                    }
+                }
+            },
+            leadingContent = item.leadingContent,
+            trailingContent = item.trailingContent,
+            colors = item.colors ?: ListItemDefaults.colors(
+                containerColor = Color.Transparent,
+                headlineColor = ZionTextPrimary,
+                supportingColor = ZionTextSecondary,
+                overlineColor = ZionTextSecondary,
+                leadingIconColor = ZionTextSecondary,
+                trailingIconColor = ZionTextSecondary
             ),
-        overlineContent = item.overlineContent,
-        supportingContent = item.supportingContent,
-        leadingContent = item.leadingContent,
-        trailingContent = item.trailingContent,
-        colors = item.colors ?: CustomColors.listItemColors,
-    )
+        )
+    }
 }
 
 @Composable
@@ -137,19 +175,34 @@ fun CardGroup(
 
     Column(modifier = modifier) {
         if (title != null) {
-            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
-                ProvideTextStyle(MaterialTheme.typography.titleSmallEmphasized) {
-                    Box(modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 8.dp)) {
-                        title()
-                    }
+            androidx.compose.material3.ProvideTextStyle(
+                TextStyle(
+                    fontFamily = SourceSans3,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = ZionTextSecondary
+                )
+            ) {
+                Box(modifier = Modifier.padding(start = 12.dp, top = 4.dp, bottom = 8.dp)) {
+                    title()
                 }
             }
         }
-        val count = scope.items.size
-        scope.items.fastForEachIndexed { index, item ->
-            CardGroupListItem(item = item, count = count, index = index)
-            if (index != count - 1) {
-                Spacer(modifier = Modifier.height(CardGroupItemSpacing))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(CardGroupCorner))
+                .background(ZionSurface)
+        ) {
+            Column {
+                val count = scope.items.size
+                scope.items.fastForEachIndexed { index, item ->
+                    CardGroupListItem(item = item, count = count, index = index)
+                    if (index != count - 1) {
+                        Spacer(modifier = Modifier.height(CardGroupItemSpacing))
+                    }
+                }
             }
         }
     }
@@ -159,15 +212,7 @@ fun CardGroup(
 @Composable
 private fun CardGroupPreview() {
     Scaffold(
-        topBar = {
-            LargeFlexibleTopAppBar(
-                title = {
-                    Text("Card Group")
-                },
-                colors = CustomColors.topBarColors,
-            )
-        },
-        containerColor = CustomColors.topBarColors.containerColor,
+        containerColor = ZionBackground,
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -176,7 +221,7 @@ private fun CardGroupPreview() {
         ) {
             CardGroup(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                title = { Text("About") },
+                title = { Text("ABOUT") },
             ) {
                 item(
                     headlineContent = { Text("第一项") },
