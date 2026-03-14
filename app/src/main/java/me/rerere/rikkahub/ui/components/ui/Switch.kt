@@ -28,6 +28,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionSurface
+import me.rerere.rikkahub.ui.theme.ZionToggleActive
 
 enum class SwitchSize {
     Small,
@@ -42,10 +45,10 @@ fun Switch(
     modifier: Modifier = Modifier,
     size: SwitchSize = SwitchSize.Medium,
     enabled: Boolean = true,
-    trackColor: Color = MaterialTheme.colorScheme.primary,
-    trackColorUnchecked: Color = MaterialTheme.colorScheme.surfaceVariant,
-    thumbColor: Color = MaterialTheme.colorScheme.onPrimary,
-    thumbColorUnchecked: Color = MaterialTheme.colorScheme.outline
+    trackColor: Color = ZionToggleActive,
+    trackColorUnchecked: Color = ZionGrayLight,
+    thumbColor: Color = ZionSurface,
+    thumbColorUnchecked: Color = ZionSurface
 ) {
     val dimensions = when (size) {
         SwitchSize.Small -> SwitchDimensions(
@@ -81,13 +84,13 @@ fun Switch(
     )
 
     val currentTrackColor = when {
-        !enabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        !enabled -> ZionGrayLight.copy(alpha = 0.5f)
         checked -> trackColor
         else -> trackColorUnchecked
     }
 
     val currentThumbColor = when {
-        !enabled -> MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        !enabled -> ZionSurface.copy(alpha = 0.75f)
         checked -> thumbColor
         else -> thumbColorUnchecked
     }

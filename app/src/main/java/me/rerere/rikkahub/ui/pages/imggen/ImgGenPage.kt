@@ -90,10 +90,13 @@ import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.FormItem
 import me.rerere.rikkahub.ui.components.ui.ImagePreviewDialog
 import me.rerere.rikkahub.ui.components.ui.OutlinedNumberInput
 import me.rerere.rikkahub.ui.context.LocalToaster
+import me.rerere.rikkahub.ui.theme.ZionBackground
+import me.rerere.rikkahub.ui.theme.ZionSurface
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import java.io.File
@@ -123,18 +126,12 @@ fun ImageGenPage(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(stringResource(R.string.imggen_page_title))
-                },
-                navigationIcon = {
-                    BackButton()
-                }
-            )
+            AutoPageTopBar(title = stringResource(R.string.imggen_page_title))
         },
         bottomBar = {
             BottomBar(pagerState, scope)
         },
+        containerColor = ZionBackground,
     ) { innerPadding ->
         HorizontalPager(
             state = pagerState,
@@ -177,7 +174,7 @@ private fun BottomBar(
     pagerState: PagerState,
     scope: CoroutineScope
 ) {
-    NavigationBar {
+    NavigationBar(containerColor = ZionSurface) {
         NavigationBarItem(
             selected = 0 == pagerState.currentPage,
             label = {

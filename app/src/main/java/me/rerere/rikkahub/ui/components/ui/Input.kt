@@ -1,6 +1,7 @@
 package me.rerere.rikkahub.ui.components.ui
 
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -13,7 +14,53 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
+import me.rerere.rikkahub.ui.theme.ZionSurface
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
+
+val ZionTextFieldShape = RoundedCornerShape(22.dp)
+
+@Composable
+fun zionOutlinedTextFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = ZionTextPrimary,
+    unfocusedTextColor = ZionTextPrimary,
+    disabledTextColor = ZionTextPrimary.copy(alpha = 0.5f),
+    cursorColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+    focusedBorderColor = androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+    unfocusedBorderColor = ZionGrayLight,
+    disabledBorderColor = ZionGrayLight.copy(alpha = 0.45f),
+    focusedContainerColor = ZionSurface,
+    unfocusedContainerColor = ZionSurface,
+    disabledContainerColor = ZionGrayLighter,
+    focusedLabelColor = ZionTextSecondary,
+    unfocusedLabelColor = ZionTextSecondary,
+    disabledLabelColor = ZionTextSecondary.copy(alpha = 0.5f),
+    focusedPlaceholderColor = ZionTextSecondary,
+    unfocusedPlaceholderColor = ZionTextSecondary,
+    disabledPlaceholderColor = ZionTextSecondary.copy(alpha = 0.5f),
+)
+
+@Composable
+fun zionTextFieldColors(): TextFieldColors = TextFieldDefaults.colors(
+    focusedTextColor = ZionTextPrimary,
+    unfocusedTextColor = ZionTextPrimary,
+    disabledTextColor = ZionTextPrimary.copy(alpha = 0.5f),
+    cursorColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+    focusedIndicatorColor = androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+    unfocusedIndicatorColor = Color.Transparent,
+    disabledIndicatorColor = Color.Transparent,
+    focusedContainerColor = ZionSurface,
+    unfocusedContainerColor = ZionSurface,
+    disabledContainerColor = ZionGrayLighter,
+    focusedPlaceholderColor = ZionTextSecondary,
+    unfocusedPlaceholderColor = ZionTextSecondary,
+    disabledPlaceholderColor = ZionTextSecondary.copy(alpha = 0.5f),
+)
 
 @Composable
 fun <T : Number> OutlinedNumberInput(
@@ -21,7 +68,7 @@ fun <T : Number> OutlinedNumberInput(
     onValueChange: (T) -> Unit,
     modifier: Modifier = Modifier,
     label: String = "",
-    colors: TextFieldColors = OutlinedTextFieldDefaults.colors()
+    colors: TextFieldColors = zionOutlinedTextFieldColors()
 ) {
     var textFieldValue by remember(value) { mutableStateOf(value.toString()) }
     OutlinedTextField(
@@ -47,7 +94,8 @@ fun <T : Number> OutlinedNumberInput(
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         isError = !textFieldValue.isValidNumberInput(),
-        colors = colors
+        colors = colors,
+        shape = ZionTextFieldShape,
     )
 }
 
@@ -57,7 +105,7 @@ fun <T : Number> NumberInput(
     onValueChange: (T) -> Unit,
     modifier: Modifier = Modifier,
     label: String = "",
-    colors: TextFieldColors = TextFieldDefaults.colors()
+    colors: TextFieldColors = zionTextFieldColors()
 ) {
     var textFieldValue by remember(value) { mutableStateOf(value.toString()) }
     TextField(
@@ -83,7 +131,8 @@ fun <T : Number> NumberInput(
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         isError = !textFieldValue.isValidNumberInput(),
-        colors = colors
+        colors = colors,
+        shape = ZionTextFieldShape,
     )
 }
 

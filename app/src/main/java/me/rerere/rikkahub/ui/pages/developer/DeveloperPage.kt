@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import me.rerere.rikkahub.data.ai.AILogging
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
+import me.rerere.rikkahub.ui.theme.ZionBackground
+import me.rerere.rikkahub.ui.theme.ZionSurface
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -33,17 +36,10 @@ fun DeveloperPage(vm: DeveloperVM = koinViewModel()) {
     val scope = rememberCoroutineScope()
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Developer Page",
-                        maxLines = 1,
-                    )
-                }
-            )
+            AutoPageTopBar(title = "Developer Page")
         },
         bottomBar = {
-            BottomAppBar {
+            BottomAppBar(containerColor = ZionSurface) {
                 NavigationBarItem(
                     selected = pager.currentPage == 0,
                     onClick = { scope.launch { pager.animateScrollToPage(0) } },
@@ -55,7 +51,8 @@ fun DeveloperPage(vm: DeveloperVM = koinViewModel()) {
                     }
                 )
             }
-        }
+        },
+        containerColor = ZionBackground,
     ) { innerPadding ->
         HorizontalPager(
             state = pager,

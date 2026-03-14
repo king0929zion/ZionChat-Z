@@ -27,7 +27,6 @@
 -keep class org.scilab.forge.jlatexmath.** {*;}
 
 -dontwarn com.google.re2j.**
--dontobfuscate
 
 # Ktor 在 Android 上引用了仅 JVM 可用的 java.lang.management 类（IntellijIdeaDebugDetector）
 # Android 不包含这些类，需要告知 R8 忽略

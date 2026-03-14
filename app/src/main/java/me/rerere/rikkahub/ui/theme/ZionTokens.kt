@@ -13,7 +13,12 @@ val ZionGrayLighter = Color(0xFFF2F2F7)
 val ZionSectionItem = Color(0xFFF1F1F1)
 val ZionSectionItemPressed = Color(0xFFE5E5E5)
 val ZionAccentBlue = Color(0xFF007AFF)
+val ZionSelectedToolBackground = Color(0xFFE8F4FD)
+val ZionActionIcon = Color(0xFF374151)
+val ZionToggleActive = Color(0xFF34C759)
 val ZionUserMessageBubble = Color(0xFFEEEEEE)
+val ZionThinkingBackground = Color(0xFFF5F5F5)
+val ZionThinkingLabelColor = Color(0xFF3A3A3C)
 
 @Immutable
 data class ZionAccentPalette(

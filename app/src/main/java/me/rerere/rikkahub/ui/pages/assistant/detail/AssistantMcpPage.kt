@@ -14,6 +14,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.ui.components.ai.McpPicker
 import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
+import me.rerere.rikkahub.ui.theme.ZionBackground
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -29,15 +31,11 @@ fun AssistantMcpPage(id: String) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(stringResource(R.string.assistant_page_tab_mcp))
-                },
-                navigationIcon = {
-                    BackButton()
-                }
+            AutoPageTopBar(
+                title = stringResource(R.string.assistant_page_tab_mcp)
             )
-        }
+        },
+        containerColor = ZionBackground,
     ) { innerPadding ->
         McpPicker(
             modifier = Modifier

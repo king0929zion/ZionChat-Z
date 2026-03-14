@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -30,12 +31,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,8 +55,10 @@ import kotlinx.coroutines.launch
 import me.rerere.ai.provider.ModelType
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
-import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.context.LocalToaster
+import me.rerere.rikkahub.ui.theme.ZionBackground
+import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.utils.getText
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
@@ -82,14 +83,9 @@ fun TranslatorPage(vm: TranslatorVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(stringResource(R.string.translator_page_title))
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                actions = {
+            AutoPageTopBar(
+                title = stringResource(R.string.translator_page_title),
+                trailing = {
                     ModelSelector(
                         modelId = settings.translateModeId,
                         onSelect = {
@@ -116,7 +112,8 @@ fun TranslatorPage(vm: TranslatorVM = koinViewModel()) {
                 },
                 targetLanguage = targetLanguage
             )
-        }
+        },
+        containerColor = ZionBackground,
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -290,6 +287,7 @@ private fun BottomBar(
     onCancelTranslation: () -> Unit
 ) {
     BottomAppBar(
+        containerColor = ZionSurface,
         actions = {
             // 目标语言选择
             LanguageSelector(

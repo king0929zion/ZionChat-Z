@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import me.rerere.rikkahub.ui.theme.SourceSans3
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 
 @Composable
 fun FormItem(
@@ -37,13 +39,14 @@ fun FormItem(
             modifier = modifier.weight(1f)
         ) {
             ProvideTextStyle(
-                value = MaterialTheme.typography.titleMedium
+                value = MaterialTheme.typography.titleMedium.copy(fontFamily = SourceSans3)
             ) {
                 label()
             }
             ProvideTextStyle(
                 value = MaterialTheme.typography.labelSmall.copy(
-                    color = LocalContentColor.current.copy(alpha = 0.6f)
+                    fontFamily = SourceSans3,
+                    color = ZionTextSecondary
                 )
             ) {
                 Column(

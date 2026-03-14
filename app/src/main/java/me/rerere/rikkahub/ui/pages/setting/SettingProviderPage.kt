@@ -35,7 +35,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -69,8 +68,8 @@ import io.github.g00fy2.quickie.ScanQRCode
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
-import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
 import me.rerere.rikkahub.ui.components.ui.decodeProviderSetting
@@ -114,47 +113,42 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.setting_provider_page_title))
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                actions = {
-                    if(Locale.getDefault().language == "zh") {
-                        IconButton(
-                            onClick = {
-                                val aihubmixIndex = filteredProviders.indexOfFirst {
-                                    it.id.toString() == "1b1395ed-b702-4aeb-8bc1-b681c4456953"
-                                }
-                                if (aihubmixIndex != -1) {
-                                    scope.launch {
-                                        lazyListState.animateScrollToItem(aihubmixIndex)
+            AutoPageTopBar(
+                title = stringResource(R.string.setting_provider_page_title),
+                trailing = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        if(Locale.getDefault().language == "zh") {
+                            IconButton(
+                                onClick = {
+                                    val aihubmixIndex = filteredProviders.indexOfFirst {
+                                        it.id.toString() == "1b1395ed-b702-4aeb-8bc1-b681c4456953"
+                                    }
+                                    if (aihubmixIndex != -1) {
+                                        scope.launch {
+                                            lazyListState.animateScrollToItem(aihubmixIndex)
+                                        }
                                     }
                                 }
+                            ) {
+                                AutoAIIcon("AiHubMix")
                             }
-                        ) {
-                            AutoAIIcon("AiHubMix")
+                        }
+                        ImportProviderButton {
+                            vm.updateSettings(
+                                settings.copy(
+                                    providers = listOf(it.copyProvider(Uuid.random())) + settings.providers
+                                )
+                            )
+                        }
+                        AddButton {
+                            vm.updateSettings(
+                                settings.copy(
+                                    providers = listOf(it) + settings.providers
+                                )
+                            )
                         }
                     }
-                    ImportProviderButton {
-                        vm.updateSettings(
-                            settings.copy(
-                                providers = listOf(it.copyProvider(Uuid.random())) + settings.providers
-                            )
-                        )
-                    }
-                    AddButton {
-                        vm.updateSettings(
-                            settings.copy(
-                                providers = listOf(it) + settings.providers
-                            )
-                        )
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = CustomColors.topBarColors
+                }
             )
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),

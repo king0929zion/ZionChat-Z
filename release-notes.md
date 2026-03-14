@@ -1,3 +1,10 @@
+## v0.0.1
+
+- 全量切到 ZionChat 风格主题基线，统一浮动头部、字体、无 ripple 点击反馈、页内表单与分组卡片视觉。
+- 把 rikkahub 现有页面的头部和主容器批量改造成 Zion 风格，覆盖聊天周边、设置链路、助手详情、备份、搜索、日志、统计、分享、翻译、WebView 等页面。
+- 优化发布链路：版本线重置为 `0.0.1 (1)`，默认只构建签名 APK，Release 将自动附带 APK 资产。
+- 优化 APK 体积与构建速度：Release 仅输出 `arm64-v8a` 与 `universal` APK，开启 Gradle 并行/缓存/配置缓存，移除 R8 的 `-dontobfuscate` 限制。
+
 ## v2.3.0
 
 - 修复 GitHub Actions 自动签名构建的 keystore 路径解析问题，避免继续指向旧的 `app/app.key` 位置。

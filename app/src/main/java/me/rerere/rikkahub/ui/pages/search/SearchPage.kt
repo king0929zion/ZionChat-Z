@@ -47,6 +47,7 @@ import androidx.compose.ui.res.stringResource
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.db.fts.MessageSearchResult
 import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.navigateToChatPage
@@ -93,10 +94,9 @@ fun SearchPage(vm: SearchVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                navigationIcon = { BackButton() },
-                title = { Text(stringResource(R.string.search_page_title)) },
-                actions = {
+            AutoPageTopBar(
+                title = stringResource(R.string.search_page_title),
+                trailing = {
                     IconButton(
                         onClick = { showRebuildDialog = true },
                         enabled = !vm.isRebuilding,
@@ -106,9 +106,7 @@ fun SearchPage(vm: SearchVM = koinViewModel()) {
                             contentDescription = stringResource(R.string.search_page_rebuild_button)
                         )
                     }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = CustomColors.topBarColors,
+                }
             )
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),

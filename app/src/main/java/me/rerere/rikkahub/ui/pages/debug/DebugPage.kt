@@ -45,9 +45,11 @@ import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
 import me.rerere.rikkahub.ui.components.richtext.MathBlock
 import me.rerere.rikkahub.ui.components.richtext.Mermaid
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
+import me.rerere.rikkahub.ui.theme.ZionBackground
 import org.koin.androidx.compose.koinViewModel
 import kotlin.random.Random
 import kotlin.random.nextInt
@@ -59,15 +61,9 @@ fun DebugPage(vm: DebugVM = koinViewModel()) {
     val context = LocalContext.current
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text("Debug Mode")
-                },
-                navigationIcon = {
-                    BackButton()
-                }
-            )
-        }
+            AutoPageTopBar(title = "Debug Mode")
+        },
+        containerColor = ZionBackground,
     ) { contentPadding ->
         val state = rememberPagerState { 2 }
         Column(

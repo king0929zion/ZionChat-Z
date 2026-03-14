@@ -6,10 +6,12 @@ import me.rerere.hugeicons.stroke.Bug01
 import me.rerere.hugeicons.stroke.Earth
 import me.rerere.hugeicons.stroke.Refresh01
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -22,7 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,13 +32,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import me.rerere.hugeicons.stroke.MoreVertical
-import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.webview.WebView
 import me.rerere.rikkahub.ui.components.webview.rememberWebViewState
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
+import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.utils.base64Decode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,65 +73,58 @@ fun WebViewPage(url: String, content: String) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = state.pageTitle?.takeIf { it.isNotEmpty() } ?: state.currentUrl
-                        ?: "",
-                        maxLines = 1,
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                actions = {
-                    IconButton(onClick = { state.reload() }) {
-                        Icon(HugeIcons.Refresh01, contentDescription = "Refresh")
-                    }
+            AutoPageTopBar(
+                title = state.pageTitle?.takeIf { it.isNotEmpty() } ?: state.currentUrl ?: "",
+                trailing = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        IconButton(onClick = { state.reload() }) {
+                            Icon(HugeIcons.Refresh01, contentDescription = "Refresh")
+                        }
 
-                    IconButton(
-                        onClick = { state.goForward() },
-                        enabled = state.canGoForward
-                    ) {
-                        Icon(HugeIcons.ArrowRight01, contentDescription = "Forward")
-                    }
-
-                    val urlHandler = LocalUriHandler.current
-                    IconButton(
-                        onClick = { showDropdown = true }
-                    ) {
-                        Icon(HugeIcons.MoreVertical, contentDescription = "More options")
-
-                        DropdownMenu(
-                            expanded = showDropdown,
-                            onDismissRequest = { showDropdown = false }
+                        IconButton(
+                            onClick = { state.goForward() },
+                            enabled = state.canGoForward
                         ) {
-                            DropdownMenuItem(
-                                text = { Text("Open in Browser") },
-                                leadingIcon = { Icon(HugeIcons.Earth, contentDescription = null) },
-                                onClick = {
-                                    showDropdown = false
-                                    state.currentUrl?.let { url ->
-                                        if (url.isNotBlank()) {
-                                            urlHandler.openUri(url)
+                            Icon(HugeIcons.ArrowRight01, contentDescription = "Forward")
+                        }
+
+                        val urlHandler = LocalUriHandler.current
+                        IconButton(
+                            onClick = { showDropdown = true }
+                        ) {
+                            Icon(HugeIcons.MoreVertical, contentDescription = "More options")
+
+                            DropdownMenu(
+                                expanded = showDropdown,
+                                onDismissRequest = { showDropdown = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Open in Browser") },
+                                    leadingIcon = { Icon(HugeIcons.Earth, contentDescription = null) },
+                                    onClick = {
+                                        showDropdown = false
+                                        state.currentUrl?.let { url ->
+                                            if (url.isNotBlank()) {
+                                                urlHandler.openUri(url)
+                                            }
                                         }
                                     }
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Console Logs") },
-                                leadingIcon = { Icon(HugeIcons.Bug01, contentDescription = null) },
-                                onClick = {
-                                    showDropdown = false
-                                    showConsoleSheet = true
-                                }
-                            )
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Console Logs") },
+                                    leadingIcon = { Icon(HugeIcons.Bug01, contentDescription = null) },
+                                    onClick = {
+                                        showDropdown = false
+                                        showConsoleSheet = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             )
-        }
+        },
+        containerColor = ZionBackground,
     ) {
         WebView(
             state = state,

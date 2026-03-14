@@ -60,6 +60,7 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.DEFAULT_SYSTEM_TTS_ID
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
 import me.rerere.rikkahub.ui.context.LocalNavController
@@ -81,14 +82,9 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.setting_tts_page_title))
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                actions = {
+            AutoPageTopBar(
+                title = stringResource(R.string.setting_tts_page_title),
+                trailing = {
                     AddTTSProviderButton {
                         vm.updateSettings(
                             settings.copy(
@@ -96,9 +92,7 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
                             )
                         )
                     }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = CustomColors.topBarColors
+                }
             )
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),

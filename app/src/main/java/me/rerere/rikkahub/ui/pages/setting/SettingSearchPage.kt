@@ -58,6 +58,7 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.FormItem
 import me.rerere.rikkahub.ui.components.ui.OutlinedNumberInput
 import me.rerere.rikkahub.ui.components.ui.Select
@@ -82,14 +83,9 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
 
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = {
-                    Text(stringResource(R.string.setting_page_search_title))
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                actions = {
+            AutoPageTopBar(
+                title = stringResource(R.string.setting_page_search_title),
+                trailing = {
                     IconButton(
                         onClick = {
                             vm.updateSettings(
@@ -107,9 +103,7 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
                             contentDescription = stringResource(R.string.setting_page_search_add_provider)
                         )
                     }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = CustomColors.topBarColors
+                }
             )
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),

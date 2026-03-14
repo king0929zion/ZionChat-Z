@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import me.rerere.common.android.LogEntry
 import me.rerere.common.android.Logging
 import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.JsonTree
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
@@ -52,10 +53,9 @@ fun LogPage() {
 
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = { Text("Logs") },
-                navigationIcon = { BackButton() },
-                actions = {
+            AutoPageTopBar(
+                title = "Logs",
+                trailing = {
                     IconButton(
                         onClick = {
                             Logging.clear()
@@ -64,9 +64,7 @@ fun LogPage() {
                     ) {
                         Icon(HugeIcons.Delete01, null)
                     }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = CustomColors.topBarColors,
+                }
             )
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),

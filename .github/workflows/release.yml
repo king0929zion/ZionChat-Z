@@ -15,7 +15,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -28,15 +28,23 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Read version metadata
+        id: version
+        shell: bash
+        run: |
+          version_name=$(sed -n 's/.*versionName = "\(.*\)"/\1/p' app/build.gradle.kts | head -n1)
+          version_code=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle.kts | head -n1)
+
+          if [ -z "$version_name" ] || [ -z "$version_code" ]; then
+            echo "Failed to read version metadata from app/build.gradle.kts"
+            exit 1
+          fi
+
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
 
       - name: Prepare signing and Firebase files
         shell: bash
@@ -108,19 +116,31 @@ jobs:
           EOF
           fi
 
-      - name: Build signed release APK and AAB
+      - name: Build signed release APK
         shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease bundleRelease
+          ./gradlew assembleRelease
 
-      - name: Upload signed artifacts
+      - name: Upload signed APK artifacts
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: signed-release-${{ github.run_number }}
+          name: signed-apk-${{ steps.version.outputs.version_name }}
           path: |
             app/build/outputs/apk/release/*.apk
-            app/build/outputs/bundle/release/*.aab
             app/build/outputs/mapping/release/**
           if-no-files-found: error
+
+      - name: Publish GitHub Release with APK
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: v${{ steps.version.outputs.version_name }}
+          name: v${{ steps.version.outputs.version_name }}
+          body_path: release-notes.md
+          files: |
+            app/build/outputs/apk/release/*.apk
+          fail_on_unmatched_files: true
+          overwrite_files: true
+          generate_release_notes: false

@@ -93,6 +93,7 @@ import me.rerere.rikkahub.data.ai.mcp.McpCommonOptions
 import me.rerere.rikkahub.data.ai.mcp.McpStatus
 import me.rerere.rikkahub.data.ai.mcp.McpTool
 import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.FormItem
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
@@ -131,31 +132,26 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = {
-                    Text(stringResource(R.string.setting_mcp_page_title))
-                },
-                navigationIcon = {
-                    BackButton()
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            showImportDialog = true
+            AutoPageTopBar(
+                title = stringResource(R.string.setting_mcp_page_title),
+                trailing = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        IconButton(
+                            onClick = {
+                                showImportDialog = true
+                            }
+                        ) {
+                            Icon(HugeIcons.FileImport, null)
                         }
-                    ) {
-                        Icon(HugeIcons.FileImport, null)
-                    }
-                    IconButton(
-                        onClick = {
-                            creationState.open(McpServerConfig.StreamableHTTPServer())
+                        IconButton(
+                            onClick = {
+                                creationState.open(McpServerConfig.StreamableHTTPServer())
+                            }
+                        ) {
+                            Icon(HugeIcons.Add01, null)
                         }
-                    ) {
-                        Icon(HugeIcons.Add01, null)
                     }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = CustomColors.topBarColors
+                }
             )
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
