@@ -37,14 +37,16 @@ jobs:
         run: |
           version_name=$(sed -n 's/.*versionName = "\(.*\)"/\1/p' app/build.gradle.kts | head -n1)
           version_code=$(sed -n 's/.*versionCode = \([0-9]*\).*/\1/p' app/build.gradle.kts | head -n1)
+          application_id=$(sed -n 's/.*applicationId = "\(.*\)"/\1/p' app/build.gradle.kts | head -n1)
 
-          if [ -z "$version_name" ] || [ -z "$version_code" ]; then
+          if [ -z "$version_name" ] || [ -z "$version_code" ] || [ -z "$application_id" ]; then
             echo "Failed to read version metadata from app/build.gradle.kts"
             exit 1
           fi
 
           echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
           echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "application_id=$application_id" >> "$GITHUB_OUTPUT"
 
       - name: Prepare signing and Firebase files
         shell: bash
@@ -95,7 +97,7 @@ jobs:
                 "client_info": {
                   "mobilesdk_app_id": "1:1234567890:android:1234567890abcdef123456",
                   "android_client_info": {
-                    "package_name": "me.rerere.rikkahub"
+                    "package_name": "${{ steps.version.outputs.application_id }}"
                   }
                 },
                 "oauth_client": [],
@@ -115,6 +117,8 @@ jobs:
           }
           EOF
           fi
+
+          sed -i 's/"package_name": "[^"]*"/"package_name": "${{ steps.version.outputs.application_id }}"/g' app/google-services.json
 
       - name: Build signed release APK
         shell: bash

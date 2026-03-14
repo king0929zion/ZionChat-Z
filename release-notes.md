@@ -1,3 +1,9 @@
+## v0.2.0
+
+- 应用安装包名已改为 `io.github.king0929zion.zionchatz`，后续签名构建、Release 附件与新安装包都会使用这个新包名。
+- GitHub Actions 现在会从 `app/build.gradle.kts` 读取当前 `applicationId`，并自动同步到构建时生成的 `google-services.json`，避免包名变化后再次卡住自动构建。
+- 延续上一版的 Zion 风格页面壳层和自动发版链路，新的 `0.2.0` 版本将作为后续继续重构的基础版本。
+
 ## v0.1.0
 
 - 修复翻译页语言选择器在当前 Material3 版本下的下拉菜单兼容问题，恢复 GitHub Actions 的签名 APK 构建。

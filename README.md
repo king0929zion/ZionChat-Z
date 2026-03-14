@@ -22,7 +22,7 @@ Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqx
 
 🔗 [Download from Website](https://rikka-ai.com/download)
 
-🔗 [Download from Google Play](https://play.google.com/store/apps/details?id=me.rerere.rikkahub)
+🔗 [Download from Google Play](https://play.google.com/store/apps/details?id=io.github.king0929zion.zionchatz)
 
 ## 💖 Sponsors
 
