@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import android.content.Context
+import android.os.Build
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.http.HttpHeaders
@@ -40,7 +41,9 @@ import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.io.File
 import java.util.Locale
+import java.util.zip.ZipFile
 import java.util.concurrent.TimeUnit
 
 val dataSourceModule = module {
@@ -89,7 +92,7 @@ val dataSourceModule = module {
                 RequerySQLiteOpenHelperFactory.ConfigurationOptions { options ->
                     options.customExtensions.add(
                         SQLiteCustomExtension(
-                            context.applicationInfo.nativeLibraryDir + "/libsimple",
+                            resolveSqliteExtensionPath(context, "libsimple.so"),
                             null
                         )
                     )
@@ -247,4 +250,48 @@ val dataSourceModule = module {
     single<RikkaHubAPI> {
         get<Retrofit>().create(RikkaHubAPI::class.java)
     }
+}
+
+private fun resolveSqliteExtensionPath(context: Context, libraryName: String): String {
+    return resolveSqliteExtensionFile(context, libraryName)
+        .absolutePath
+        .removeSuffix(".so")
+}
+
+private fun resolveSqliteExtensionFile(context: Context, libraryName: String): File {
+    val nativeLibrary = File(context.applicationInfo.nativeLibraryDir, libraryName)
+    if (nativeLibrary.exists()) {
+        return nativeLibrary
+    }
+
+    val sourceApk = File(context.applicationInfo.sourceDir)
+    val extractionDir = File(context.noBackupFilesDir, "sqlite_extensions").apply {
+        mkdirs()
+    }
+    val extractedLibrary = File(extractionDir, libraryName)
+    if (extractedLibrary.exists() && extractedLibrary.lastModified() >= sourceApk.lastModified()) {
+        return extractedLibrary
+    }
+
+    ZipFile(sourceApk).use { apk ->
+        val entry = Build.SUPPORTED_ABIS
+            .asSequence()
+            .mapNotNull { abi -> apk.getEntry("lib/$abi/$libraryName") }
+            .firstOrNull()
+            ?: error("Could not find $libraryName in ${sourceApk.absolutePath}")
+
+        val tempFile = File(extractionDir, "$libraryName.tmp")
+        apk.getInputStream(entry).use { input ->
+            tempFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        if (extractedLibrary.exists()) {
+            extractedLibrary.delete()
+        }
+        tempFile.renameTo(extractedLibrary)
+        extractedLibrary.setLastModified(sourceApk.lastModified())
+    }
+
+    return extractedLibrary
 }

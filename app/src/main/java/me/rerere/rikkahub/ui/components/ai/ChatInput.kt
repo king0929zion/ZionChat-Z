@@ -83,10 +83,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
@@ -108,19 +110,11 @@ import me.rerere.ai.provider.ProviderSetting
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.common.android.appTempFolder
 import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.Add01
-import me.rerere.hugeicons.stroke.ArrowUp01
-import me.rerere.hugeicons.stroke.ArrowUp02
 import me.rerere.hugeicons.stroke.Book03
-import me.rerere.hugeicons.stroke.Camera01
-import me.rerere.hugeicons.stroke.Cancel01
-import me.rerere.hugeicons.stroke.Files02
 import me.rerere.hugeicons.stroke.FullScreen
-import me.rerere.hugeicons.stroke.Image02
 import me.rerere.hugeicons.stroke.MusicNote03
 import me.rerere.hugeicons.stroke.Package01
 import me.rerere.hugeicons.stroke.Video01
-import me.rerere.hugeicons.stroke.Zap
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.ai.mcp.McpManager
@@ -141,9 +135,13 @@ import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.hooks.ChatInputState
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
+import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionAccentBlue
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import org.koin.compose.koinInject
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
@@ -248,7 +246,19 @@ fun ChatInput(
 
                     TextInputRow(
                         state = state,
-                        onSendMessage = { sendMessage() }
+                        loading = loading,
+                        onCancelMessage = {
+                            dismissExpand()
+                            onCancelClick()
+                        },
+                        onSendMessage = {
+                            dismissExpand()
+                            sendMessage()
+                        },
+                        onLongSendMessage = {
+                            dismissExpand()
+                            sendMessageWithoutAnswer()
+                        }
                     )
 
                     Row(
@@ -330,56 +340,9 @@ fun ChatInput(
                                 expandToggle(ExpandState.Files)
                             }) {
                             Icon(
-                                imageVector = if (expand == ExpandState.Files) HugeIcons.Cancel01 else HugeIcons.Add01,
+                                imageVector = if (expand == ExpandState.Files) ZionAppIcons.Close else ZionAppIcons.Plus,
                                 contentDescription = stringResource(R.string.more_options)
                             )
-                        }
-
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .combinedClickable(
-                                    enabled = loading || !state.isEmpty(),
-                                    onClick = {
-                                        dismissExpand()
-                                        sendMessage()
-                                    }, onLongClick = {
-                                        dismissExpand()
-                                        sendMessageWithoutAnswer()
-                                    }
-                                )
-                        ) {
-                            val containerColor = when {
-                                loading -> Color(0xFFFFE8E6)
-                                state.isEmpty() -> ZionSectionItem
-                                else -> ZionAccentBlue
-                            }
-                            val contentColor = when {
-                                loading -> Color(0xFFD44A3A)
-                                state.isEmpty() -> Color(0xFF9B9BA1)
-                                else -> Color.White
-                            }
-                            Surface(
-                                modifier = Modifier.fillMaxSize(),
-                                shape = CircleShape,
-                                color = containerColor,
-                                content = {})
-                            if (loading) {
-                                KeepScreenOn()
-                                Icon(
-                                    imageVector = HugeIcons.Cancel01,
-                                    contentDescription = stringResource(R.string.stop),
-                                    tint = contentColor
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = HugeIcons.ArrowUp02,
-                                    contentDescription = stringResource(R.string.send),
-                                    tint = contentColor
-                                )
-                            }
                         }
                     }
                 }
@@ -452,7 +415,10 @@ private fun ActionIconButton(
 @Composable
 private fun TextInputRow(
     state: ChatInputState,
+    loading: Boolean,
+    onCancelMessage: () -> Unit,
     onSendMessage: () -> Unit,
+    onLongSendMessage: () -> Unit,
 ) {
     val settings = LocalSettings.current
     val filesManager: FilesManager = koinInject()
@@ -476,9 +442,12 @@ private fun TextInputRow(
                     Text(text = stringResource(R.string.editing))
                     Spacer(Modifier.weight(1f))
                     Icon(
-                        imageVector = HugeIcons.Cancel01,
+                        imageVector = ZionAppIcons.Close,
                         contentDescription = stringResource(R.string.cancel_edit),
-                        modifier = Modifier.clickable { state.clearInput() }
+                        tint = ZionTextSecondary,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clickable { state.clearInput() }
                     )
                 }
             }
@@ -522,49 +491,125 @@ private fun TextInputRow(
                 }
             }
         }
-        TextField(
-            state = state.textContent,
-            modifier = Modifier
-                .fillMaxWidth()
-                .contentReceiver(receiveContentListener)
-                .onFocusChanged {
-                    isFocused = it.isFocused
-                },
-            shape = MaterialTheme.shapes.largeIncreased,
-            placeholder = {
-                Text(stringResource(R.string.chat_input_placeholder))
-            },
-            lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 5),
-            keyboardOptions = KeyboardOptions(
-                imeAction = if (settings.displaySetting.sendOnEnter) ImeAction.Send else ImeAction.Default
-            ),
-            onKeyboardAction = {
-                if (settings.displaySetting.sendOnEnter && !state.isEmpty()) {
-                    onSendMessage()
+        Surface(
+            shape = RoundedCornerShape(23.dp),
+            color = ZionSectionItem,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                if (assistant.quickMessages.isNotEmpty()) {
+                    QuickMessageButton(assistant = assistant, state = state)
                 }
-            },
-            colors = TextFieldDefaults.colors().copy(
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                focusedContainerColor = ZionSectionItem,
-                unfocusedContainerColor = ZionSectionItem,
-            ),
-            trailingIcon = {
+
+                TextField(
+                    state = state.textContent,
+                    modifier = Modifier
+                        .weight(1f)
+                        .contentReceiver(receiveContentListener)
+                        .onFocusChanged {
+                            isFocused = it.isFocused
+                        },
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.chat_input_placeholder),
+                            style = TextStyle(
+                                fontSize = 17.sp,
+                                lineHeight = 22.sp,
+                                color = ZionTextSecondary,
+                                fontFamily = SourceSans3,
+                            )
+                        )
+                    },
+                    lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 5),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = if (settings.displaySetting.sendOnEnter) ImeAction.Send else ImeAction.Default
+                    ),
+                    onKeyboardAction = {
+                        if (settings.displaySetting.sendOnEnter && !state.isEmpty()) {
+                            onSendMessage()
+                        }
+                    },
+                    textStyle = TextStyle(
+                        fontSize = 17.sp,
+                        lineHeight = 22.sp,
+                        color = ZionTextPrimary,
+                        fontFamily = SourceSans3,
+                    ),
+                    colors = TextFieldDefaults.colors().copy(
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                    ),
+                )
+
                 if (isFocused) {
                     IconButton(
                         onClick = {
                             isFullScreen = !isFullScreen
-                        }) {
-                        Icon(HugeIcons.FullScreen, null)
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = HugeIcons.FullScreen,
+                            contentDescription = null,
+                            tint = ZionTextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
-            },
-            leadingIcon = if (assistant.quickMessages.isNotEmpty()) {
-                {
-                    QuickMessageButton(assistant = assistant, state = state)
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .combinedClickable(
+                            enabled = loading || !state.isEmpty(),
+                            onClick = {
+                                if (loading) onCancelMessage() else onSendMessage()
+                            },
+                            onLongClick = {
+                                if (!loading) {
+                                    onLongSendMessage()
+                                }
+                            }
+                        )
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        shape = CircleShape,
+                        color = when {
+                            loading -> Color(0xFFFFE8E6)
+                            state.isEmpty() -> ZionSurface
+                            else -> ZionAccentBlue
+                        },
+                        content = {}
+                    )
+                    if (loading) {
+                        KeepScreenOn()
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(Color.White)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = ZionAppIcons.Send,
+                            contentDescription = stringResource(R.string.send),
+                            tint = if (state.isEmpty()) Color(0xFF9B9BA1) else Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
-            } else null,
-        )
+            }
+        }
         if (isFullScreen) {
             FullScreenEditor(state = state) {
                 isFullScreen = false
@@ -580,10 +625,16 @@ private fun QuickMessageButton(
 ) {
     var expanded by remember { mutableStateOf(false) }
     IconButton(
+        modifier = Modifier.size(32.dp),
         onClick = {
             expanded = !expanded
         }) {
-        Icon(HugeIcons.Zap, null)
+        Icon(
+            imageVector = ZionAppIcons.Think,
+            contentDescription = null,
+            tint = ZionTextSecondary,
+            modifier = Modifier.size(18.dp)
+        )
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
@@ -710,7 +761,7 @@ private fun MediaFileInputRow(
                             displayNameByRelativePath = displayNameByRelativePath,
                             displayNameByFileName = displayNameByFileName
                         ),
-                        leading = { AttachmentLeadingIcon(icon = HugeIcons.Files02) },
+                        leading = { AttachmentLeadingIcon(icon = ZionAppIcons.Files) },
                         onRemove = { removePart(part, part.url) }
                     )
                 }
@@ -757,7 +808,7 @@ private fun AttachmentChip(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = HugeIcons.Cancel01,
+                    imageVector = ZionAppIcons.Close,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp)
@@ -1098,8 +1149,8 @@ private fun ImagePickButton(onAddImages: (List<Uri>) -> Unit = {}) {
         }
     }
 
-    BigIconTextButton(icon = {
-        Icon(HugeIcons.Image02, null)
+        BigIconTextButton(icon = {
+        Icon(ZionAppIcons.Image, null)
     }, text = {
         Text(stringResource(R.string.photo))
     }) {
@@ -1155,7 +1206,7 @@ fun TakePicButton(onAddImages: (List<Uri>) -> Unit = {}) {
         permissionState = cameraPermission
     ) {
         BigIconTextButton(icon = {
-            Icon(HugeIcons.Camera01, null)
+            Icon(ZionAppIcons.Camera, null)
         }, text = {
             Text(stringResource(R.string.take_picture))
         }) {
@@ -1293,7 +1344,7 @@ fun FilePickButton(onAddFiles: (List<UIMessagePart.Document>) -> Unit = {}) {
         }
     }
     BigIconTextButton(icon = {
-        Icon(HugeIcons.Files02, null)
+        Icon(ZionAppIcons.Files, null)
     }, text = {
         Text(stringResource(R.string.upload_file))
     }) {
@@ -1380,7 +1431,7 @@ private fun BigIconTextButtonPreview() {
         modifier = Modifier.padding(16.dp)
     ) {
         BigIconTextButton(icon = {
-            Icon(HugeIcons.Image02, null)
+            Icon(ZionAppIcons.Image, null)
         }, text = {
             Text(stringResource(R.string.photo))
         }) {}

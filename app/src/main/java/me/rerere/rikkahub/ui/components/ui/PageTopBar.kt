@@ -37,9 +37,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.ArrowLeft01
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.ZionSurface
@@ -185,7 +184,7 @@ fun PageTopBar(
             ) {
                 HeaderActionButton(
                     onClick = onBack,
-                    icon = HugeIcons.ArrowLeft01,
+                    icon = ZionAppIcons.Back,
                     contentDescription = "Back",
                     modifier = Modifier.align(Alignment.CenterStart)
                 )

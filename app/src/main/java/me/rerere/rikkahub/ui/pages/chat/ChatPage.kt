@@ -51,11 +51,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import me.rerere.ai.provider.Model
 import me.rerere.ai.ui.UIMessagePart
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.Cancel01
-import me.rerere.hugeicons.stroke.LeftToRightListBullet
-import me.rerere.hugeicons.stroke.Menu03
-import me.rerere.hugeicons.stroke.MessageAdd01
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.findProvider
@@ -74,6 +69,7 @@ import me.rerere.rikkahub.ui.context.Navigator
 import me.rerere.rikkahub.ui.hooks.ChatInputState
 import me.rerere.rikkahub.ui.hooks.EditStateContent
 import me.rerere.rikkahub.ui.hooks.useEditState
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.ZionChatBackground
@@ -465,7 +461,7 @@ private fun TopBar(
         HeaderTranslucentBackdrop(
             modifier = Modifier.fillMaxSize(),
             containerColor = ZionSurface,
-            containerAlpha = 0.9f,
+            containerAlpha = 0.82f,
         )
 
         Row(
@@ -485,7 +481,7 @@ private fun TopBar(
                         onClick = {
                             scope.launch { drawerState.open() }
                         },
-                        icon = HugeIcons.Menu03,
+                        icon = ZionAppIcons.HamburgerMenu,
                         contentDescription = "Messages"
                     )
                 }
@@ -517,8 +513,8 @@ private fun TopBar(
                         overflow = TextOverflow.Ellipsis,
                         color = ZionTextPrimary,
                         fontFamily = SourceSans3,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
                     )
                     Text(
                         text = if (model != null && provider != null) {
@@ -531,7 +527,7 @@ private fun TopBar(
                         color = ZionTextSecondary,
                         fontFamily = SourceSans3,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                     )
                 }
             }
@@ -542,13 +538,13 @@ private fun TopBar(
             ) {
                 HeaderActionButton(
                     onClick = onClickMenu,
-                    icon = if (previewMode) HugeIcons.Cancel01 else HugeIcons.LeftToRightListBullet,
+                    icon = if (previewMode) ZionAppIcons.Close else ZionAppIcons.Tool,
                     contentDescription = "Chat Options"
                 )
                 Box(modifier = Modifier.size(8.dp))
                 HeaderActionButton(
                     onClick = onNewChat,
-                    icon = HugeIcons.MessageAdd01,
+                    icon = ZionAppIcons.NewChat,
                     contentDescription = "New Message"
                 )
             }
