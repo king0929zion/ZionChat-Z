@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
@@ -62,6 +64,7 @@ import me.rerere.rikkahub.service.ChatError
 import me.rerere.rikkahub.ui.components.ai.ChatInput
 import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
 import me.rerere.rikkahub.ui.components.ui.HeaderTranslucentBackdrop
+import me.rerere.rikkahub.ui.components.ui.headerActionButtonShadow
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
@@ -270,18 +273,10 @@ private fun ChatPageContent(
             topBar = {
                 TopBar(
                     settings = setting,
-                    conversation = conversation,
                     bigScreen = bigScreen,
                     drawerState = drawerState,
-                    previewMode = previewMode,
                     onNewChat = {
                         navigateToChatPage(navController)
-                    },
-                    onClickMenu = {
-                        previewMode = !previewMode
-                    },
-                    onUpdateTitle = {
-                        vm.updateTitle(it)
                     }
                 )
             },
@@ -297,8 +292,12 @@ private fun ChatPageContent(
                         loadingJob?.cancel()
                     },
                     enableSearch = enableWebSearch,
-                    onToggleSearch = {
-                        vm.updateSettings(setting.copy(enableWebSearch = !enableWebSearch))
+                    onToggleSearch = { enabled ->
+                        vm.updateSettings(setting.copy(enableWebSearch = enabled))
+                    },
+                    previewMode = previewMode,
+                    onTogglePreviewMode = {
+                        previewMode = !previewMode
                     },
                     onSendClick = {
                         if (currentChatModel == null) {
@@ -439,23 +438,16 @@ private fun ChatPageContent(
 @Composable
 private fun TopBar(
     settings: Settings,
-    conversation: Conversation,
     drawerState: DrawerState,
     bigScreen: Boolean,
-    previewMode: Boolean,
-    onClickMenu: () -> Unit,
     onNewChat: () -> Unit,
-    onUpdateTitle: (String) -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val toaster = LocalToaster.current
-    val titleState = useEditState<String> {
-        onUpdateTitle(it)
-    }
     val assistant = settings.getCurrentAssistant()
     val model = settings.getCurrentChatModel()
-    val provider = model?.findProvider(providers = settings.providers, checkOverwrite = false)
-    val editTitleWarning = stringResource(R.string.chat_page_edit_title_warning)
+    val centerLabel = model?.displayName ?: assistant.name.ifBlank {
+        stringResource(R.string.assistant_page_default_assistant)
+    }
 
     Box(modifier = Modifier.fillMaxWidth()) {
         HeaderTranslucentBackdrop(
@@ -470,121 +462,53 @@ private fun TopBar(
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(
-                modifier = Modifier.width(48.dp),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                if (!bigScreen) {
-                    HeaderActionButton(
-                        onClick = {
-                            scope.launch { drawerState.open() }
-                        },
-                        icon = ZionAppIcons.HamburgerMenu,
-                        contentDescription = "Messages"
-                    )
-                }
+            if (!bigScreen) {
+                HeaderActionButton(
+                    onClick = {
+                        scope.launch { drawerState.open() }
+                    },
+                    icon = ZionAppIcons.HamburgerMenu,
+                    contentDescription = "Messages"
+                )
+            } else {
+                Box(modifier = Modifier.size(42.dp))
             }
 
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                Surface(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp)
-                        .pressableScale(
-                            pressedScale = 0.985f,
-                            onClick = {
-                                if (conversation.messageNodes.isNotEmpty()) {
-                                    titleState.open(conversation.title)
-                                } else {
-                                    toaster.show(editTitleWarning, type = ToastType.Warning)
-                                }
-                            }
+                        .headerActionButtonShadow(RoundedCornerShape(21.dp))
+                        .padding(horizontal = 12.dp),
+                    shape = RoundedCornerShape(21.dp),
+                    color = ZionSurface,
+                ) {
+                    Box(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 11.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = centerLabel,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = ZionTextPrimary,
+                            fontFamily = SourceSans3,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 16.sp,
                         )
-                ) {
-                    Text(
-                        text = conversation.title.ifBlank { stringResource(R.string.chat_page_new_chat) },
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = ZionTextPrimary,
-                        fontFamily = SourceSans3,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                    )
-                    Text(
-                        text = if (model != null && provider != null) {
-                            "${assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }} / ${model.displayName} (${provider.name})"
-                        } else {
-                            assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
-                        },
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
-                        color = ZionTextSecondary,
-                        fontFamily = SourceSans3,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 12.sp,
-                    )
+                    }
                 }
             }
 
-            Row(
-                modifier = Modifier.width(96.dp),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                HeaderActionButton(
-                    onClick = onClickMenu,
-                    icon = if (previewMode) ZionAppIcons.Close else ZionAppIcons.Tool,
-                    contentDescription = "Chat Options"
-                )
-                Box(modifier = Modifier.size(8.dp))
-                HeaderActionButton(
-                    onClick = onNewChat,
-                    icon = ZionAppIcons.NewChat,
-                    contentDescription = "New Message"
-                )
-            }
+            HeaderActionButton(
+                onClick = onNewChat,
+                icon = ZionAppIcons.NewChat,
+                contentDescription = "New Message"
+            )
         }
-    }
-
-    titleState.EditStateContent { title, onUpdate ->
-        AlertDialog(
-            onDismissRequest = {
-                titleState.dismiss()
-            },
-            title = {
-                Text(stringResource(R.string.chat_page_edit_title))
-            },
-            text = {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = onUpdate,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        titleState.confirm()
-                    }
-                ) {
-                    Text(stringResource(R.string.chat_page_save))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        titleState.dismiss()
-                    }
-                ) {
-                    Text(stringResource(R.string.chat_page_cancel))
-                }
-            }
-        )
     }
 }

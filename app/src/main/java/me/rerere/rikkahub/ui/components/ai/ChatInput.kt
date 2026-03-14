@@ -40,6 +40,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -74,6 +75,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -148,7 +150,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
 enum class ExpandState {
-    Collapsed, Files,
+    Collapsed, Tools,
 }
 
 @Composable
@@ -161,6 +163,8 @@ fun ChatInput(
     hazeState: HazeState,
     enableSearch: Boolean,
     onToggleSearch: (Boolean) -> Unit,
+    previewMode: Boolean,
+    onTogglePreviewMode: () -> Unit,
     modifier: Modifier = Modifier,
     onUpdateChatModel: (Model) -> Unit,
     onUpdateAssistant: (Assistant) -> Unit,
@@ -218,174 +222,132 @@ fun ChatInput(
             modifier = modifier
                 .imePadding()
                 .navigationBarsPadding()
-                .padding(horizontal = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 16.dp)
+                .padding(top = 6.dp, bottom = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Surface(
+            Box(
                 modifier = Modifier
+                    .animateContentSize()
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(30.dp))
-                    .then(
-                        if (settings.displaySetting.enableBlurEffect) Modifier.hazeEffect(
-                            state = hazeState,
-                            style = HazeMaterials.ultraThin(containerColor = hazeTintColor)
-                        )
-                        else Modifier
-                    ),
-                shape = RoundedCornerShape(30.dp),
-                tonalElevation = 0.dp,
-                color = if (settings.displaySetting.enableBlurEffect) Color.Transparent else hazeTintColor,
             ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    if (state.messageContent.isNotEmpty()) {
-                        MediaFileInputRow(state = state)
-                    }
-
-                    TextInputRow(
-                        state = state,
-                        loading = loading,
-                        onCancelMessage = {
-                            dismissExpand()
-                            onCancelClick()
-                        },
-                        onSendMessage = {
-                            dismissExpand()
-                            sendMessage()
-                        },
-                        onLongSendMessage = {
-                            dismissExpand()
-                            sendMessageWithoutAnswer()
-                        }
-                    )
-
-                    Row(
+                BackHandler(enabled = expand != ExpandState.Collapsed) {
+                    dismissExpand()
+                }
+                if (expand == ExpandState.Tools) {
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            .clip(RoundedCornerShape(24.dp))
+                            .then(
+                                if (settings.displaySetting.enableBlurEffect) Modifier.hazeEffect(
+                                    state = hazeState,
+                                    style = HazeMaterials.ultraThin(containerColor = hazeTintColor)
+                                ) else Modifier
+                            ),
+                        shape = RoundedCornerShape(24.dp),
+                        tonalElevation = 0.dp,
+                        color = if (settings.displaySetting.enableBlurEffect) Color.Transparent else hazeTintColor,
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        Column(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            // Model Picker
-                            ModelSelector(
-                                modelId = assistant.chatModelId ?: settings.chatModelId,
-                                providers = settings.providers,
-                                onSelect = {
-                                    onUpdateChatModel(it)
-                                    dismissExpand()
-                                },
-                                type = ModelType.CHAT,
-                                onlyIcon = true,
-                                modifier = Modifier,
-                            )
-
-                            // Search
-                            val enableSearchMsg = stringResource(R.string.web_search_enabled)
-                            val disableSearchMsg = stringResource(R.string.web_search_disabled)
-                            val chatModel = settings.getCurrentChatModel()
-                            SearchPickerButton(
-                                enableSearch = enableSearch,
+                            ToolControlPanel(
+                                state = state,
+                                assistant = assistant,
                                 settings = settings,
+                                mcpManager = mcpManager,
+                                enableSearch = enableSearch,
+                                previewMode = previewMode,
+                                onTogglePreviewMode = onTogglePreviewMode,
                                 onToggleSearch = { enabled ->
                                     onToggleSearch(enabled)
                                     toaster.show(
-                                        message = if (enabled) enableSearchMsg else disableSearchMsg,
+                                        message = if (enabled) stringResource(R.string.web_search_enabled) else stringResource(R.string.web_search_disabled),
                                         duration = 1.seconds,
-                                        type = if (enabled) {
-                                            ToastType.Success
-                                        } else {
-                                            ToastType.Normal
-                                        }
+                                        type = if (enabled) ToastType.Success else ToastType.Normal
                                     )
                                 },
                                 onUpdateSearchService = onUpdateSearchService,
-                                model = chatModel,
+                                onUpdateChatModel = {
+                                    onUpdateChatModel(it)
+                                    dismissExpand()
+                                },
+                                onUpdateAssistant = onUpdateAssistant,
                             )
-
-                            // Reasoning
-                            val model = settings.getCurrentChatModel()
-                            if (model?.abilities?.contains(ModelAbility.REASONING) == true) {
-                                ReasoningButton(
-                                    reasoningTokens = assistant.thinkingBudget ?: 0,
-                                    onUpdateReasoningTokens = {
-                                        onUpdateAssistant(assistant.copy(thinkingBudget = it))
-                                    },
-                                    onlyIcon = true,
-                                )
-                            }
-
-                            // MCP
-                            if (settings.mcpServers.isNotEmpty()) {
-                                McpPickerButton(
-                                    assistant = assistant,
-                                    servers = settings.mcpServers,
-                                    mcpManager = mcpManager,
-                                    onUpdateAssistant = {
-                                        onUpdateAssistant(it)
-                                    },
-                                )
-                            }
-                        }
-
-                        ActionIconButton(
-                            onClick = {
-                                expandToggle(ExpandState.Files)
-                            }) {
-                            Icon(
-                                imageVector = if (expand == ExpandState.Files) ZionAppIcons.Close else ZionAppIcons.Plus,
-                                contentDescription = stringResource(R.string.more_options)
+                            HorizontalDivider(color = ZionSectionItem.copy(alpha = 0.8f))
+                            FilesPicker(
+                                conversation = conversation,
+                                state = state,
+                                assistant = assistant,
+                                onCompressContext = onCompressContext,
+                                onUpdateAssistant = onUpdateAssistant,
+                                showInjectionSheet = showInjectionSheet,
+                                onShowInjectionSheetChange = { showInjectionSheet = it },
+                                showCompressDialog = showCompressDialog,
+                                onShowCompressDialogChange = { showCompressDialog = it },
+                                onDismiss = { dismissExpand() }
                             )
                         }
                     }
                 }
             }
 
-            // Expanded content
-            Box(
-                modifier = Modifier
-                    .animateContentSize()
-                    .fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                BackHandler(
-                    enabled = expand != ExpandState.Collapsed,
+                ActionIconButton(
+                    expanded = expand == ExpandState.Tools,
+                    onClick = { expandToggle(ExpandState.Tools) }
                 ) {
-                    dismissExpand()
+                    Icon(
+                        imageVector = if (expand == ExpandState.Tools) ZionAppIcons.Close else ZionAppIcons.Tool,
+                        contentDescription = stringResource(R.string.more_options),
+                        tint = if (expand == ExpandState.Tools) ZionTextSecondary else ZionTextPrimary
+                    )
                 }
-                if (expand == ExpandState.Files) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(20.dp))
-                            .then(
-                                if (settings.displaySetting.enableBlurEffect) Modifier.hazeEffect(
-                                    state = hazeState,
-                                    style = HazeMaterials.ultraThin()
-                                )
-                                else Modifier
-                            ),
-                        shape = RoundedCornerShape(20.dp),
-                        tonalElevation = 0.dp,
-                        color = if (settings.displaySetting.enableBlurEffect) Color.Transparent else hazeTintColor,
+
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(23.dp))
+                        .then(
+                            if (settings.displaySetting.enableBlurEffect) Modifier.hazeEffect(
+                                state = hazeState,
+                                style = HazeMaterials.ultraThin(containerColor = hazeTintColor)
+                            ) else Modifier
+                        ),
+                    shape = RoundedCornerShape(23.dp),
+                    tonalElevation = 0.dp,
+                    color = if (settings.displaySetting.enableBlurEffect) Color.Transparent else hazeTintColor,
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        FilesPicker(
-                            conversation = conversation,
+                        if (state.messageContent.isNotEmpty()) {
+                            MediaFileInputRow(state = state)
+                        }
+
+                        TextInputRow(
                             state = state,
-                            assistant = assistant,
-                            onCompressContext = onCompressContext,
-                            onUpdateAssistant = onUpdateAssistant,
-                            showInjectionSheet = showInjectionSheet,
-                            onShowInjectionSheetChange = { showInjectionSheet = it },
-                            showCompressDialog = showCompressDialog,
-                            onShowCompressDialogChange = { showCompressDialog = it },
-                            onDismiss = { dismissExpand() })
+                            loading = loading,
+                            onCancelMessage = {
+                                dismissExpand()
+                                onCancelClick()
+                            },
+                            onSendMessage = {
+                                dismissExpand()
+                                sendMessage()
+                            },
+                            onLongSendMessage = {
+                                dismissExpand()
+                                sendMessageWithoutAnswer()
+                            }
+                        )
                     }
                 }
             }
@@ -395,13 +357,24 @@ fun ChatInput(
 
 @Composable
 private fun ActionIconButton(
+    expanded: Boolean,
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     Box(
         modifier = Modifier
-            .size(36.dp)
-            .background(ZionSectionItem, CircleShape)
+            .size(46.dp)
+            .shadow(
+                elevation = 8.dp,
+                shape = CircleShape,
+                clip = false,
+                ambientColor = Color.Black.copy(alpha = 0.08f),
+                spotColor = Color.Black.copy(alpha = 0.08f)
+            )
+            .background(
+                color = if (expanded) ZionSectionItem else ZionSurface,
+                shape = CircleShape
+            )
             .pressableScale(
                 pressedScale = 0.95f,
                 onClick = onClick,
@@ -409,6 +382,117 @@ private fun ActionIconButton(
         contentAlignment = Alignment.Center
     ) {
         content()
+    }
+}
+
+@Composable
+private fun ToolControlPanel(
+    state: ChatInputState,
+    assistant: Assistant,
+    settings: Settings,
+    mcpManager: McpManager,
+    enableSearch: Boolean,
+    previewMode: Boolean,
+    onTogglePreviewMode: () -> Unit,
+    onToggleSearch: (Boolean) -> Unit,
+    onUpdateSearchService: (Int) -> Unit,
+    onUpdateChatModel: (Model) -> Unit,
+    onUpdateAssistant: (Assistant) -> Unit,
+) {
+    val model = settings.getCurrentChatModel()
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            PreviewModeChip(
+                active = previewMode,
+                onClick = onTogglePreviewMode
+            )
+            if (assistant.quickMessages.isNotEmpty()) {
+                QuickMessageButton(
+                    assistant = assistant,
+                    state = state,
+                    modifier = Modifier
+                )
+            }
+        }
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ModelSelector(
+                modelId = assistant.chatModelId ?: settings.chatModelId,
+                providers = settings.providers,
+                onSelect = onUpdateChatModel,
+                type = ModelType.CHAT,
+            )
+            SearchPickerButton(
+                enableSearch = enableSearch,
+                settings = settings,
+                onToggleSearch = onToggleSearch,
+                onUpdateSearchService = onUpdateSearchService,
+                model = model,
+            )
+            if (model?.abilities?.contains(ModelAbility.REASONING) == true) {
+                ReasoningButton(
+                    reasoningTokens = assistant.thinkingBudget ?: 0,
+                    onUpdateReasoningTokens = {
+                        onUpdateAssistant(assistant.copy(thinkingBudget = it))
+                    },
+                )
+            }
+            if (settings.mcpServers.isNotEmpty()) {
+                McpPickerButton(
+                    assistant = assistant,
+                    servers = settings.mcpServers,
+                    mcpManager = mcpManager,
+                    onUpdateAssistant = onUpdateAssistant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewModeChip(
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = if (active) ZionAccentBlue.copy(alpha = 0.16f) else ZionSectionItem,
+        modifier = Modifier
+            .shadow(
+                elevation = if (active) 4.dp else 0.dp,
+                shape = RoundedCornerShape(18.dp),
+                clip = false,
+                ambientColor = Color.Black.copy(alpha = 0.06f),
+                spotColor = Color.Black.copy(alpha = 0.06f)
+            )
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = ZionAppIcons.Image,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = if (active) ZionAccentBlue else ZionTextSecondary
+            )
+            Text(
+                text = stringResource(R.string.code_block_preview),
+                color = if (active) ZionAccentBlue else ZionTextPrimary,
+                fontFamily = SourceSans3,
+                fontSize = 14.sp,
+                fontWeight = if (active) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Medium
+            )
+        }
     }
 }
 
@@ -422,11 +506,10 @@ private fun TextInputRow(
 ) {
     val settings = LocalSettings.current
     val filesManager: FilesManager = koinInject()
-    val assistant = settings.getCurrentAssistant()
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         if (state.isEditing()) {
             Surface(
@@ -453,8 +536,6 @@ private fun TextInputRow(
             }
         }
 
-        var isFocused by remember { mutableStateOf(false) }
-        var isFullScreen by remember { mutableStateOf(false) }
         val receiveContentListener = remember(
             settings.displaySetting.pasteLongTextAsFile, settings.displaySetting.pasteLongTextThreshold
         ) {
@@ -491,128 +572,96 @@ private fun TextInputRow(
                 }
             }
         }
-        Surface(
-            shape = RoundedCornerShape(23.dp),
-            color = ZionSectionItem,
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 2.dp, end = 2.dp, top = 1.dp, bottom = 1.dp),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Row(
+            TextField(
+                state = state.textContent,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                if (assistant.quickMessages.isNotEmpty()) {
-                    QuickMessageButton(assistant = assistant, state = state)
-                }
-
-                TextField(
-                    state = state.textContent,
-                    modifier = Modifier
-                        .weight(1f)
-                        .contentReceiver(receiveContentListener)
-                        .onFocusChanged {
-                            isFocused = it.isFocused
-                        },
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.chat_input_placeholder),
-                            style = TextStyle(
-                                fontSize = 17.sp,
-                                lineHeight = 22.sp,
-                                color = ZionTextSecondary,
-                                fontFamily = SourceSans3,
-                            )
+                    .weight(1f)
+                    .contentReceiver(receiveContentListener)
+                    .onFocusChanged { },
+                placeholder = {
+                    Text(
+                        text = stringResource(R.string.chat_input_placeholder),
+                        style = TextStyle(
+                            fontSize = 17.sp,
+                            lineHeight = 22.sp,
+                            color = ZionTextSecondary,
+                            fontFamily = SourceSans3,
                         )
-                    },
-                    lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 5),
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = if (settings.displaySetting.sendOnEnter) ImeAction.Send else ImeAction.Default
-                    ),
-                    onKeyboardAction = {
-                        if (settings.displaySetting.sendOnEnter && !state.isEmpty()) {
-                            onSendMessage()
-                        }
-                    },
-                    textStyle = TextStyle(
-                        fontSize = 17.sp,
-                        lineHeight = 22.sp,
-                        color = ZionTextPrimary,
-                        fontFamily = SourceSans3,
-                    ),
-                    colors = TextFieldDefaults.colors().copy(
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                    ),
-                )
-
-                if (isFocused) {
-                    IconButton(
-                        onClick = {
-                            isFullScreen = !isFullScreen
-                        },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = HugeIcons.FullScreen,
-                            contentDescription = null,
-                            tint = ZionTextSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
+                    )
+                },
+                lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 5),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = if (settings.displaySetting.sendOnEnter) ImeAction.Send else ImeAction.Default
+                ),
+                onKeyboardAction = {
+                    if (settings.displaySetting.sendOnEnter && !state.isEmpty()) {
+                        onSendMessage()
                     }
-                }
+                },
+                textStyle = TextStyle(
+                    fontSize = 17.sp,
+                    lineHeight = 22.sp,
+                    color = ZionTextPrimary,
+                    fontFamily = SourceSans3,
+                ),
+                colors = TextFieldDefaults.colors().copy(
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                ),
+            )
 
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .combinedClickable(
-                            enabled = loading || !state.isEmpty(),
-                            onClick = {
-                                if (loading) onCancelMessage() else onSendMessage()
-                            },
-                            onLongClick = {
-                                if (!loading) {
-                                    onLongSendMessage()
-                                }
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .padding(bottom = 2.dp)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .combinedClickable(
+                        enabled = loading || !state.isEmpty(),
+                        onClick = {
+                            if (loading) onCancelMessage() else onSendMessage()
+                        },
+                        onLongClick = {
+                            if (!loading) {
+                                onLongSendMessage()
                             }
-                        )
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        shape = CircleShape,
+                        }
+                    )
+                    .background(
                         color = when {
                             loading -> Color(0xFFFFE8E6)
                             state.isEmpty() -> ZionSurface
                             else -> ZionAccentBlue
                         },
-                        content = {}
+                        shape = CircleShape
                     )
-                    if (loading) {
-                        KeepScreenOn()
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .clip(RoundedCornerShape(3.dp))
-                                .background(Color.White)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = ZionAppIcons.Send,
-                            contentDescription = stringResource(R.string.send),
-                            tint = if (state.isEmpty()) Color(0xFF9B9BA1) else Color.White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+            ) {
+                if (loading) {
+                    KeepScreenOn()
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(Color.White)
+                    )
+                } else {
+                    Icon(
+                        imageVector = ZionAppIcons.Send,
+                        contentDescription = stringResource(R.string.send),
+                        tint = if (state.isEmpty()) Color(0xFF9B9BA1) else Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
-            }
-        }
-        if (isFullScreen) {
-            FullScreenEditor(state = state) {
-                isFullScreen = false
             }
         }
     }
@@ -622,19 +671,37 @@ private fun TextInputRow(
 private fun QuickMessageButton(
     assistant: Assistant,
     state: ChatInputState,
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    IconButton(
-        modifier = Modifier.size(32.dp),
-        onClick = {
-            expanded = !expanded
-        }) {
-        Icon(
-            imageVector = ZionAppIcons.Think,
-            contentDescription = null,
-            tint = ZionTextSecondary,
-            modifier = Modifier.size(18.dp)
-        )
+    Box(modifier = modifier) {
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = ZionSectionItem,
+            modifier = Modifier.clickable {
+                expanded = !expanded
+            }
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = ZionAppIcons.Think,
+                    contentDescription = null,
+                    tint = ZionTextSecondary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = stringResource(R.string.assistant_page_quick_messages),
+                    color = ZionTextPrimary,
+                    fontFamily = SourceSans3,
+                    fontSize = 14.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                )
+            }
+        }
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
@@ -646,6 +713,7 @@ private fun QuickMessageButton(
                 Surface(
                     onClick = {
                         state.appendText(quickMessage.content)
+                        expanded = false
                     },
                     color = Color.Transparent,
                     modifier = Modifier.fillMaxWidth(),

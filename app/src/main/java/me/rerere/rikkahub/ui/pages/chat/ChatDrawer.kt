@@ -6,11 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,7 +22,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
@@ -40,45 +40,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.ChartColumn
-import me.rerere.hugeicons.stroke.Image02
-import me.rerere.hugeicons.stroke.InLove
-import me.rerere.hugeicons.stroke.LanguageCircle
-import me.rerere.hugeicons.stroke.LookTop
-import me.rerere.hugeicons.stroke.PencilEdit01
-import me.rerere.hugeicons.stroke.Search01
-import me.rerere.hugeicons.stroke.Settings03
-import me.rerere.hugeicons.stroke.Sparkles
-import me.rerere.hugeicons.stroke.TransactionHistory
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.Settings
+import me.rerere.rikkahub.data.datastore.getCurrentAssistant
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Conversation
-import me.rerere.rikkahub.data.repository.ConversationRepository
-import me.rerere.rikkahub.ui.components.ai.AssistantPicker
-import me.rerere.rikkahub.ui.components.ui.BackupReminderCard
-import me.rerere.rikkahub.ui.components.ui.Greeting
-import me.rerere.rikkahub.ui.components.ui.Tooltip
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
-import me.rerere.rikkahub.ui.components.ui.UpdateCard
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.Navigator
 import me.rerere.rikkahub.ui.hooks.EditStateContent
-import me.rerere.rikkahub.ui.hooks.readBooleanPreference
-import me.rerere.rikkahub.ui.hooks.rememberIsPlayStoreVersion
 import me.rerere.rikkahub.ui.hooks.useEditState
-import me.rerere.rikkahub.ui.modifier.onClick
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionAccentBlue
 import me.rerere.rikkahub.ui.theme.ZionBackground
@@ -87,9 +68,6 @@ import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.navigateToChatPage
-import me.rerere.rikkahub.utils.toDp
-import org.koin.compose.koinInject
-import kotlin.uuid.Uuid
 
 @Composable
 fun ChatDrawerContent(
@@ -99,18 +77,11 @@ fun ChatDrawerContent(
     current: Conversation,
 ) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val isPlayStore = rememberIsPlayStoreVersion()
-    val repo = koinInject<ConversationRepository>()
-
     val conversations = vm.conversations.collectAsLazyPagingItems()
     val conversationListState = rememberLazyListState()
+    val conversationJobs by vm.conversationJobs.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val currentAssistant = settings.getCurrentAssistant()
 
-    val conversationJobs by vm.conversationJobs.collectAsStateWithLifecycle(
-        initialValue = emptyMap(),
-    )
-
-    // 昵称编辑状态
     val nicknameEditState = useEditState<String> { newNickname ->
         vm.updateSettings(
             settings.copy(
@@ -121,109 +92,93 @@ fun ChatDrawerContent(
         )
     }
 
-    // 移动对话状态
     var showMoveToAssistantSheet by remember { mutableStateOf(false) }
     var conversationToMove by remember { mutableStateOf<Conversation?>(null) }
-    val bottomSheetState = rememberModalBottomSheetState()
-
-    // Menu popup 状态
-    var showMenuPopup by remember { mutableStateOf(false) }
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showToolsMenu by remember { mutableStateOf(false) }
 
     ModalDrawerSheet(
-        modifier = Modifier.width(320.dp),
+        modifier = Modifier.width(304.dp),
         drawerContainerColor = ZionBackground,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (settings.displaySetting.showUpdates && !isPlayStore) {
-                UpdateCard(vm)
-            }
-
-            BackupReminderCard(
-                settings = settings,
-                onClick = { navController.navigate(Screen.Backup) },
+            SidebarSearchHeader(
+                onSearchClick = { navController.navigate(Screen.MessageSearch) },
+                onNewChatClick = { navigateToChatPage(navController) }
             )
 
-            // 用户头像和昵称自定义区域
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(
-                        elevation = 18.dp,
-                        shape = RoundedCornerShape(28.dp),
-                        ambientColor = Color.Black.copy(alpha = 0.08f),
-                        spotColor = Color.Black.copy(alpha = 0.08f),
-                    ),
-                shape = RoundedCornerShape(28.dp),
-                color = ZionSurface,
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    UIAvatar(
-                        name = settings.displaySetting.userNickname.ifBlank { stringResource(R.string.user_default_name) },
-                        value = settings.displaySetting.userAvatar,
-                        onUpdate = { newAvatar ->
-                            vm.updateSettings(
-                                settings.copy(
-                                    displaySetting = settings.displaySetting.copy(
-                                        userAvatar = newAvatar
-                                    )
-                                )
-                            )
-                        },
-                        modifier = Modifier.size(50.dp),
+                SidebarMenuEntry(
+                    icon = ZionAppIcons.Assistant,
+                    label = stringResource(R.string.assistant_page_title),
+                    onClick = { navController.navigate(Screen.Assistant) }
+                )
+                SidebarMenuEntry(
+                    icon = ZionAppIcons.History,
+                    label = stringResource(R.string.chat_page_history),
+                    onClick = { navController.navigate(Screen.History) }
+                )
+                SidebarMenuEntry(
+                    icon = ZionAppIcons.Favorite,
+                    label = stringResource(R.string.favorite_page_title),
+                    onClick = { navController.navigate(Screen.Favorite) }
+                )
+                SidebarMenuEntry(
+                    icon = ZionAppIcons.Stats,
+                    label = stringResource(R.string.stats_page_title),
+                    onClick = { navController.navigate(Screen.Stats) }
+                )
+                Box {
+                    SidebarMenuEntry(
+                        icon = ZionAppIcons.Tool,
+                        label = stringResource(R.string.menu),
+                        onClick = { showToolsMenu = true }
                     )
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    DropdownMenu(
+                        expanded = showToolsMenu,
+                        onDismissRequest = { showToolsMenu = false }
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                text = settings.displaySetting.userNickname.ifBlank { stringResource(R.string.user_default_name) },
-                                fontFamily = SourceSans3,
-                                fontWeight = FontWeight.SemiBold,
-                                color = ZionTextPrimary,
-                                style = MaterialTheme.typography.titleMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.clickable {
-                                    nicknameEditState.open(settings.displaySetting.userNickname)
-                                }
-                            )
-
-                            Icon(
-                                imageVector = HugeIcons.PencilEdit01,
-                                contentDescription = "Edit",
-                                tint = ZionTextSecondary,
-                                modifier = Modifier
-                                    .onClick {
-                                        nicknameEditState.open(settings.displaySetting.userNickname)
-                                    }
-                                    .size(LocalTextStyle.current.fontSize.toDp())
-                            )
-                        }
-                        Greeting(
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                color = ZionTextSecondary,
-                                fontFamily = SourceSans3,
-                            ),
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.chat_page_menu_ai_translator)) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = ZionAppIcons.Globe,
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = {
+                                showToolsMenu = false
+                                navController.navigate(Screen.Translator)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.chat_page_menu_image_generation)) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = ZionAppIcons.Image,
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = {
+                                showToolsMenu = false
+                                navController.navigate(Screen.ImageGen)
+                            }
                         )
                     }
                 }
+                SidebarMenuEntry(
+                    icon = ZionAppIcons.Settings,
+                    label = stringResource(R.string.settings),
+                    onClick = { navController.navigate(Screen.Setting) }
+                )
             }
-
-            DrawerActions(navController = navController)
 
             ConversationList(
                 current = current,
@@ -241,9 +196,6 @@ fun ChatDrawerContent(
                 },
                 onDelete = {
                     vm.deleteConversation(it)
-                    // Refresh the conversation list to immediately remove the deleted item
-                    // This fixes the issue where deleted conversations sometimes remain visible
-                    // until manually clicked (issue #747)
                     conversations.refresh()
                     if (it.id == current.id) {
                         navigateToChatPage(navController)
@@ -258,127 +210,22 @@ fun ChatDrawerContent(
                 }
             )
 
-            // 助手选择器
-            AssistantPicker(
-                settings = settings,
-                onUpdateSettings = {
-                    vm.updateSettings(it)
-                    scope.launch {
-                        val id = if (context.readBooleanPreference("create_new_conversation_on_start", true)) {
-                            Uuid.random()
-                        } else {
-                            repo.getConversationsOfAssistant(it.assistantId)
-                                .first()
-                                .firstOrNull()
-                                ?.id ?: Uuid.random()
-                        }
-                        navigateToChatPage(navigator = navController, chatId = id)
-                    }
+            SidebarProfileCard(
+                nickname = settings.displaySetting.userNickname.ifBlank {
+                    stringResource(R.string.user_default_name)
                 },
-                modifier = Modifier.fillMaxWidth(),
-                onClickSetting = {
-                    val currentAssistantId = settings.assistantId
-                    navController.navigate(Screen.AssistantDetail(id = currentAssistantId.toString()))
+                avatar = settings.displaySetting.userAvatar,
+                assistantName = currentAssistant.name.ifBlank {
+                    stringResource(R.string.assistant_page_default_assistant)
+                },
+                onClick = { navController.navigate(Screen.Setting) },
+                onEditNickname = {
+                    nicknameEditState.open(settings.displaySetting.userNickname)
                 }
             )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
-            ) {
-                DrawerAction(
-                    icon = {
-                        Icon(
-                            imageVector = HugeIcons.LookTop,
-                            contentDescription = stringResource(R.string.assistant_page_title)
-                        )
-                    },
-                    label = {
-                        Text(stringResource(R.string.assistant_page_title))
-                    },
-                    onClick = {
-                        navController.navigate(Screen.Assistant)
-                    },
-                )
-
-                Box {
-                    DrawerAction(
-                        icon = {
-                            Icon(HugeIcons.Sparkles, "Menu")
-                        },
-                        label = {
-                            Text(stringResource(R.string.menu))
-                        },
-                        onClick = {
-                            showMenuPopup = true
-                        },
-                    )
-                    DropdownMenu(
-                        expanded = showMenuPopup,
-                        onDismissRequest = { showMenuPopup = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.chat_page_menu_ai_translator)) },
-                            leadingIcon = { Icon(HugeIcons.LanguageCircle, null) },
-                            onClick = {
-                                showMenuPopup = false
-                                navController.navigate(Screen.Translator)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.chat_page_menu_image_generation)) },
-                            leadingIcon = { Icon(HugeIcons.Image02, null) },
-                            onClick = {
-                                showMenuPopup = false
-                                navController.navigate(Screen.ImageGen)
-                            }
-                        )
-                    }
-                }
-
-                DrawerAction(
-                    icon = {
-                        Icon(HugeIcons.InLove, stringResource(R.string.favorite_page_title))
-                    },
-                    label = {
-                        Text(stringResource(R.string.favorite_page_title))
-                    },
-                    onClick = {
-                        navController.navigate(Screen.Favorite)
-                    },
-                )
-
-                DrawerAction(
-                    icon = {
-                        Icon(HugeIcons.ChartColumn, "统计数据")
-                    },
-                    label = {
-                        Text("统计数据")
-                    },
-                    onClick = {
-                        navController.navigate(Screen.Stats)
-                    },
-                )
-
-                Spacer(Modifier.weight(1f))
-
-                DrawerAction(
-                    icon = {
-                        Icon(HugeIcons.Settings03, null)
-                    },
-                    label = { Text(stringResource(R.string.settings)) },
-                    onClick = {
-                        navController.navigate(Screen.Setting)
-                    },
-                )
-            }
         }
     }
 
-    // 昵称编辑对话框
     nicknameEditState.EditStateContent { nickname, onUpdate ->
         AlertDialog(
             onDismissRequest = {
@@ -417,7 +264,6 @@ fun ChatDrawerContent(
         )
     }
 
-    // 移动到助手 Bottom Sheet
     if (showMoveToAssistantSheet) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -465,64 +311,84 @@ fun ChatDrawerContent(
 }
 
 @Composable
-private fun DrawerActions(navController: Navigator) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        DrawerEntry(
-            icon = HugeIcons.Search01,
-            label = stringResource(R.string.chat_page_search_chats),
-            onClick = { navController.navigate(Screen.MessageSearch) },
-        )
-        DrawerEntry(
-            icon = HugeIcons.TransactionHistory,
-            label = stringResource(R.string.chat_page_history),
-            onClick = { navController.navigate(Screen.History) },
-        )
-    }
-}
-
-@Composable
-private fun DrawerAction(
-    modifier: Modifier = Modifier,
-    icon: @Composable () -> Unit,
-    label: @Composable () -> Unit,
-    onClick: () -> Unit,
+private fun SidebarSearchHeader(
+    onSearchClick: () -> Unit,
+    onNewChatClick: () -> Unit,
 ) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Tooltip(
-            tooltip = {
-                label()
-            }
+        Surface(
+            modifier = Modifier
+                .weight(1f)
+                .shadow(
+                    elevation = 8.dp,
+                    shape = RoundedCornerShape(20.dp),
+                    clip = false,
+                    ambientColor = Color.Black.copy(alpha = 0.08f),
+                    spotColor = Color.Black.copy(alpha = 0.08f)
+                ),
+            shape = RoundedCornerShape(20.dp),
+            color = ZionSurface,
         ) {
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(42.dp)
-                    .shadow(
-                        elevation = 12.dp,
-                        shape = CircleShape,
-                        ambientColor = Color.Black.copy(alpha = 0.08f),
-                        spotColor = Color.Black.copy(alpha = 0.08f),
-                    )
-                    .background(ZionSurface, CircleShape)
+                    .fillMaxWidth()
                     .pressableScale(
-                        pressedScale = 0.95f,
-                        onClick = onClick,
+                        pressedScale = 0.985f,
+                        onClick = onSearchClick
                     )
-                    .padding(10.dp),
+                    .padding(horizontal = 12.dp, vertical = 11.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                icon()
+                Icon(
+                    imageVector = ZionAppIcons.Search,
+                    contentDescription = null,
+                    tint = ZionTextSecondary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = stringResource(R.string.chat_page_search_chats),
+                    color = ZionTextSecondary,
+                    fontFamily = SourceSans3,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
+        }
+
+        Box(
+            modifier = Modifier
+                .size(42.dp)
+                .shadow(
+                    elevation = 8.dp,
+                    shape = CircleShape,
+                    clip = false,
+                    ambientColor = Color.Black.copy(alpha = 0.08f),
+                    spotColor = Color.Black.copy(alpha = 0.08f)
+                )
+                .background(ZionSurface, CircleShape)
+                .pressableScale(
+                    pressedScale = 0.95f,
+                    onClick = onNewChatClick
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = ZionAppIcons.NewChat,
+                contentDescription = null,
+                tint = ZionTextPrimary,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun DrawerEntry(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+private fun SidebarMenuEntry(
+    icon: ImageVector,
     label: String,
     onClick: () -> Unit,
 ) {
@@ -530,12 +396,13 @@ private fun DrawerEntry(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 10.dp,
-                shape = RoundedCornerShape(24.dp),
+                elevation = 8.dp,
+                shape = RoundedCornerShape(20.dp),
+                clip = false,
                 ambientColor = Color.Black.copy(alpha = 0.06f),
-                spotColor = Color.Black.copy(alpha = 0.06f),
+                spotColor = Color.Black.copy(alpha = 0.06f)
             ),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         color = ZionSurface,
     ) {
         Row(
@@ -543,31 +410,104 @@ private fun DrawerEntry(
                 .fillMaxWidth()
                 .pressableScale(
                     pressedScale = 0.985f,
-                    onClick = onClick,
+                    onClick = onClick
                 )
-                .padding(horizontal = 14.dp, vertical = 13.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(
                 modifier = Modifier
                     .size(32.dp)
                     .background(ZionSectionItem, CircleShape),
-                contentAlignment = Alignment.Center,
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
                     tint = ZionTextPrimary,
+                    modifier = Modifier.size(18.dp)
                 )
             }
             Text(
                 text = label,
+                color = ZionTextPrimary,
                 fontFamily = SourceSans3,
                 fontWeight = FontWeight.Medium,
-                style = MaterialTheme.typography.bodyMedium,
-                color = ZionTextPrimary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+@Composable
+private fun SidebarProfileCard(
+    nickname: String,
+    avatar: String,
+    assistantName: String,
+    onClick: () -> Unit,
+    onEditNickname: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 10.dp,
+                shape = RoundedCornerShape(28.dp),
+                clip = false,
+                ambientColor = Color.Black.copy(alpha = 0.08f),
+                spotColor = Color.Black.copy(alpha = 0.08f)
+            ),
+        shape = RoundedCornerShape(28.dp),
+        color = ZionSurface,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pressableScale(
+                    pressedScale = 0.985f,
+                    onClick = onClick
+                )
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            UIAvatar(
+                name = nickname,
+                value = avatar,
+                onUpdate = {},
+                modifier = Modifier.size(46.dp),
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = nickname,
+                    color = ZionTextPrimary,
+                    fontFamily = SourceSans3,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.clickable(onClick = onEditNickname)
+                )
+                Text(
+                    text = assistantName,
+                    color = ZionTextSecondary,
+                    fontFamily = SourceSans3,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Icon(
+                imageVector = ZionAppIcons.Settings,
+                contentDescription = null,
+                tint = ZionTextSecondary,
+                modifier = Modifier.size(18.dp)
             )
         }
     }

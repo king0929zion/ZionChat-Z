@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -44,14 +45,14 @@ import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 
-val PageTopBarContentTopPadding: Dp = 72.dp
+val PageTopBarContentTopPadding: Dp = 96.dp
 
 fun Modifier.headerActionButtonShadow(shape: Shape = CircleShape): Modifier = this.shadow(
-    elevation = 20.dp,
+    elevation = 8.dp,
     shape = shape,
     clip = false,
-    ambientColor = Color.Black.copy(alpha = 0.25f),
-    spotColor = Color.Black.copy(alpha = 0.18f),
+    ambientColor = Color.Black.copy(alpha = 0.08f),
+    spotColor = Color.Black.copy(alpha = 0.08f),
 )
 
 @Composable
@@ -141,7 +142,7 @@ fun HeaderActionButton(
 ) {
     Box(
         modifier = modifier
-            .size(40.dp)
+            .size(42.dp)
             .headerActionButtonShadow(CircleShape)
             .clip(CircleShape)
             .background(ZionSurface, CircleShape)
@@ -164,7 +165,7 @@ fun PageTopBar(
     modifier: Modifier = Modifier,
     containerColor: Color = ZionSurface,
     containerAlpha: Float = 0.92f,
-    fadeHeight: Dp = 0.dp,
+    fadeHeight: Dp = 8.dp,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
@@ -228,7 +229,13 @@ fun SettingsPage(
             .fillMaxSize()
             .background(ZionBackground)
     ) {
-        content()
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(top = PageTopBarContentTopPadding)
+        ) {
+            content()
+        }
         PageTopBar(
             title = title,
             onBack = onBack,

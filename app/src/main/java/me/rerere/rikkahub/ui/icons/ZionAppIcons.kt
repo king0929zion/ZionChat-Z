@@ -449,4 +449,168 @@ object ZionAppIcons {
             lineTo(5f, 21f)
         }
     }.build()
+
+    val Search = ImageVector.Builder(
+        name = "search",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2.2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(10.5f, 18f)
+            arcTo(7.5f, 7.5f, 0f, true, true, 10.5f, 3f)
+            arcTo(7.5f, 7.5f, 0f, false, true, 10.5f, 18f)
+            moveTo(16.5f, 16.5f)
+            lineTo(21f, 21f)
+        }
+    }.build()
+
+    val History = ImageVector.Builder(
+        name = "history",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2.2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(4f, 12f)
+            arcTo(8f, 8f, 0f, true, true, 6.343f, 17.657f)
+            moveTo(4f, 12f)
+            lineTo(4f, 6.5f)
+            moveTo(4f, 12f)
+            lineTo(8.5f, 12f)
+            moveTo(12f, 8f)
+            lineTo(12f, 12f)
+            lineTo(15f, 14f)
+        }
+    }.build()
+
+    val Favorite = ImageVector.Builder(
+        name = "favorite",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(12f, 20f)
+            cubicTo(11f, 19.2f, 4f, 14.3f, 4f, 9.2f)
+            cubicTo(4f, 6.5f, 6f, 4.5f, 8.6f, 4.5f)
+            cubicTo(10.2f, 4.5f, 11.2f, 5.3f, 12f, 6.4f)
+            cubicTo(12.8f, 5.3f, 13.8f, 4.5f, 15.4f, 4.5f)
+            cubicTo(18f, 4.5f, 20f, 6.5f, 20f, 9.2f)
+            cubicTo(20f, 14.3f, 13f, 19.2f, 12f, 20f)
+        }
+    }.build()
+
+    val Stats = ImageVector.Builder(
+        name = "stats",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2.2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(5f, 19f)
+            lineTo(19f, 19f)
+            moveTo(7.5f, 19f)
+            lineTo(7.5f, 11f)
+            moveTo(12f, 19f)
+            lineTo(12f, 7f)
+            moveTo(16.5f, 19f)
+            lineTo(16.5f, 13.5f)
+        }
+    }.build()
+
+    val Settings = ImageVector.Builder(
+        name = "settings",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2.2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(5f, 7f)
+            lineTo(19f, 7f)
+            moveTo(5f, 17f)
+            lineTo(19f, 17f)
+            moveTo(8f, 12f)
+            lineTo(19f, 12f)
+            moveTo(12f, 7f)
+            arcTo(2f, 2f, 0f, true, true, 12f, 3f)
+            arcTo(2f, 2f, 0f, false, true, 12f, 7f)
+            moveTo(16f, 17f)
+            arcTo(2f, 2f, 0f, true, true, 16f, 13f)
+            arcTo(2f, 2f, 0f, false, true, 16f, 17f)
+            moveTo(8f, 12f)
+            arcTo(2f, 2f, 0f, true, true, 8f, 8f)
+            arcTo(2f, 2f, 0f, false, true, 8f, 12f)
+        }
+    }.build()
+
+    val Assistant = ImageVector.Builder(
+        name = "assistant",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(8f, 5f)
+            lineTo(16f, 5f)
+            arcTo(4f, 4f, 0f, false, true, 20f, 9f)
+            lineTo(20f, 13f)
+            arcTo(4f, 4f, 0f, false, true, 16f, 17f)
+            lineTo(13.5f, 17f)
+            lineTo(10.5f, 20f)
+            lineTo(10.5f, 17f)
+            lineTo(8f, 17f)
+            arcTo(4f, 4f, 0f, false, true, 4f, 13f)
+            lineTo(4f, 9f)
+            arcTo(4f, 4f, 0f, false, true, 8f, 5f)
+            moveTo(9.5f, 10f)
+            lineTo(9.5f, 10f)
+            moveTo(14.5f, 10f)
+            lineTo(14.5f, 10f)
+            moveTo(9f, 13.5f)
+            cubicTo(10f, 14.5f, 14f, 14.5f, 15f, 13.5f)
+        }
+    }.build()
 }
