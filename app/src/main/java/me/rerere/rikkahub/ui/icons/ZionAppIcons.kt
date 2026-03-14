@@ -513,12 +513,12 @@ object ZionAppIcons {
             strokeLineJoin = StrokeJoin.Round
         ) {
             moveTo(12f, 20f)
-            cubicTo(11f, 19.2f, 4f, 14.3f, 4f, 9.2f)
-            cubicTo(4f, 6.5f, 6f, 4.5f, 8.6f, 4.5f)
-            cubicTo(10.2f, 4.5f, 11.2f, 5.3f, 12f, 6.4f)
-            cubicTo(12.8f, 5.3f, 13.8f, 4.5f, 15.4f, 4.5f)
-            cubicTo(18f, 4.5f, 20f, 6.5f, 20f, 9.2f)
-            cubicTo(20f, 14.3f, 13f, 19.2f, 12f, 20f)
+            curveTo(11f, 19.2f, 4f, 14.3f, 4f, 9.2f)
+            curveTo(4f, 6.5f, 6f, 4.5f, 8.6f, 4.5f)
+            curveTo(10.2f, 4.5f, 11.2f, 5.3f, 12f, 6.4f)
+            curveTo(12.8f, 5.3f, 13.8f, 4.5f, 15.4f, 4.5f)
+            curveTo(18f, 4.5f, 20f, 6.5f, 20f, 9.2f)
+            curveTo(20f, 14.3f, 13f, 19.2f, 12f, 20f)
         }
     }.build()
 
@@ -610,7 +610,7 @@ object ZionAppIcons {
             moveTo(14.5f, 10f)
             lineTo(14.5f, 10f)
             moveTo(9f, 13.5f)
-            cubicTo(10f, 14.5f, 14f, 14.5f, 15f, 13.5f)
+            curveTo(10f, 14.5f, 14f, 14.5f, 15f, 13.5f)
         }
     }.build()
 }

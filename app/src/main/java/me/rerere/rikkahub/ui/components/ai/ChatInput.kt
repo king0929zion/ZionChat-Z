@@ -40,7 +40,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -177,6 +176,8 @@ fun ChatInput(
     val toaster = LocalToaster.current
     val assistant = settings.getCurrentAssistant()
     val hazeTintColor = ZionSurface.copy(alpha = 0.96f)
+    val webSearchEnabledText = stringResource(R.string.web_search_enabled)
+    val webSearchDisabledText = stringResource(R.string.web_search_disabled)
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -264,7 +265,7 @@ fun ChatInput(
                                 onToggleSearch = { enabled ->
                                     onToggleSearch(enabled)
                                     toaster.show(
-                                        message = if (enabled) stringResource(R.string.web_search_enabled) else stringResource(R.string.web_search_disabled),
+                                        message = if (enabled) webSearchEnabledText else webSearchDisabledText,
                                         duration = 1.seconds,
                                         type = if (enabled) ToastType.Success else ToastType.Normal
                                     )
