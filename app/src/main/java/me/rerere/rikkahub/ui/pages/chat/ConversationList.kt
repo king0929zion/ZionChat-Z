@@ -29,7 +29,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -50,7 +50,12 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.model.Conversation
-import me.rerere.rikkahub.ui.theme.extendColors
+import me.rerere.rikkahub.ui.theme.SourceSans3
+import me.rerere.rikkahub.ui.theme.ZionAccentBlue
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionSurface
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.toLocalString
 import java.time.LocalDate
 import java.time.ZoneId
@@ -177,15 +182,15 @@ private fun DateHeaderItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            fontFamily = SourceSans3,
+            fontWeight = FontWeight.SemiBold,
+            color = ZionTextSecondary
         )
     }
 }
@@ -197,22 +202,22 @@ private fun PinnedHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = HugeIcons.Pin,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = ZionAccentBlue
         )
         Spacer(Modifier.size(8.dp))
         Text(
             text = stringResource(R.string.pinned_chats),
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            fontFamily = SourceSans3,
+            fontWeight = FontWeight.SemiBold,
+            color = ZionTextSecondary
         )
     }
 }
@@ -230,35 +235,34 @@ private fun ConversationItem(
     onClick: (Conversation) -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val backgroundColor = if (selected) {
-        MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp)
-    } else {
-        Color.Transparent
-    }
+    val backgroundColor = if (selected) ZionSurface else ZionSectionItem
     var showDropdownMenu by remember {
         mutableStateOf(false)
     }
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(50f))
+            .clip(RoundedCornerShape(24.dp))
             .combinedClickable(
                 interactionSource = interactionSource,
-                indication = LocalIndication.current,
+                indication = null,
                 onClick = { onClick(conversation) },
                 onLongClick = {
                     showDropdownMenu = true
                 }
             )
-            .background(backgroundColor),
+            .background(backgroundColor, RoundedCornerShape(24.dp)),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = conversation.title.ifBlank { stringResource(id = R.string.chat_page_new_message) },
+                fontFamily = SourceSans3,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                color = ZionTextPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -270,14 +274,14 @@ private fun ConversationItem(
                     imageVector = HugeIcons.Pin,
                     contentDescription = "Pinned",
                     modifier = Modifier.size(12.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = ZionAccentBlue
                 )
             }
             AnimatedVisibility(loading) {
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(MaterialTheme.extendColors.green6)
+                        .background(ZionAccentBlue)
                         .size(4.dp)
                         .semantics {
                             contentDescription = "Loading"

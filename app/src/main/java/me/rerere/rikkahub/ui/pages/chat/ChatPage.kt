@@ -2,18 +2,23 @@ package me.rerere.rikkahub.ui.pages.chat
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PermanentNavigationDrawer
@@ -21,8 +26,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowDpSize
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -32,10 +35,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,12 +65,21 @@ import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.service.ChatError
 import me.rerere.rikkahub.ui.components.ai.ChatInput
+import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
+import me.rerere.rikkahub.ui.components.ui.HeaderTranslucentBackdrop
+import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.context.Navigator
 import me.rerere.rikkahub.ui.hooks.ChatInputState
 import me.rerere.rikkahub.ui.hooks.EditStateContent
 import me.rerere.rikkahub.ui.hooks.useEditState
+import me.rerere.rikkahub.ui.theme.SourceSans3
+import me.rerere.rikkahub.ui.theme.ZionBackground
+import me.rerere.rikkahub.ui.theme.ZionChatBackground
+import me.rerere.rikkahub.ui.theme.ZionSurface
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.base64Decode
 import me.rerere.rikkahub.utils.navigateToChatPage
 import org.koin.androidx.compose.koinViewModel
@@ -252,7 +266,7 @@ private fun ChatPageContent(
     TTSAutoPlay(vm = vm, setting = setting, conversation = conversation)
 
     Surface(
-        color = MaterialTheme.colorScheme.background,
+        color = ZionChatBackground,
         modifier = Modifier.fillMaxSize()
     ) {
         AssistantBackground(setting = setting)
@@ -442,74 +456,105 @@ private fun TopBar(
     val titleState = useEditState<String> {
         onUpdateTitle(it)
     }
+    val assistant = settings.getCurrentAssistant()
+    val model = settings.getCurrentChatModel()
+    val provider = model?.findProvider(providers = settings.providers, checkOverwrite = false)
+    val editTitleWarning = stringResource(R.string.chat_page_edit_title_warning)
 
-    TopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-        navigationIcon = {
-            if (!bigScreen) {
-                IconButton(
-                    onClick = {
-                        scope.launch { drawerState.open() }
-                    }
-                ) {
-                    Icon(HugeIcons.Menu03, "Messages")
+    Box(modifier = Modifier.fillMaxWidth()) {
+        HeaderTranslucentBackdrop(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = ZionSurface,
+            containerAlpha = 0.9f,
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                modifier = Modifier.width(48.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                if (!bigScreen) {
+                    HeaderActionButton(
+                        onClick = {
+                            scope.launch { drawerState.open() }
+                        },
+                        icon = HugeIcons.Menu03,
+                        contentDescription = "Messages"
+                    )
                 }
             }
-        },
-        title = {
-            val editTitleWarning = stringResource(R.string.chat_page_edit_title_warning)
-            Surface(
-                onClick = {
-                    if (conversation.messageNodes.isNotEmpty()) {
-                        titleState.open(conversation.title)
-                    } else {
-                        toaster.show(editTitleWarning, type = ToastType.Warning)
-                    }
-                },
-                color = Color.Transparent,
+
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center,
             ) {
-                Column {
-                    val assistant = settings.getCurrentAssistant()
-                    val model = settings.getCurrentChatModel()
-                    val provider = model?.findProvider(providers = settings.providers, checkOverwrite = false)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp)
+                        .pressableScale(
+                            pressedScale = 0.985f,
+                            onClick = {
+                                if (conversation.messageNodes.isNotEmpty()) {
+                                    titleState.open(conversation.title)
+                                } else {
+                                    toaster.show(editTitleWarning, type = ToastType.Warning)
+                                }
+                            }
+                        )
+                ) {
                     Text(
                         text = conversation.title.ifBlank { stringResource(R.string.chat_page_new_chat) },
                         maxLines = 1,
-                        style = MaterialTheme.typography.bodyMedium,
                         overflow = TextOverflow.Ellipsis,
+                        color = ZionTextPrimary,
+                        fontFamily = SourceSans3,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp,
                     )
-                    if (model != null && provider != null) {
-                        Text(
-                            text = "${assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }} / ${model.displayName} (${provider.name})",
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 1,
-                            color = LocalContentColor.current.copy(0.65f),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 8.sp,
-                            )
-                        )
-                    }
+                    Text(
+                        text = if (model != null && provider != null) {
+                            "${assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }} / ${model.displayName} (${provider.name})"
+                        } else {
+                            assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
+                        },
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        color = ZionTextSecondary,
+                        fontFamily = SourceSans3,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 11.sp,
+                    )
                 }
-            }
-        },
-        actions = {
-            IconButton(
-                onClick = {
-                    onClickMenu()
-                }
-            ) {
-                Icon(if (previewMode) HugeIcons.Cancel01 else HugeIcons.LeftToRightListBullet, "Chat Options")
             }
 
-            IconButton(
-                onClick = {
-                    onNewChat()
-                }
+            Row(
+                modifier = Modifier.width(96.dp),
+                horizontalArrangement = Arrangement.End,
             ) {
-                Icon(HugeIcons.MessageAdd01, "New Message")
+                HeaderActionButton(
+                    onClick = onClickMenu,
+                    icon = if (previewMode) HugeIcons.Cancel01 else HugeIcons.LeftToRightListBullet,
+                    contentDescription = "Chat Options"
+                )
+                Box(modifier = Modifier.size(8.dp))
+                HeaderActionButton(
+                    onClick = onNewChat,
+                    icon = HugeIcons.MessageAdd01,
+                    contentDescription = "New Message"
+                )
             }
-        },
-    )
+        }
+    }
+
     titleState.EditStateContent { title, onUpdate ->
         AlertDialog(
             onDismissRequest = {

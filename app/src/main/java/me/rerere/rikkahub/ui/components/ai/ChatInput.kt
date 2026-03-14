@@ -136,10 +136,14 @@ import me.rerere.rikkahub.ui.components.ui.KeepScreenOn
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionCamera
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionManager
 import me.rerere.rikkahub.ui.components.ui.permission.rememberPermissionState
+import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.hooks.ChatInputState
+import me.rerere.rikkahub.ui.theme.ZionAccentBlue
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionSurface
 import org.koin.compose.koinInject
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
@@ -170,7 +174,7 @@ fun ChatInput(
 ) {
     val toaster = LocalToaster.current
     val assistant = settings.getCurrentAssistant()
-    val hazeTintColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val hazeTintColor = ZionSurface.copy(alpha = 0.96f)
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -216,13 +220,13 @@ fun ChatInput(
             modifier = modifier
                 .imePadding()
                 .navigationBarsPadding()
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.largeIncreased)
+                    .clip(RoundedCornerShape(30.dp))
                     .then(
                         if (settings.displaySetting.enableBlurEffect) Modifier.hazeEffect(
                             state = hazeState,
@@ -230,12 +234,12 @@ fun ChatInput(
                         )
                         else Modifier
                     ),
-                shape = MaterialTheme.shapes.largeIncreased,
+                shape = RoundedCornerShape(30.dp),
                 tonalElevation = 0.dp,
                 color = if (settings.displaySetting.enableBlurEffect) Color.Transparent else hazeTintColor,
             ) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (state.messageContent.isNotEmpty()) {
@@ -348,14 +352,14 @@ fun ChatInput(
                                 )
                         ) {
                             val containerColor = when {
-                                loading -> MaterialTheme.colorScheme.errorContainer // 加载时，红色
-                                state.isEmpty() -> MaterialTheme.colorScheme.surfaceContainerHigh // 禁用时(输入为空)，灰色
-                                else -> MaterialTheme.colorScheme.primary // 启用时(输入非空)，绿色/主题色
+                                loading -> Color(0xFFFFE8E6)
+                                state.isEmpty() -> ZionSectionItem
+                                else -> ZionAccentBlue
                             }
                             val contentColor = when {
-                                loading -> MaterialTheme.colorScheme.onErrorContainer
-                                state.isEmpty() -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) // 禁用时，内容用带透明度的灰色
-                                else -> MaterialTheme.colorScheme.onPrimary
+                                loading -> Color(0xFFD44A3A)
+                                state.isEmpty() -> Color(0xFF9B9BA1)
+                                else -> Color.White
                             }
                             Surface(
                                 modifier = Modifier.fillMaxSize(),
@@ -431,18 +435,17 @@ private fun ActionIconButton(
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.size(36.dp),
-        shape = CircleShape,
-        tonalElevation = 0.dp,
-        color = Color.Transparent,
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .background(ZionSectionItem, CircleShape)
+            .pressableScale(
+                pressedScale = 0.95f,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-        ) {
-            content()
-        }
+        content()
     }
 }
 
@@ -462,7 +465,7 @@ private fun TextInputRow(
         if (state.isEditing()) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = ZionSectionItem,
             ) {
                 Row(
                     modifier = Modifier
@@ -543,8 +546,8 @@ private fun TextInputRow(
             colors = TextFieldDefaults.colors().copy(
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+                focusedContainerColor = ZionSectionItem,
+                unfocusedContainerColor = ZionSectionItem,
             ),
             trailingIcon = {
                 if (isFocused) {

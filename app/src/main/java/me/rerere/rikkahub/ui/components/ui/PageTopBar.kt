@@ -5,9 +5,9 @@ import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -57,7 +57,7 @@ fun HeaderTranslucentBackdrop(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Spacer(
                 modifier = Modifier
-                    .matchParentSize()
+                    .fillMaxSize()
                     .graphicsLayer {
                         renderEffect = android.graphics.RenderEffect
                             .createBlurEffect(26f, 26f, Shader.TileMode.CLAMP)
@@ -68,7 +68,7 @@ fun HeaderTranslucentBackdrop(
 
         Spacer(
             modifier = Modifier
-                .matchParentSize()
+                .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         0.0f to topColor,
@@ -118,8 +118,7 @@ fun PageTopBar(
     Box(modifier = modifier.fillMaxWidth()) {
         HeaderTranslucentBackdrop(
             modifier = Modifier
-                .fillMaxWidth()
-                .matchParentSize(),
+                .fillMaxSize(),
             containerColor = containerColor,
             containerAlpha = containerAlpha
         )
