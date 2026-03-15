@@ -70,6 +70,8 @@ import me.rerere.rikkahub.ui.components.ui.permission.rememberPermissionState
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.context.LocalToaster
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.plus
 import me.rerere.rikkahub.web.WebServerManager
 import org.koin.compose.koinInject
@@ -136,7 +138,6 @@ fun SettingWebPage() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(top = PageTopBarContentTopPadding)
         ) {
             LazyColumn(
@@ -286,7 +287,7 @@ fun SettingWebPage() {
                                 Text(
                                     text = stringResource(R.string.setting_page_web_server_address_note),
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = ZionTextSecondary,
                                 )
                             },
                             supportingContent = {
@@ -362,7 +363,12 @@ fun SettingWebPage() {
                 containerColor = if (serverState.isRunning) {
                     MaterialTheme.colorScheme.errorContainer
                 } else {
-                    MaterialTheme.colorScheme.primaryContainer
+                    ZionTextPrimary
+                },
+                contentColor = if (serverState.isRunning) {
+                    MaterialTheme.colorScheme.onErrorContainer
+                } else {
+                    Color.White
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)

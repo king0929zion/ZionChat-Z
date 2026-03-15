@@ -119,7 +119,6 @@ fun SettingFilesPage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(top = PageTopBarContentTopPadding)
         ) {
             FolderRow(

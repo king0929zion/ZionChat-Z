@@ -157,7 +157,6 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(top = PageTopBarContentTopPadding)
         ) {
             // Search bar

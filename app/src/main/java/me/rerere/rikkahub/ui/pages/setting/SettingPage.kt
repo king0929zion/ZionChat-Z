@@ -25,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -108,16 +107,18 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 }, colors = ButtonDefaults.buttonColors(
                     containerColor = ZionTextPrimary,
                     contentColor = Color.White
-                }) {
+                )) {
                     Text(stringResource(R.string.setting_page_sponsor_alert_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = {
                     vm.updateSettings(settings.copy(sponsorAlertDismissedAt = settings.launchCount))
-                }, colors = TextButtonDefaults.textButtonColors(contentColor = ZionTextPrimary)
                 }) {
-                    Text(stringResource(R.string.setting_page_sponsor_alert_dismiss))
+                    Text(
+                        text = stringResource(R.string.setting_page_sponsor_alert_dismiss),
+                        color = ZionTextPrimary
+                    )
                 }
             },
         )
@@ -138,8 +139,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
     ) {
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars),
+                .fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 8.dp,
                 end = 8.dp,
@@ -285,35 +285,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     item(
                         onClick = { navController.navigate(Screen.SettingAbout) },
                         leadingContent = { Icon(ZionAppIcons.Info, null) },
-                        trailingContent = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        context.joinQQGroup("wMdqlDETtzIz6o49HrBR2TeQlwcX6RH9")
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = TencentQQIcon,
-                                        contentDescription = "QQ",
-                                        tint = ZionTextPrimary
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        context.openUrl("https://discord.gg/9weBqxe5c4")
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = DiscordIcon,
-                                        contentDescription = "Discord",
-                                        tint = ZionTextPrimary
-                                    )
-                                }
-                            }
-                        },
                         headlineContent = { Text(stringResource(R.string.setting_page_about)) },
                     )
                     item(
@@ -383,10 +354,12 @@ private fun ProviderConfigWarningCard(navController: Navigator) {
             TextButton(
                 onClick = {
                     navController.navigate(Screen.SettingProvider)
-                },
-                colors = TextButtonDefaults.textButtonColors(contentColor = ZionTextPrimary)
+                }
             ) {
-                Text(stringResource(R.string.setting_page_config))
+                Text(
+                    text = stringResource(R.string.setting_page_config),
+                    color = ZionTextPrimary
+                )
             }
         }
     }

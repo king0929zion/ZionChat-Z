@@ -51,6 +51,7 @@ import me.rerere.rikkahub.ui.hooks.rememberAmoledDarkMode
 import me.rerere.rikkahub.ui.hooks.rememberSharedPreferenceBoolean
 import me.rerere.rikkahub.ui.pages.setting.components.PresetThemeButtonGroup
 import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.plus
 import org.koin.androidx.compose.koinViewModel
 
@@ -79,8 +80,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     ) {
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars),
+                .fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 8.dp,
                 end = 8.dp,
@@ -97,7 +97,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                     Text(
                         text = stringResource(R.string.setting_page_theme_setting),
                         style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = ZionTextSecondary,
                         modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 8.dp)
                     )
                     ListItem(

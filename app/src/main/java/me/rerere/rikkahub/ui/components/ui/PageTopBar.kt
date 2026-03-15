@@ -63,10 +63,10 @@ fun Modifier.settingsBottomInsets(): Modifier =
 fun HeaderTranslucentBackdrop(
     modifier: Modifier = Modifier,
     containerColor: Color = ZionSurface,
-    containerAlpha: Float = 0.82f,
+    containerAlpha: Float = 0.76f,
 ) {
-    val topColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
-    val midColor = containerColor.copy(alpha = (containerAlpha * 0.66f).coerceIn(0.42f, 0.76f))
+    val topColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.52f, 0.84f))
+    val midColor = containerColor.copy(alpha = (containerAlpha * 0.58f).coerceIn(0.24f, 0.56f))
 
     Box(modifier = modifier) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -75,7 +75,7 @@ fun HeaderTranslucentBackdrop(
                     .matchParentSize()
                     .graphicsLayer {
                         renderEffect = android.graphics.RenderEffect
-                            .createBlurEffect(26f, 26f, Shader.TileMode.CLAMP)
+                            .createBlurEffect(18f, 18f, Shader.TileMode.CLAMP)
                             .asComposeRenderEffect()
                     }
             )
@@ -100,10 +100,10 @@ fun HeaderTranslucentBackdrop(
 fun FooterTranslucentBackdrop(
     modifier: Modifier = Modifier,
     containerColor: Color = ZionSurface,
-    containerAlpha: Float = 0.82f,
+    containerAlpha: Float = 0.76f,
 ) {
-    val bottomColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
-    val midColor = containerColor.copy(alpha = (containerAlpha * 0.66f).coerceIn(0.42f, 0.76f))
+    val bottomColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.52f, 0.84f))
+    val midColor = containerColor.copy(alpha = (containerAlpha * 0.58f).coerceIn(0.24f, 0.56f))
 
     Box(modifier = modifier) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -112,7 +112,7 @@ fun FooterTranslucentBackdrop(
                     .matchParentSize()
                     .graphicsLayer {
                         renderEffect = android.graphics.RenderEffect
-                            .createBlurEffect(26f, 26f, Shader.TileMode.CLAMP)
+                            .createBlurEffect(18f, 18f, Shader.TileMode.CLAMP)
                             .asComposeRenderEffect()
                     }
             )
@@ -165,7 +165,7 @@ fun PageTopBar(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = ZionSurface,
-    containerAlpha: Float = 0.82f,
+    containerAlpha: Float = 0.76f,
     fadeHeight: Dp = 0.dp,
     trailing: (@Composable () -> Unit)? = null,
 ) {

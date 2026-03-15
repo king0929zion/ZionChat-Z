@@ -38,6 +38,7 @@ import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.UiState
 import me.rerere.rikkahub.utils.onError
 import me.rerere.rikkahub.utils.onLoading
@@ -55,7 +56,6 @@ fun SettingDonatePage() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(horizontal = 16.dp)
                 .padding(top = PageTopBarContentTopPadding, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -65,7 +65,7 @@ fun SettingDonatePage() {
             Text(
                 text = stringResource(R.string.donate_page_sponsor_list),
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
+                color = ZionTextSecondary,
             )
 
             Sponsors(

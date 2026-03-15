@@ -81,8 +81,7 @@ fun SettingAboutPage() {
         ) { onBurst ->
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.statusBars),
+                    .fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = 8.dp,
                     end = 8.dp,

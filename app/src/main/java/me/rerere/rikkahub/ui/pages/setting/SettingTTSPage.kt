@@ -111,7 +111,6 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
                 .imePadding(),
             contentPadding = PaddingValues(
                 start = 16.dp,

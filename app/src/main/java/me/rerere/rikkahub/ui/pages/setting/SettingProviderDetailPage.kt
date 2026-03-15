@@ -212,7 +212,6 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                 state = pager,
                 modifier = Modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.statusBars)
                     .padding(top = PageTopBarContentTopPadding)
                     .padding(innerPadding)
                     .consumeWindowInsets(innerPadding)

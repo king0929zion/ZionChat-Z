@@ -174,7 +174,6 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
             state = state,
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(top = PageTopBarContentTopPadding)
         ) {
             LazyColumn(
