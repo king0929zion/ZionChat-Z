@@ -9,12 +9,17 @@ import me.rerere.hugeicons.stroke.ViewOff
 import me.rerere.hugeicons.stroke.Play
 import me.rerere.hugeicons.stroke.StopCircle
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -55,20 +60,22 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.service.WebServerService
 import me.rerere.rikkahub.ui.components.nav.BackButton
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.CardGroup
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionManager
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionNotification
 import me.rerere.rikkahub.ui.components.ui.permission.rememberPermissionState
+import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.context.LocalToaster
-import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.plus
 import me.rerere.rikkahub.web.WebServerManager
 import org.koin.compose.koinInject
 
 @Composable
 fun SettingWebPage() {
+    val navController = LocalNavController.current
     val webServerManager: WebServerManager = koinInject()
     val settingsStore: SettingsStore = koinInject()
     val settings = LocalSettings.current
@@ -121,13 +128,194 @@ fun SettingWebPage() {
         toaster.show(copiedText)
     }
 
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(
-                title = stringResource(R.string.setting_page_web_server)
-            )
-        },
-        floatingActionButton = {
+    SettingsPage(
+        title = stringResource(R.string.setting_page_web_server),
+        onBack = { navController.popBackStack() }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(top = PageTopBarContentTopPadding)
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 112.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                item {
+                    CardGroup(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                    ) {
+                        item(
+                            headlineContent = { Text(stringResource(R.string.setting_page_web_server_port)) },
+                            supportingContent = { Text(stringResource(R.string.setting_page_web_server_port_desc)) },
+                            trailingContent = {
+                                TextField(
+                                    value = portText,
+                                    onValueChange = { value ->
+                                        portText = value.filter { it.isDigit() }
+                                        val port = portText.toIntOrNull()
+                                        if (port != null && port in 1024..65535) {
+                                            scope.launch {
+                                                settingsStore.update { it.copy(webServerPort = port) }
+                                            }
+                                        }
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    singleLine = true,
+                                    isError = portText.toIntOrNull()?.let { it !in 1024..65535 } ?: true,
+                                    modifier = Modifier.width(100.dp),
+                                    enabled = !serverState.isRunning,
+                                    shape = CircleShape,
+                                    colors = TextFieldDefaults.colors(
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent,
+                                        errorIndicatorColor = Color.Transparent,
+                                        disabledIndicatorColor = Color.Transparent
+                                    )
+                                )
+                            },
+                        )
+                        item(
+                            headlineContent = { Text(stringResource(R.string.setting_page_web_server_localhost_only)) },
+                            supportingContent = { Text(stringResource(R.string.setting_page_web_server_localhost_only_desc)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = settings.webServerLocalhostOnly,
+                                    onCheckedChange = { checked ->
+                                        scope.launch {
+                                            settingsStore.update { it.copy(webServerLocalhostOnly = checked) }
+                                        }
+                                    },
+                                    enabled = !serverState.isRunning,
+                                )
+                            },
+                        )
+                        item(
+                            headlineContent = { Text(stringResource(R.string.setting_page_web_server_jwt_enable)) },
+                            supportingContent = { Text(stringResource(R.string.setting_page_web_server_jwt_enable_desc)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = settings.webServerJwtEnabled,
+                                    onCheckedChange = { checked ->
+                                        scope.launch {
+                                            settingsStore.update { it.copy(webServerJwtEnabled = checked) }
+                                        }
+                                    },
+                                    enabled = settings.webServerJwtEnabled || accessPasswordText.isNotBlank(),
+                                )
+                            },
+                        )
+                        item(
+                            headlineContent = { Text(stringResource(R.string.setting_page_web_server_password)) },
+                            supportingContent = { Text(stringResource(R.string.setting_page_web_server_password_desc)) },
+                            trailingContent = {
+                                TextField(
+                                    value = accessPasswordText,
+                                    onValueChange = { value ->
+                                        accessPasswordText = value
+                                        scope.launch {
+                                            settingsStore.update {
+                                                it.copy(
+                                                    webServerAccessPassword = value,
+                                                    webServerJwtEnabled = it.webServerJwtEnabled && value.isNotBlank()
+                                                )
+                                            }
+                                        }
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                    visualTransformation = if (passwordVisible) {
+                                        VisualTransformation.None
+                                    } else {
+                                        PasswordVisualTransformation()
+                                    },
+                                    trailingIcon = {
+                                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                            Icon(
+                                                imageVector = if (passwordVisible) HugeIcons.ViewOff else HugeIcons.View,
+                                                contentDescription = null
+                                            )
+                                        }
+                                    },
+                                    singleLine = true,
+                                    isError = settings.webServerJwtEnabled && accessPasswordText.isBlank(),
+                                    modifier = Modifier.width(180.dp),
+                                    shape = CircleShape,
+                                    colors = TextFieldDefaults.colors(
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent,
+                                        errorIndicatorColor = Color.Transparent,
+                                        disabledIndicatorColor = Color.Transparent
+                                    )
+                                )
+                            },
+                        )
+                        if (serverState.isRunning) {
+                            val port = serverState.port
+                            if (!serverState.localhostOnly) {
+                                val lanUrl = "http://${serverState.address ?: "localhost"}:$port"
+                                item(
+                                    onClick = { copyUrl(lanUrl) },
+                                    headlineContent = { Text(stringResource(R.string.setting_page_web_server_lan_address)) },
+                                    supportingContent = { Text(lanUrl) },
+                                )
+
+                                if (serverState.hostname != null) {
+                                    val mdnsUrl = "http://${serverState.hostname}:$port"
+                                    item(
+                                        onClick = { copyUrl(mdnsUrl) },
+                                        headlineContent = { Text(stringResource(R.string.setting_page_web_server_mdns_address)) },
+                                        supportingContent = { Text(mdnsUrl) },
+                                    )
+                                }
+                            }
+
+                            val localUrl = "http://localhost:$port"
+                            item(
+                                onClick = { copyUrl(localUrl) },
+                                headlineContent = { Text(stringResource(R.string.setting_page_web_server_local_address)) },
+                                supportingContent = { Text(localUrl) },
+                            )
+                        }
+                        item(
+                            headlineContent = {
+                                Text(
+                                    text = stringResource(R.string.setting_page_web_server_address_note),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            },
+                            supportingContent = {
+                                Text(
+                                    text = stringResource(R.string.setting_page_web_server_address_note_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            },
+                        )
+                        if (serverState.error != null) {
+                            item(
+                                headlineContent = {
+                                    Text(
+                                        text = stringResource(R.string.setting_page_web_server_error),
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(
+                                        text = serverState.error ?: "",
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+
             ExtendedFloatingActionButton(
                 onClick = {
                     if (serverState.isLoading) return@ExtendedFloatingActionButton
@@ -175,191 +363,10 @@ fun SettingWebPage() {
                 } else {
                     MaterialTheme.colorScheme.primaryContainer
                 },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(horizontal = 24.dp, vertical = 20.dp)
             )
-        },
-        containerColor = CustomColors.topBarColors.containerColor,
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = innerPadding + PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                CardGroup(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                ) {
-                    item(
-                        headlineContent = { Text(stringResource(R.string.setting_page_web_server_port)) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_web_server_port_desc)) },
-                        trailingContent = {
-                            TextField(
-                                value = portText,
-                                onValueChange = { value ->
-                                    portText = value.filter { it.isDigit() }
-                                    val port = portText.toIntOrNull()
-                                    if (port != null && port in 1024..65535) {
-                                        scope.launch {
-                                            settingsStore.update { it.copy(webServerPort = port) }
-                                        }
-                                    }
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true,
-                                isError = portText.toIntOrNull()?.let { it !in 1024..65535 } ?: true,
-                                modifier = Modifier.width(100.dp),
-                                enabled = !serverState.isRunning,
-                                shape = CircleShape,
-                                colors = TextFieldDefaults.colors(
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    errorIndicatorColor = Color.Transparent,
-                                    disabledIndicatorColor = Color.Transparent
-                                )
-                            )
-                        },
-                    )
-                    item(
-                        headlineContent = { Text(stringResource(R.string.setting_page_web_server_localhost_only)) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_web_server_localhost_only_desc)) },
-                        trailingContent = {
-                            Switch(
-                                checked = settings.webServerLocalhostOnly,
-                                onCheckedChange = { checked ->
-                                    scope.launch {
-                                        settingsStore.update {
-                                            it.copy(webServerLocalhostOnly = checked)
-                                        }
-                                    }
-                                },
-                                // 运行中不允许切换 需重启服务生效
-                                enabled = !serverState.isRunning,
-                            )
-                        },
-                    )
-                    item(
-                        headlineContent = { Text(stringResource(R.string.setting_page_web_server_jwt_enable)) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_web_server_jwt_enable_desc)) },
-                        trailingContent = {
-                            Switch(
-                                checked = settings.webServerJwtEnabled,
-                                onCheckedChange = { checked ->
-                                    scope.launch {
-                                        settingsStore.update {
-                                            it.copy(webServerJwtEnabled = checked)
-                                        }
-                                    }
-                                },
-                                enabled = settings.webServerJwtEnabled || accessPasswordText.isNotBlank(),
-                            )
-                        },
-                    )
-                    item(
-                        headlineContent = { Text(stringResource(R.string.setting_page_web_server_password)) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_web_server_password_desc)) },
-                        trailingContent = {
-                            TextField(
-                                value = accessPasswordText,
-                                onValueChange = { value ->
-                                    accessPasswordText = value
-                                    scope.launch {
-                                        settingsStore.update {
-                                            it.copy(
-                                                webServerAccessPassword = value,
-                                                webServerJwtEnabled = it.webServerJwtEnabled && value.isNotBlank()
-                                            )
-                                        }
-                                    }
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                visualTransformation = if (passwordVisible) {
-                                    VisualTransformation.None
-                                } else {
-                                    PasswordVisualTransformation()
-                                },
-                                trailingIcon = {
-                                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                        Icon(
-                                            imageVector = if (passwordVisible) HugeIcons.ViewOff else HugeIcons.View,
-                                            contentDescription = null
-                                        )
-                                    }
-                                },
-                                singleLine = true,
-                                isError = settings.webServerJwtEnabled && accessPasswordText.isBlank(),
-                                modifier = Modifier.width(180.dp),
-                                shape = CircleShape,
-                                colors = TextFieldDefaults.colors(
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    errorIndicatorColor = Color.Transparent,
-                                    disabledIndicatorColor = Color.Transparent
-                                )
-                            )
-                        },
-                    )
-                    if (serverState.isRunning) {
-                        val port = serverState.port
-                        if (!serverState.localhostOnly) {
-                            val lanUrl = "http://${serverState.address ?: "localhost"}:$port"
-                            item(
-                                onClick = { copyUrl(lanUrl) },
-                                headlineContent = { Text(stringResource(R.string.setting_page_web_server_lan_address)) },
-                                supportingContent = { Text(lanUrl) },
-                            )
-
-                            if (serverState.hostname != null) {
-                                val mdnsUrl = "http://${serverState.hostname}:$port"
-                                item(
-                                    onClick = { copyUrl(mdnsUrl) },
-                                    headlineContent = { Text(stringResource(R.string.setting_page_web_server_mdns_address)) },
-                                    supportingContent = { Text(mdnsUrl) },
-                                )
-                            }
-                        }
-
-                        val localUrl = "http://localhost:$port"
-                        item(
-                            onClick = { copyUrl(localUrl) },
-                            headlineContent = { Text(stringResource(R.string.setting_page_web_server_local_address)) },
-                            supportingContent = { Text(localUrl) },
-                        )
-                    }
-                    item(
-                        headlineContent = {
-                            Text(
-                                text = stringResource(R.string.setting_page_web_server_address_note),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        },
-                        supportingContent = {
-                            Text(
-                                text = stringResource(R.string.setting_page_web_server_address_note_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        },
-                    )
-                    if (serverState.error != null) {
-                        item(
-                            headlineContent = {
-                                Text(
-                                    text = stringResource(R.string.setting_page_web_server_error),
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    text = serverState.error ?: "",
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            },
-                        )
-                    }
-                }
-            }
         }
     }
 }

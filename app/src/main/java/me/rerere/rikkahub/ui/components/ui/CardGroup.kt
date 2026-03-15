@@ -1,7 +1,10 @@
 package me.rerere.rikkahub.ui.components.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
@@ -20,15 +25,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionSectionItemPressed
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
@@ -86,6 +95,7 @@ private fun CardGroupListItem(
     val isLast = index == count - 1
 
     val interactionSource = remember { MutableInteractionSource() }
+    val isPressed = item.onClick != null && interactionSource.collectIsPressedAsState().value
     val shape = RoundedCornerShape(
         topStart = if (count == 1 || isFirst) CardGroupCorner else CardGroupInnerCorner,
         topEnd = if (count == 1 || isFirst) CardGroupCorner else CardGroupInnerCorner,
@@ -97,7 +107,10 @@ private fun CardGroupListItem(
         modifier = item.modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(ZionSectionItem, shape)
+            .background(
+                if (isPressed) ZionSectionItemPressed else ZionSectionItem,
+                shape
+            )
             .then(
                 if (item.onClick != null) {
                     Modifier.pressableScale(
@@ -151,7 +164,12 @@ private fun CardGroupListItem(
                 }
             },
             leadingContent = item.leadingContent,
-            trailingContent = item.trailingContent,
+            trailingContent = {
+                when {
+                    item.trailingContent != null -> item.trailingContent.invoke()
+                    item.onClick != null -> DefaultCardGroupChevron()
+                }
+            },
             colors = item.colors ?: ListItemDefaults.colors(
                 containerColor = Color.Transparent,
                 headlineColor = ZionTextPrimary,
@@ -160,6 +178,25 @@ private fun CardGroupListItem(
                 leadingIconColor = ZionTextSecondary,
                 trailingIconColor = ZionTextSecondary
             ),
+        )
+    }
+}
+
+@Composable
+private fun DefaultCardGroupChevron(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = ZionAppIcons.ChevronRight,
+            contentDescription = null,
+            tint = ZionTextSecondary,
+            modifier = Modifier.size(size)
         )
     }
 }

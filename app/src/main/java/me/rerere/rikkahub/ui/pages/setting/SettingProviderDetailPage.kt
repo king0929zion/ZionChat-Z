@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +28,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -106,7 +109,8 @@ import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.ai.ModelTypeTag
 import me.rerere.rikkahub.ui.components.ai.ProviderBalanceText
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.ShareSheet
 import me.rerere.rikkahub.ui.components.ui.SiliconFlowPowerByIcon
 import me.rerere.rikkahub.ui.components.ui.Tag
@@ -161,76 +165,81 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
         navController.popBackStack()
     }
 
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(
-                title = provider.name,
-                trailing = {
-                    val shareSheetState = rememberShareSheetState()
-                    ShareSheet(shareSheetState)
-                    IconButton(
-                        onClick = {
-                            shareSheetState.show(provider)
-                        }
-                    ) {
-                        Icon(HugeIcons.Share01, null)
-                    }
+    val shareSheetState = rememberShareSheetState()
+    ShareSheet(shareSheetState)
+
+    SettingsPage(
+        title = provider.name,
+        onBack = { navController.popBackStack() },
+        trailing = {
+            IconButton(
+                onClick = {
+                    shareSheetState.show(provider)
                 }
-            )
-        },
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = pager.currentPage == 0,
-                    label = { Text(stringResource(id = R.string.setting_provider_page_configuration)) },
-                    icon = { Icon(HugeIcons.Tools, null) },
-                    onClick = {
-                        scope.launch {
-                            pager.animateScrollToPage(0)
-                        }
-                    }
-                )
-                NavigationBarItem(
-                    selected = pager.currentPage == 1,
-                    label = { Text(stringResource(id = R.string.setting_provider_page_models)) },
-                    icon = { Icon(HugeIcons.Package01, null) },
-                    onClick = {
-                        scope.launch {
-                            pager.animateScrollToPage(1)
-                        }
-                    }
-                )
+            ) {
+                Icon(HugeIcons.Share01, null)
             }
         }
     ) {
-        HorizontalPager(
-            state = pager,
-            modifier = Modifier
-                .padding(it)
-                .consumeWindowInsets(it)
-        ) { page ->
-            when (page) {
-                0 -> {
-                    SettingProviderConfigPage(
-                        provider = provider,
-                        onEdit = {
-                            onEdit(it)
-                            toaster.show(
-                                context.getString(R.string.setting_provider_page_save_success),
-                                type = ToastType.Success
-                            )
-                        },
-                        onDelete = {
-                            onDelete()
+        Scaffold(
+            containerColor = Color.Transparent,
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = pager.currentPage == 0,
+                        label = { Text(stringResource(id = R.string.setting_provider_page_configuration)) },
+                        icon = { Icon(HugeIcons.Tools, null) },
+                        onClick = {
+                            scope.launch {
+                                pager.animateScrollToPage(0)
+                            }
+                        }
+                    )
+                    NavigationBarItem(
+                        selected = pager.currentPage == 1,
+                        label = { Text(stringResource(id = R.string.setting_provider_page_models)) },
+                        icon = { Icon(HugeIcons.Package01, null) },
+                        onClick = {
+                            scope.launch {
+                                pager.animateScrollToPage(1)
+                            }
                         }
                     )
                 }
+            }
+        ) { innerPadding ->
+            HorizontalPager(
+                state = pager,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(top = PageTopBarContentTopPadding)
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
+            ) { page ->
+                when (page) {
+                    0 -> {
+                        SettingProviderConfigPage(
+                            provider = provider,
+                            onEdit = {
+                                onEdit(it)
+                                toaster.show(
+                                    context.getString(R.string.setting_provider_page_save_success),
+                                    type = ToastType.Success
+                                )
+                            },
+                            onDelete = {
+                                onDelete()
+                            }
+                        )
+                    }
 
-                1 -> {
-                    SettingProviderModelPage(
-                        provider = provider,
-                        onEdit = onEdit
-                    )
+                    1 -> {
+                        SettingProviderModelPage(
+                            provider = provider,
+                            onEdit = onEdit
+                        )
+                    }
                 }
             }
         }

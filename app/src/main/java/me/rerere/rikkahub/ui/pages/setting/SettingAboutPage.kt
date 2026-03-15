@@ -13,10 +13,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -42,9 +45,11 @@ import me.rerere.rikkahub.BuildConfig
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.ui.components.easteregg.EmojiBurstHost
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.CardGroup
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.plus
@@ -65,22 +70,25 @@ fun SettingAboutPage() {
         )
     }
     var logoCenterPx by remember { mutableStateOf(Offset.Zero) }
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(
-                title = stringResource(R.string.about_page_title)
-            )
-        },
-        containerColor = CustomColors.topBarColors.containerColor,
-    ) { innerPadding ->
+    SettingsPage(
+        title = stringResource(R.string.about_page_title),
+        onBack = { navController.popBackStack() }
+    ) {
         EmojiBurstHost(
             modifier = Modifier.fillMaxSize(),
             emojiOptions = emojiOptions,
             burstCount = 12
         ) { onBurst ->
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = innerPadding + PaddingValues(8.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.statusBars),
+                contentPadding = PaddingValues(
+                    start = 8.dp,
+                    end = 8.dp,
+                    top = PageTopBarContentTopPadding,
+                    bottom = 16.dp,
+                ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 item {
@@ -111,7 +119,7 @@ fun SettingAboutPage() {
                         )
 
                         Text(
-                            text = "RikkaHub",
+                            text = stringResource(R.string.app_name),
                             style = MaterialTheme.typography.displaySmall,
                         )
                     }
@@ -128,14 +136,14 @@ fun SettingAboutPage() {
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = LocalIndication.current,
                             ),
-                            leadingContent = { Icon(HugeIcons.Code, null) },
+                            leadingContent = { Icon(ZionAppIcons.Info, null) },
                             supportingContent = {
                                 Text("${BuildConfig.VERSION_NAME} / ${BuildConfig.VERSION_CODE}")
                             },
                             headlineContent = { Text(stringResource(R.string.about_page_version)) },
                         )
                         item(
-                            leadingContent = { Icon(HugeIcons.SmartPhone01, null) },
+                            leadingContent = { Icon(ZionAppIcons.User, null) },
                             supportingContent = {
                                 Text("${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} / Android ${android.os.Build.VERSION.RELEASE} / SDK ${android.os.Build.VERSION.SDK_INT}")
                             },
@@ -149,21 +157,21 @@ fun SettingAboutPage() {
                         modifier = Modifier.padding(horizontal = 8.dp),
                     ) {
                         item(
-                            onClick = { context.openUrl("https://rikka-ai.com/") },
-                            leadingContent = { Icon(HugeIcons.Earth, null) },
-                            supportingContent = { Text("https://rikka-ai.com") },
+                            onClick = { context.openUrl("https://github.com/king0929zion/ZionChat-Z") },
+                            leadingContent = { Icon(ZionAppIcons.Globe, null) },
+                            supportingContent = { Text("https://github.com/king0929zion/ZionChat-Z") },
                             headlineContent = { Text(stringResource(R.string.about_page_website)) },
                         )
                         item(
-                            onClick = { context.openUrl("https://github.com/rikkahub/rikkahub") },
-                            leadingContent = { Icon(HugeIcons.Github, null) },
-                            supportingContent = { Text("https://github.com/rikkahub/rikkahub") },
+                            onClick = { context.openUrl("https://github.com/king0929zion/ZionChat-Z") },
+                            leadingContent = { Icon(ZionAppIcons.Files, null) },
+                            supportingContent = { Text("https://github.com/king0929zion/ZionChat-Z") },
                             headlineContent = { Text(stringResource(R.string.about_page_github)) },
                         )
                         item(
-                            onClick = { context.openUrl("https://github.com/rikkahub/rikkahub/blob/master/LICENSE") },
-                            leadingContent = { Icon(HugeIcons.File02, null) },
-                            supportingContent = { Text("https://github.com/rikkahub/rikkahub/blob/master/LICENSE") },
+                            onClick = { context.openUrl("https://github.com/king0929zion/ZionChat-Z/blob/main/LICENSE") },
+                            leadingContent = { Icon(ZionAppIcons.Files, null) },
+                            supportingContent = { Text("https://github.com/king0929zion/ZionChat-Z/blob/main/LICENSE") },
                             headlineContent = { Text(stringResource(R.string.about_page_license)) },
                         )
                     }

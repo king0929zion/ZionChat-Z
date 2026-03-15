@@ -3,10 +3,13 @@ package me.rerere.rikkahub.ui.pages.setting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -31,9 +34,10 @@ import coil3.compose.AsyncImage
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.api.SponsorAPI
 import me.rerere.rikkahub.data.model.Sponsor
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.CardGroup
-import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
+import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.utils.UiState
 import me.rerere.rikkahub.utils.onError
 import me.rerere.rikkahub.utils.onLoading
@@ -43,19 +47,17 @@ import org.koin.compose.koinInject
 
 @Composable
 fun SettingDonatePage() {
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(
-                title = stringResource(R.string.donate_page_title)
-            )
-        },
-        containerColor = CustomColors.topBarColors.containerColor,
-    ) { paddings ->
+    val navController = LocalNavController.current
+    SettingsPage(
+        title = stringResource(R.string.donate_page_title),
+        onBack = { navController.popBackStack() }
+    ) {
         Column(
             modifier = Modifier
-                .padding(paddings)
-                .padding(16.dp)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = 16.dp)
+                .padding(top = PageTopBarContentTopPadding, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             DonateMethodsCardGroup()

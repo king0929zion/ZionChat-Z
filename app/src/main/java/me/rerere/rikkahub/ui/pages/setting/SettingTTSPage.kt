@@ -14,15 +14,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -60,13 +64,17 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.DEFAULT_SYSTEM_TTS_ID
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalTTSState
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.pages.setting.components.TTSProviderConfigure
 import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.theme.ZionSelectedToolBackground
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.utils.plus
 import me.rerere.tts.provider.TTSProviderSetting
 import org.koin.androidx.compose.koinViewModel
@@ -78,26 +86,20 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
     var editingProvider by remember { mutableStateOf<TTSProviderSetting?>(null) }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(
-                title = stringResource(R.string.setting_tts_page_title),
-                trailing = {
-                    AddTTSProviderButton {
-                        vm.updateSettings(
-                            settings.copy(
-                                ttsProviders = listOf(it) + settings.ttsProviders
-                            )
-                        )
-                    }
-                }
-            )
-        },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = CustomColors.topBarColors.containerColor,
-    ) { innerPadding ->
+    SettingsPage(
+        title = stringResource(R.string.setting_tts_page_title),
+        onBack = { navController.popBackStack() },
+        trailing = {
+            AddTTSProviderButton {
+                vm.updateSettings(
+                    settings.copy(
+                        ttsProviders = listOf(it) + settings.ttsProviders
+                    )
+                )
+            }
+        }
+    ) {
         val lazyListState = rememberLazyListState()
         val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
             val newProviders = settings.ttsProviders.toMutableList().apply {
@@ -109,8 +111,14 @@ fun SettingTTSPage(vm: SettingVM = koinViewModel()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
                 .imePadding(),
-            contentPadding = innerPadding + PaddingValues(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = PageTopBarContentTopPadding,
+                bottom = 16.dp,
+            ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             state = lazyListState
         ) {
@@ -244,7 +252,7 @@ private fun AddTTSProviderButton(onAdd: (TTSProviderSetting) -> Unit) {
             showBottomSheet = true
         }
     ) {
-        Icon(HugeIcons.Add01, stringResource(R.string.setting_tts_page_add_provider_content_description))
+        Icon(ZionAppIcons.Plus, stringResource(R.string.setting_tts_page_add_provider_content_description))
     }
 
     if (showBottomSheet) {
@@ -323,9 +331,10 @@ private fun TTSProviderItem(
 
     Card(
         modifier = modifier,
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer
+                ZionSelectedToolBackground
             } else {
                 CustomColors.listItemColors.containerColor
             }
@@ -351,9 +360,9 @@ private fun TTSProviderItem(
                         text = provider.name.ifEmpty { stringResource(R.string.setting_tts_page_default_name) },
                         style = MaterialTheme.typography.titleMedium,
                         color = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
+                            ZionTextPrimary
                         } else {
-                            MaterialTheme.colorScheme.onSurface
+                            ZionTextPrimary
                         }
                     )
 
@@ -416,7 +425,7 @@ private fun TTSProviderItem(
                     onClick = { showDropdownMenu = true }
                 ) {
                     Icon(
-                        imageVector = HugeIcons.Tools,
+                        imageVector = ZionAppIcons.Tool,
                         contentDescription = stringResource(R.string.setting_tts_page_more_options_content_description)
                     )
                     DropdownMenu(

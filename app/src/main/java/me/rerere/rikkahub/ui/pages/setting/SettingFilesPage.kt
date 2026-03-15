@@ -8,20 +8,25 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,9 +52,14 @@ import me.rerere.rikkahub.data.db.entity.ManagedFileEntity
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.files.FileFolders
 import me.rerere.rikkahub.data.files.FilesManager
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
+import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import org.koin.compose.koinInject
 import java.io.File
 
@@ -57,6 +67,7 @@ import java.io.File
 fun SettingFilesPage(
     filesManager: FilesManager = koinInject(),
 ) {
+    val navController = LocalNavController.current
     val gridState = rememberLazyStaggeredGridState()
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
@@ -101,16 +112,15 @@ fun SettingFilesPage(
         )
     }
 
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(title = stringResource(R.string.setting_files_page_title))
-        },
-        containerColor = CustomColors.topBarColors.containerColor,
-    ) { innerPadding ->
+    SettingsPage(
+        title = stringResource(R.string.setting_files_page_title),
+        onBack = { navController.popBackStack() }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(top = PageTopBarContentTopPadding)
         ) {
             FolderRow(
                 folders = folders,
@@ -129,7 +139,7 @@ fun SettingFilesPage(
             } else {
                 LazyVerticalStaggeredGrid(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
                     verticalItemSpacing = 8.dp,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     state = gridState,
@@ -165,7 +175,14 @@ private fun FolderRow(
             FilterChip(
                 selected = selectedFolder == folder,
                 onClick = { onFolderSelected(folder) },
-                label = { Text(folderDisplayName(folder)) }
+                label = { Text(folderDisplayName(folder)) },
+                shape = RoundedCornerShape(18.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = CustomColors.listItemColors.containerColor,
+                    selectedLabelColor = ZionTextPrimary,
+                    containerColor = ZionGrayLighter,
+                    labelColor = ZionTextSecondary
+                )
             )
         }
     }
@@ -185,6 +202,7 @@ private fun FileItem(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = CustomColors.listItemColors.containerColor)
     ) {
         Column {

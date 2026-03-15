@@ -305,7 +305,7 @@ fun ChatInput(
                     onClick = { expandToggle(ExpandState.Tools) }
                 ) {
                     Icon(
-                        imageVector = if (expand == ExpandState.Tools) ZionAppIcons.Close else ZionAppIcons.Tool,
+                        imageVector = if (expand == ExpandState.Tools) ZionAppIcons.Close else ZionAppIcons.ChatGPTLogo,
                         contentDescription = stringResource(R.string.more_options),
                         tint = if (expand == ExpandState.Tools) ZionTextSecondary else ZionTextPrimary
                     )
@@ -576,92 +576,97 @@ private fun TextInputRow(
 
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 2.dp, end = 2.dp, top = 1.dp, bottom = 1.dp),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.Bottom
         ) {
-            TextField(
-                state = state.textContent,
-                modifier = Modifier
-                    .weight(1f)
-                    .contentReceiver(receiveContentListener)
-                    .onFocusChanged { },
-                placeholder = {
-                    Text(
-                        text = stringResource(R.string.chat_input_placeholder),
-                        style = TextStyle(
-                            fontSize = 17.sp,
-                            lineHeight = 22.sp,
-                            color = ZionTextSecondary,
-                            fontFamily = SourceSans3,
-                        )
-                    )
-                },
-                lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 5),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = if (settings.displaySetting.sendOnEnter) ImeAction.Send else ImeAction.Default
-                ),
-                onKeyboardAction = {
-                    if (settings.displaySetting.sendOnEnter && !state.isEmpty()) {
-                        onSendMessage()
-                    }
-                },
-                textStyle = TextStyle(
-                    fontSize = 17.sp,
-                    lineHeight = 22.sp,
-                    color = ZionTextPrimary,
-                    fontFamily = SourceSans3,
-                ),
-                colors = TextFieldDefaults.colors().copy(
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                ),
-            )
-
             Box(
-                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(bottom = 2.dp)
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .combinedClickable(
-                        enabled = loading || !state.isEmpty(),
-                        onClick = {
-                            if (loading) onCancelMessage() else onSendMessage()
-                        },
-                        onLongClick = {
-                            if (!loading) {
-                                onLongSendMessage()
-                            }
-                        }
-                    )
-                    .background(
-                        color = when {
-                            loading -> Color(0xFFFFE8E6)
-                            state.isEmpty() -> ZionSurface
-                            else -> ZionAccentBlue
-                        },
-                        shape = CircleShape
-                    )
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.BottomEnd
             ) {
-                if (loading) {
-                    KeepScreenOn()
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(Color.White)
-                    )
-                } else {
-                    Icon(
-                        imageVector = ZionAppIcons.Send,
-                        contentDescription = stringResource(R.string.send),
-                        tint = if (state.isEmpty()) Color(0xFF9B9BA1) else Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
+                TextField(
+                    state = state.textContent,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 42.dp)
+                        .contentReceiver(receiveContentListener)
+                        .onFocusChanged { },
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.chat_input_placeholder),
+                            style = TextStyle(
+                                fontSize = 17.sp,
+                                lineHeight = 22.sp,
+                                color = ZionTextSecondary,
+                                fontFamily = SourceSans3,
+                            )
+                        )
+                    },
+                    lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 6),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = if (settings.displaySetting.sendOnEnter) ImeAction.Send else ImeAction.Default
+                    ),
+                    onKeyboardAction = {
+                        if (settings.displaySetting.sendOnEnter && !state.isEmpty()) {
+                            onSendMessage()
+                        }
+                    },
+                    textStyle = TextStyle(
+                        fontSize = 17.sp,
+                        lineHeight = 22.sp,
+                        color = ZionTextPrimary,
+                        fontFamily = SourceSans3,
+                    ),
+                    colors = TextFieldDefaults.colors().copy(
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                    ),
+                )
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .padding(end = 6.dp, bottom = 4.dp)
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .combinedClickable(
+                            enabled = loading || !state.isEmpty(),
+                            onClick = {
+                                if (loading) onCancelMessage() else onSendMessage()
+                            },
+                            onLongClick = {
+                                if (!loading) {
+                                    onLongSendMessage()
+                                }
+                            }
+                        )
+                        .background(
+                            color = when {
+                                loading -> ZionAccentBlue
+                                state.isEmpty() -> ZionSectionItem
+                                else -> ZionAccentBlue
+                            },
+                            shape = CircleShape
+                        )
+                ) {
+                    if (loading) {
+                        KeepScreenOn()
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(Color.White)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = ZionAppIcons.Send,
+                            contentDescription = stringResource(R.string.send),
+                            tint = if (state.isEmpty()) ZionTextSecondary else Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }

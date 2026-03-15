@@ -17,17 +17,21 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -69,13 +73,15 @@ import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
 import me.rerere.rikkahub.ui.components.ui.decodeProviderSetting
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.hooks.useEditState
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConfigure
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.ImageUtils
@@ -91,7 +97,6 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
     val scope = rememberCoroutineScope()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var searchQuery by remember { mutableStateOf("") }
     val lazyListState = rememberLazyStaggeredGridState()
     val reorderableState = rememberReorderableLazyStaggeredGridState(lazyListState) { from, to ->
@@ -111,53 +116,49 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(
-                title = stringResource(R.string.setting_provider_page_title),
-                trailing = {
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        if(Locale.getDefault().language == "zh") {
-                            IconButton(
-                                onClick = {
-                                    val aihubmixIndex = filteredProviders.indexOfFirst {
-                                        it.id.toString() == "1b1395ed-b702-4aeb-8bc1-b681c4456953"
-                                    }
-                                    if (aihubmixIndex != -1) {
-                                        scope.launch {
-                                            lazyListState.animateScrollToItem(aihubmixIndex)
-                                        }
-                                    }
+    SettingsPage(
+        title = stringResource(R.string.setting_provider_page_title),
+        onBack = { navController.popBackStack() },
+        trailing = {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (Locale.getDefault().language == "zh") {
+                    IconButton(
+                        onClick = {
+                            val aihubmixIndex = filteredProviders.indexOfFirst {
+                                it.id.toString() == "1b1395ed-b702-4aeb-8bc1-b681c4456953"
+                            }
+                            if (aihubmixIndex != -1) {
+                                scope.launch {
+                                    lazyListState.animateScrollToItem(aihubmixIndex)
                                 }
-                            ) {
-                                AutoAIIcon("AiHubMix")
                             }
                         }
-                        ImportProviderButton {
-                            vm.updateSettings(
-                                settings.copy(
-                                    providers = listOf(it.copyProvider(Uuid.random())) + settings.providers
-                                )
-                            )
-                        }
-                        AddButton {
-                            vm.updateSettings(
-                                settings.copy(
-                                    providers = listOf(it) + settings.providers
-                                )
-                            )
-                        }
+                    ) {
+                        AutoAIIcon("AiHubMix")
                     }
                 }
-            )
-        },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = CustomColors.topBarColors.containerColor,
-    ) { innerPadding ->
+                ImportProviderButton {
+                    vm.updateSettings(
+                        settings.copy(
+                            providers = listOf(it.copyProvider(Uuid.random())) + settings.providers
+                        )
+                    )
+                }
+                AddButton {
+                    vm.updateSettings(
+                        settings.copy(
+                            providers = listOf(it) + settings.providers
+                        )
+                    )
+                }
+            }
+        }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(top = PageTopBarContentTopPadding)
         ) {
             // Search bar
             OutlinedTextField(
@@ -168,12 +169,12 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = { Text(stringResource(R.string.setting_provider_page_search_providers)) },
                 leadingIcon = {
-                    Icon(HugeIcons.Search01, contentDescription = null)
+                    Icon(ZionAppIcons.Search, contentDescription = null)
                 },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(HugeIcons.Cancel01, contentDescription = "Clear")
+                            Icon(ZionAppIcons.Close, contentDescription = "Clear")
                         }
                     }
                 },
@@ -187,7 +188,7 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                     .fillMaxWidth()
                     .weight(1f)
                     .imePadding(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
                 verticalItemSpacing = 8.dp,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 state = lazyListState,
@@ -259,7 +260,7 @@ private fun ImportProviderButton(
             showImportDialog = true
         }
     ) {
-        Icon(HugeIcons.FileImport, null)
+        Icon(ZionAppIcons.Files, null)
     }
 
     if (showImportDialog) {
@@ -452,7 +453,7 @@ private fun AddButton(onAdd: (ProviderSetting) -> Unit) {
             dialogState.open(ProviderSetting.OpenAI())
         }
     ) {
-        Icon(HugeIcons.Add01, "Add")
+        Icon(ZionAppIcons.Plus, "Add")
     }
 
     if (dialogState.isEditing) {
@@ -501,6 +502,7 @@ private fun ProviderItem(
 ) {
     Card(
         modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (provider.enabled) {
                 CustomColors.listItemColors.containerColor

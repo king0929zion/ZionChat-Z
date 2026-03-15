@@ -2,6 +2,8 @@ package me.rerere.rikkahub.ui.pages.chat
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,11 +17,13 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PermanentNavigationDrawer
@@ -271,7 +275,6 @@ private fun ChatPageContent(
         Scaffold(
             topBar = {
                 TopBar(
-                    settings = setting,
                     bigScreen = bigScreen,
                     drawerState = drawerState,
                     onNewChat = {
@@ -436,17 +439,11 @@ private fun ChatPageContent(
 
 @Composable
 private fun TopBar(
-    settings: Settings,
     drawerState: DrawerState,
     bigScreen: Boolean,
     onNewChat: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val assistant = settings.getCurrentAssistant()
-    val model = settings.getCurrentChatModel()
-    val centerLabel = model?.displayName ?: assistant.name.ifBlank {
-        stringResource(R.string.assistant_page_default_assistant)
-    }
 
     Box(modifier = Modifier.fillMaxWidth()) {
         HeaderTranslucentBackdrop(
@@ -459,55 +456,81 @@ private fun TopBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            if (!bigScreen) {
-                HeaderActionButton(
-                    onClick = {
-                        scope.launch { drawerState.open() }
-                    },
-                    icon = ZionAppIcons.HamburgerMenu,
-                    contentDescription = "Messages"
-                )
-            } else {
-                Box(modifier = Modifier.size(42.dp))
-            }
-
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (!bigScreen) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .headerActionButtonShadow(RoundedCornerShape(21.dp))
+                            .clip(RoundedCornerShape(21.dp))
+                            .background(ZionSurface, RoundedCornerShape(21.dp))
+                            .pressableScale(
+                                pressedScale = 0.95f,
+                                onClick = { scope.launch { drawerState.open() } }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = ZionAppIcons.HamburgerMenu,
+                            contentDescription = "Messages",
+                            tint = ZionTextPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                } else {
+                    Box(modifier = Modifier.size(42.dp))
+                }
+
                 Surface(
                     modifier = Modifier
                         .headerActionButtonShadow(RoundedCornerShape(21.dp))
-                        .padding(horizontal = 12.dp),
+                        .clip(RoundedCornerShape(21.dp))
+                        .pressableScale(
+                            pressedScale = 0.97f,
+                            onClick = {}
+                        ),
                     shape = RoundedCornerShape(21.dp),
                     color = ZionSurface,
                 ) {
-                    Box(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 11.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = centerLabel,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = ZionTextPrimary,
-                            fontFamily = SourceSans3,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 16.sp,
-                        )
-                    }
+                    Text(
+                        text = "ChatGPT",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = ZionTextPrimary,
+                        fontFamily = SourceSans3,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 11.dp)
+                    )
                 }
             }
 
-            HeaderActionButton(
-                onClick = onNewChat,
-                icon = ZionAppIcons.NewChat,
-                contentDescription = "New Message"
-            )
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .headerActionButtonShadow(RoundedCornerShape(21.dp))
+                    .clip(RoundedCornerShape(21.dp))
+                    .background(ZionSurface, RoundedCornerShape(21.dp))
+                    .pressableScale(
+                        pressedScale = 0.95f,
+                        onClick = onNewChat
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = ZionAppIcons.NewChat,
+                    contentDescription = "New Message",
+                    tint = ZionTextPrimary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
     }
 }

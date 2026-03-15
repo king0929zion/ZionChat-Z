@@ -44,14 +44,14 @@ import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 
-val PageTopBarContentTopPadding: Dp = 96.dp
+val PageTopBarContentTopPadding: Dp = 72.dp
 
 fun Modifier.headerActionButtonShadow(shape: Shape = CircleShape): Modifier = this.shadow(
-    elevation = 8.dp,
+    elevation = 20.dp,
     shape = shape,
     clip = false,
-    ambientColor = Color.Black.copy(alpha = 0.08f),
-    spotColor = Color.Black.copy(alpha = 0.08f),
+    ambientColor = Color.Black.copy(alpha = 0.25f),
+    spotColor = Color.Black.copy(alpha = 0.18f),
 )
 
 @Composable
@@ -138,10 +138,11 @@ fun HeaderActionButton(
     icon: ImageVector,
     contentDescription: String?,
     modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
 ) {
     Box(
         modifier = modifier
-            .size(42.dp)
+            .size(size)
             .headerActionButtonShadow(CircleShape)
             .clip(CircleShape)
             .background(ZionSurface, CircleShape)
@@ -164,7 +165,7 @@ fun PageTopBar(
     modifier: Modifier = Modifier,
     containerColor: Color = ZionSurface,
     containerAlpha: Float = 0.92f,
-    fadeHeight: Dp = 8.dp,
+    fadeHeight: Dp = 0.dp,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
@@ -186,7 +187,8 @@ fun PageTopBar(
                     onClick = onBack,
                     icon = ZionAppIcons.Back,
                     contentDescription = "Back",
-                    modifier = Modifier.align(Alignment.CenterStart)
+                    modifier = Modifier.align(Alignment.CenterStart),
+                    size = 40.dp,
                 )
 
                 Text(
@@ -228,13 +230,7 @@ fun SettingsPage(
             .fillMaxSize()
             .background(ZionBackground)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = PageTopBarContentTopPadding)
-        ) {
-            content()
-        }
+        content()
         PageTopBar(
             title = title,
             onBack = onBack,

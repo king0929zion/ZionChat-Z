@@ -6,12 +6,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -37,12 +41,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -62,7 +68,7 @@ import me.rerere.rikkahub.ui.hooks.useEditState
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionAccentBlue
-import me.rerere.rikkahub.ui.theme.ZionBackground
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
@@ -98,14 +104,15 @@ fun ChatDrawerContent(
     var showToolsMenu by remember { mutableStateOf(false) }
 
     ModalDrawerSheet(
-        modifier = Modifier.width(304.dp),
-        drawerContainerColor = ZionBackground,
+        modifier = Modifier.width(280.dp),
+        drawerContainerColor = ZionSurface,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(bottom = 8.dp),
         ) {
             SidebarSearchHeader(
                 onSearchClick = { navController.navigate(Screen.MessageSearch) },
@@ -113,7 +120,7 @@ fun ChatDrawerContent(
             )
 
             Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 SidebarMenuEntry(
                     icon = ZionAppIcons.Assistant,
@@ -187,7 +194,8 @@ fun ChatDrawerContent(
                 listState = conversationListState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
                 onClick = {
                     navigateToChatPage(navController, it.id)
                 },
@@ -316,60 +324,44 @@ private fun SidebarSearchHeader(
     onNewChatClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Surface(
+        Row(
             modifier = Modifier
                 .weight(1f)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(20.dp),
-                    clip = false,
-                    ambientColor = Color.Black.copy(alpha = 0.08f),
-                    spotColor = Color.Black.copy(alpha = 0.08f)
-                ),
-            shape = RoundedCornerShape(20.dp),
-            color = ZionSurface,
+                .heightIn(min = 40.dp)
+                .background(ZionGrayLighter, RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(20.dp))
+                .pressableScale(
+                    pressedScale = 0.98f,
+                    onClick = onSearchClick
+                )
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .pressableScale(
-                        pressedScale = 0.985f,
-                        onClick = onSearchClick
-                    )
-                    .padding(horizontal = 12.dp, vertical = 11.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = ZionAppIcons.Search,
-                    contentDescription = null,
-                    tint = ZionTextSecondary,
-                    modifier = Modifier.size(18.dp)
-                )
-                Text(
-                    text = stringResource(R.string.chat_page_search_chats),
-                    color = ZionTextSecondary,
-                    fontFamily = SourceSans3,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            Icon(
+                imageVector = ZionAppIcons.Search,
+                contentDescription = null,
+                tint = ZionTextSecondary,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = stringResource(R.string.chat_page_search_chats),
+                color = ZionTextSecondary,
+                fontFamily = SourceSans3,
+                fontSize = 15.sp,
+                modifier = Modifier.padding(start = 8.dp)
+            )
         }
 
         Box(
             modifier = Modifier
-                .size(42.dp)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = CircleShape,
-                    clip = false,
-                    ambientColor = Color.Black.copy(alpha = 0.08f),
-                    spotColor = Color.Black.copy(alpha = 0.08f)
-                )
-                .background(ZionSurface, CircleShape)
+                .size(40.dp)
+                .clip(CircleShape)
                 .pressableScale(
                     pressedScale = 0.95f,
                     onClick = onNewChatClick
@@ -392,51 +384,36 @@ private fun SidebarMenuEntry(
     label: String,
     onClick: () -> Unit,
 ) {
-    Surface(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(20.dp),
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.06f),
-                spotColor = Color.Black.copy(alpha = 0.06f)
-            ),
-        shape = RoundedCornerShape(20.dp),
-        color = ZionSurface,
+            .clip(RoundedCornerShape(12.dp))
+            .pressableScale(
+                pressedScale = 0.98f,
+                onClick = onClick
+            )
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pressableScale(
-                    pressedScale = 0.985f,
-                    onClick = onClick
-                )
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Box(
+            modifier = Modifier.size(28.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(ZionSectionItem, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = ZionTextPrimary,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-            Text(
-                text = label,
-                color = ZionTextPrimary,
-                fontFamily = SourceSans3,
-                fontWeight = FontWeight.Medium,
-                style = MaterialTheme.typography.bodyMedium
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = ZionTextPrimary,
+                modifier = Modifier.size(24.dp)
             )
         }
+        Text(
+            text = label,
+            color = ZionTextPrimary,
+            fontFamily = SourceSans3,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 18.sp
+        )
     }
 }
 
@@ -448,27 +425,18 @@ private fun SidebarProfileCard(
     onClick: () -> Unit,
     onEditNickname: () -> Unit,
 ) {
-    Surface(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 10.dp,
-                shape = RoundedCornerShape(28.dp),
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.08f),
-                spotColor = Color.Black.copy(alpha = 0.08f)
-            ),
-        shape = RoundedCornerShape(28.dp),
-        color = ZionSurface,
+            .padding(12.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .pressableScale(
+                pressedScale = 0.98f,
+                onClick = onClick
+            )
+            .padding(12.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pressableScale(
-                    pressedScale = 0.985f,
-                    onClick = onClick
-                )
-                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -476,7 +444,7 @@ private fun SidebarProfileCard(
                 name = nickname,
                 value = avatar,
                 onUpdate = {},
-                modifier = Modifier.size(46.dp),
+                modifier = Modifier.size(36.dp),
             )
 
             Column(
@@ -504,10 +472,10 @@ private fun SidebarProfileCard(
             }
 
             Icon(
-                imageVector = ZionAppIcons.Settings,
+                imageVector = ZionAppIcons.ChevronRight,
                 contentDescription = null,
                 tint = ZionTextSecondary,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(16.dp)
             )
         }
     }

@@ -16,12 +16,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -32,6 +35,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Scaffold
@@ -60,29 +64,34 @@ import me.rerere.rikkahub.data.ai.prompts.DEFAULT_TRANSLATION_PROMPT
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.nav.BackButton
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.FormItem
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.utils.plus
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SettingModelPage(vm: SettingVM = koinViewModel()) {
+    val navController = LocalNavController.current
     val settings by vm.settings.collectAsStateWithLifecycle()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(
-                title = stringResource(R.string.setting_model_page_title)
-            )
-        },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = CustomColors.topBarColors.containerColor,
-    ) { contentPadding ->
+    SettingsPage(
+        title = stringResource(R.string.setting_model_page_title),
+        onBack = { navController.popBackStack() }
+    ) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = contentPadding + PaddingValues(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = PageTopBarContentTopPadding,
+                bottom = 16.dp,
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
@@ -129,7 +138,7 @@ private fun DefaultTranslationModelSetting(
             Text(stringResource(R.string.setting_model_page_translate_model_desc))
         },
         icon = {
-            Icon(HugeIcons.Earth, null)
+            Icon(ZionAppIcons.Globe, null)
         },
         actions = {
             Box(modifier = Modifier.weight(1f)) {
@@ -153,7 +162,7 @@ private fun DefaultTranslationModelSetting(
                 },
                 colors = IconButtonDefaults.filledTonalIconButtonColors()
             ) {
-                Icon(HugeIcons.Tools, null)
+                Icon(ZionAppIcons.Tool, null)
             }
         }
     )
@@ -225,7 +234,7 @@ private fun DefaultSuggestionModelSetting(
             Text(stringResource(R.string.setting_model_page_suggestion_model_desc))
         },
         icon = {
-            Icon(HugeIcons.MessageMultiple01, null)
+            Icon(ZionAppIcons.Assistant, null)
         },
         actions = {
             Box(modifier = Modifier.weight(1f)) {
@@ -250,7 +259,7 @@ private fun DefaultSuggestionModelSetting(
                 },
                 colors = IconButtonDefaults.filledTonalIconButtonColors()
             ) {
-                Icon(HugeIcons.Tools, null)
+                Icon(ZionAppIcons.Tool, null)
             }
         }
     )
@@ -319,7 +328,7 @@ private fun DefaultTitleModelSetting(
             Text(stringResource(R.string.setting_model_page_title_model_desc))
         },
         icon = {
-            Icon(HugeIcons.Notebook01, null)
+            Icon(ZionAppIcons.Files, null)
         },
         actions = {
             Box(modifier = Modifier.weight(1f)) {
@@ -344,7 +353,7 @@ private fun DefaultTitleModelSetting(
                 },
                 colors = IconButtonDefaults.filledTonalIconButtonColors()
             ) {
-                Icon(HugeIcons.Tools, null)
+                Icon(ZionAppIcons.Tool, null)
             }
         }
     )
@@ -406,7 +415,7 @@ private fun DefaultChatModelSetting(
 ) {
     ModelFeatureCard(
         icon = {
-            Icon(HugeIcons.Message01, null)
+            Icon(ZionAppIcons.ChatGPTLogo, null)
         },
         title = {
             Text(stringResource(R.string.setting_model_page_chat_model), maxLines = 1)
@@ -451,7 +460,7 @@ private fun DefaultOcrModelSetting(
             Text(stringResource(R.string.setting_model_page_ocr_model_desc))
         },
         icon = {
-            Icon(HugeIcons.View, null)
+            Icon(ZionAppIcons.Image, null)
         },
         actions = {
             Box(modifier = Modifier.weight(1f)) {
@@ -475,7 +484,7 @@ private fun DefaultOcrModelSetting(
                 },
                 colors = IconButtonDefaults.filledTonalIconButtonColors()
             ) {
-                Icon(HugeIcons.Tools, null)
+                Icon(ZionAppIcons.Tool, null)
             }
         }
     )
@@ -547,7 +556,7 @@ private fun DefaultCompressModelSetting(
             Text(stringResource(R.string.setting_model_page_compress_model_desc))
         },
         icon = {
-            Icon(HugeIcons.FileZip, null)
+            Icon(ZionAppIcons.Files, null)
         },
         actions = {
             Box(modifier = Modifier.weight(1f)) {
@@ -571,7 +580,7 @@ private fun DefaultCompressModelSetting(
                 },
                 colors = IconButtonDefaults.filledTonalIconButtonColors()
             ) {
-                Icon(HugeIcons.Tools, null)
+                Icon(ZionAppIcons.Tool, null)
             }
         }
     )
@@ -634,10 +643,11 @@ private fun ModelFeatureCard(
     title: @Composable () -> Unit,
     actions: @Composable RowScope.() -> Unit
 ) {
-    OutlinedCard(
+    Card(
         modifier = modifier.fillMaxWidth(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
         colors = CardDefaults.outlinedCardColors(
-            containerColor = CustomColors.listItemColors.containerColor
+            containerColor = CustomColors.cardColors.containerColor
         )
     ) {
         Column(

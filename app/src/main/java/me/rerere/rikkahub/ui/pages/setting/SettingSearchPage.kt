@@ -13,14 +13,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -58,12 +62,15 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.FormItem
 import me.rerere.rikkahub.ui.components.ui.OutlinedNumberInput
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.Select
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
+import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.plus
 import me.rerere.search.SearchCommonOptions
@@ -76,38 +83,33 @@ import kotlin.reflect.full.primaryConstructor
 
 @Composable
 fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
+    val navController = LocalNavController.current
     val settings by vm.settings.collectAsStateWithLifecycle()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val lazyListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(
-                title = stringResource(R.string.setting_page_search_title),
-                trailing = {
-                    IconButton(
-                        onClick = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    searchServices = listOf(SearchServiceOptions.BingLocalOptions()) + settings.searchServices
-                                )
-                            )
-                            scope.launch {
-                                lazyListState.animateScrollToItem(0)
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = HugeIcons.Add01,
-                            contentDescription = stringResource(R.string.setting_page_search_add_provider)
+    SettingsPage(
+        title = stringResource(R.string.setting_page_search_title),
+        onBack = { navController.popBackStack() },
+        trailing = {
+            IconButton(
+                onClick = {
+                    vm.updateSettings(
+                        settings.copy(
+                            searchServices = listOf(SearchServiceOptions.BingLocalOptions()) + settings.searchServices
                         )
+                    )
+                    scope.launch {
+                        lazyListState.animateScrollToItem(0)
                     }
                 }
-            )
-        },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = CustomColors.topBarColors.containerColor
+            ) {
+                Icon(
+                    imageVector = ZionAppIcons.Plus,
+                    contentDescription = stringResource(R.string.setting_page_search_add_provider)
+                )
+            }
+        }
     ) {
         val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
             // providers_header 已移除，搜索服务从索引 0 开始
@@ -131,8 +133,14 @@ fun SettingSearchPage(vm: SettingVM = koinViewModel()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
                 .imePadding(),
-            contentPadding = it + PaddingValues(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = PageTopBarContentTopPadding,
+                bottom = 16.dp,
+            ),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             state = lazyListState
         ) {
@@ -220,6 +228,7 @@ private fun SearchProviderCard(
     var expand by remember { mutableStateOf(false) }
     Card(
         modifier = modifier,
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
             containerColor = CustomColors.listItemColors.containerColor
         )
@@ -263,7 +272,7 @@ private fun SearchProviderCard(
                     }
                 ) {
                     Icon(
-                        imageVector = if (expand) HugeIcons.Cancel01 else HugeIcons.QuillWrite01,
+                        imageVector = if (expand) ZionAppIcons.Close else ZionAppIcons.Tool,
                         contentDescription = if (expand) "Hide details" else "Show details"
                     )
                 }
@@ -545,6 +554,7 @@ private fun CommonOptions(
         mutableStateOf(settings.searchCommonOptions)
     }
     Card(
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
             containerColor = CustomColors.listItemColors.containerColor
         )
