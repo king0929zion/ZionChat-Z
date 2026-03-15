@@ -51,7 +51,11 @@ import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.components.ui.ToggleSurface
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.Navigator
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.pages.setting.SearchAbilityTagLine
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.search.SearchServiceOptions
 import org.koin.compose.koinInject
 
@@ -91,7 +95,7 @@ fun SearchPickerButton(
                     )
                 } else {
                     Icon(
-                        imageVector = HugeIcons.Search01,
+                        imageVector = ZionAppIcons.Search,
                         contentDescription = stringResource(R.string.use_web_search),
                     )
                 }
@@ -180,7 +184,9 @@ private fun AppSearchSettings(
     settings: Settings,
     onUpdateSearchService: (Int) -> Unit
 ) {
-    Card {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = ZionSectionItem, contentColor = ZionTextPrimary)
+    ) {
         Row(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -231,16 +237,16 @@ private fun AppSearchSettings(
         itemsIndexed(settings.searchServices) { index, service ->
             val containerColor = animateColorAsState(
                 if (settings.searchServiceSelected == index) {
-                    MaterialTheme.colorScheme.primaryContainer
+                    ZionAccentNeutral
                 } else {
-                    MaterialTheme.colorScheme.surface
+                    ZionSectionItem
                 }
             )
             val textColor = animateColorAsState(
                 if (settings.searchServiceSelected == index) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
+                    Color.White
                 } else {
-                    MaterialTheme.colorScheme.onSurface
+                    ZionTextPrimary
                 }
             )
             Card(

@@ -1,47 +1,36 @@
 package me.rerere.rikkahub.ui.pages.setting
 
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.Earth
-import me.rerere.hugeicons.stroke.View
-import me.rerere.hugeicons.stroke.FileZip
-import me.rerere.hugeicons.stroke.Mortarboard01
-import me.rerere.hugeicons.stroke.Message01
-import me.rerere.hugeicons.stroke.MessageMultiple01
-import me.rerere.hugeicons.stroke.Notebook01
-import me.rerere.hugeicons.stroke.Tools
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,645 +39,527 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.util.fastFilter
+import me.rerere.ai.provider.Model
 import me.rerere.ai.provider.ModelType
+import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_COMPRESS_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_OCR_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_SUGGESTION_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_TITLE_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_TRANSLATION_PROMPT
-import me.rerere.rikkahub.data.datastore.Settings
-import me.rerere.rikkahub.ui.components.ai.ModelSelector
-import me.rerere.rikkahub.ui.components.nav.BackButton
-import me.rerere.rikkahub.ui.components.ui.FormItem
+import me.rerere.rikkahub.data.datastore.findModelById
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
-import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
-import me.rerere.rikkahub.utils.plus
+import me.rerere.rikkahub.ui.theme.SourceSans3
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutralBorder
+import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import org.koin.androidx.compose.koinViewModel
+
+private data class ModelSectionConfig(
+    val key: String,
+    val title: String,
+    val required: Boolean,
+    val modelId: kotlin.uuid.Uuid?,
+    val type: ModelType,
+    val prompt: String? = null,
+    val promptVariablesLabel: String? = null,
+    val resetPrompt: String? = null,
+    val onSelect: (Model?) -> Unit,
+    val onPromptChange: ((String) -> Unit)? = null,
+)
 
 @Composable
 fun SettingModelPage(vm: SettingVM = koinViewModel()) {
     val navController = LocalNavController.current
     val settings by vm.settings.collectAsStateWithLifecycle()
+    var selectorTarget by remember { mutableStateOf<ModelSectionConfig?>(null) }
+    var promptTarget by remember { mutableStateOf<ModelSectionConfig?>(null) }
+
+    val sections = listOf(
+        ModelSectionConfig(
+            key = "chat",
+            title = "CHAT",
+            required = true,
+            modelId = settings.chatModelId,
+            type = ModelType.CHAT,
+            onSelect = { model ->
+                vm.updateSettings(settings.copy(chatModelId = model?.id))
+            }
+        ),
+        ModelSectionConfig(
+            key = "title",
+            title = stringResource(R.string.setting_model_page_title_model).uppercase(),
+            required = false,
+            modelId = settings.titleModelId,
+            type = ModelType.CHAT,
+            prompt = settings.titlePrompt,
+            promptVariablesLabel = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
+            resetPrompt = DEFAULT_TITLE_PROMPT,
+            onSelect = { model ->
+                vm.updateSettings(settings.copy(titleModelId = model?.id))
+            },
+            onPromptChange = { prompt ->
+                vm.updateSettings(settings.copy(titlePrompt = prompt))
+            }
+        ),
+        ModelSectionConfig(
+            key = "suggestion",
+            title = stringResource(R.string.setting_model_page_suggestion_model).uppercase(),
+            required = false,
+            modelId = settings.suggestionModelId,
+            type = ModelType.CHAT,
+            prompt = settings.suggestionPrompt,
+            promptVariablesLabel = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
+            resetPrompt = DEFAULT_SUGGESTION_PROMPT,
+            onSelect = { model ->
+                vm.updateSettings(settings.copy(suggestionModelId = model?.id))
+            },
+            onPromptChange = { prompt ->
+                vm.updateSettings(settings.copy(suggestionPrompt = prompt))
+            }
+        ),
+        ModelSectionConfig(
+            key = "translation",
+            title = stringResource(R.string.setting_model_page_translate_model).uppercase(),
+            required = false,
+            modelId = settings.translateModeId,
+            type = ModelType.CHAT,
+            prompt = settings.translatePrompt,
+            promptVariablesLabel = stringResource(R.string.setting_model_page_translate_prompt_vars),
+            resetPrompt = DEFAULT_TRANSLATION_PROMPT,
+            onSelect = { model ->
+                vm.updateSettings(settings.copy(translateModeId = model?.id))
+            },
+            onPromptChange = { prompt ->
+                vm.updateSettings(settings.copy(translatePrompt = prompt))
+            }
+        ),
+        ModelSectionConfig(
+            key = "ocr",
+            title = stringResource(R.string.setting_model_page_ocr_model).uppercase(),
+            required = false,
+            modelId = settings.ocrModelId,
+            type = ModelType.CHAT,
+            prompt = settings.ocrPrompt,
+            promptVariablesLabel = stringResource(R.string.setting_model_page_ocr_prompt_vars),
+            resetPrompt = DEFAULT_OCR_PROMPT,
+            onSelect = { model ->
+                vm.updateSettings(settings.copy(ocrModelId = model?.id))
+            },
+            onPromptChange = { prompt ->
+                vm.updateSettings(settings.copy(ocrPrompt = prompt))
+            }
+        ),
+        ModelSectionConfig(
+            key = "compress",
+            title = stringResource(R.string.setting_model_page_compress_model).uppercase(),
+            required = false,
+            modelId = settings.compressModelId,
+            type = ModelType.CHAT,
+            prompt = settings.compressPrompt,
+            promptVariablesLabel = stringResource(R.string.setting_model_page_compress_prompt_vars),
+            resetPrompt = DEFAULT_COMPRESS_PROMPT,
+            onSelect = { model ->
+                vm.updateSettings(settings.copy(compressModelId = model?.id))
+            },
+            onPromptChange = { prompt ->
+                vm.updateSettings(settings.copy(compressPrompt = prompt))
+            }
+        )
+    )
 
     SettingsPage(
         title = stringResource(R.string.setting_model_page_title),
         onBack = { navController.popBackStack() }
     ) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = PageTopBarContentTopPadding,
-                bottom = 16.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(top = PageTopBarContentTopPadding)
+                .padding(horizontal = 16.dp)
         ) {
-            item {
-                DefaultChatModelSetting(settings = settings, vm = vm)
+            sections.forEachIndexed { index, section ->
+                DefaultModelSection(
+                    title = section.title,
+                    required = section.required,
+                    selectedName = settings.providers.findModelById(section.modelId)?.displayName,
+                    onOpenSelector = { selectorTarget = section },
+                    onOpenPrompt = if (section.onPromptChange != null) {
+                        { promptTarget = section }
+                    } else {
+                        null
+                    }
+                )
+
+                if (index != sections.lastIndex) {
+                    Box(modifier = Modifier.height(16.dp))
+                }
             }
 
-            item {
-                DefaultTitleModelSetting(settings = settings, vm = vm)
-            }
-
-            item {
-                DefaultSuggestionModelSetting(settings = settings, vm = vm)
-            }
-
-            item {
-                DefaultTranslationModelSetting(settings = settings, vm = vm)
-            }
-
-            item {
-                DefaultOcrModelSetting(settings = settings, vm = vm)
-            }
-
-            item {
-                DefaultCompressModelSetting(settings = settings, vm = vm)
-            }
-        }
-    }
-}
-
-@Composable
-private fun DefaultTranslationModelSetting(
-    settings: Settings,
-    vm: SettingVM
-) {
-    var showModal by remember { mutableStateOf(false) }
-    ModelFeatureCard(
-        title = {
             Text(
-                stringResource(R.string.setting_model_page_translate_model),
-                maxLines = 1
+                text = stringResource(R.string.default_model_screen_note),
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontFamily = SourceSans3,
+                color = ZionTextSecondary,
+                modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 28.dp)
             )
-        },
-        description = {
-            Text(stringResource(R.string.setting_model_page_translate_model_desc))
-        },
-        icon = {
-            Icon(ZionAppIcons.Globe, null)
-        },
-        actions = {
-            Box(modifier = Modifier.weight(1f)) {
-                ModelSelector(
-                    modelId = settings.translateModeId,
-                    type = ModelType.CHAT,
-                    onSelect = {
-                        vm.updateSettings(
-                            settings.copy(
-                                translateModeId = it.id
-                            )
-                        )
-                    },
-                    providers = settings.providers,
-                    modifier = Modifier.wrapContentWidth()
-                )
-            }
-            IconButton(
-                onClick = {
-                    showModal = true
-                },
-                colors = IconButtonDefaults.filledTonalIconButtonColors()
-            ) {
-                Icon(ZionAppIcons.Tool, null)
-            }
-        }
-    )
-
-    if (showModal) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    description = {
-                        Text(stringResource(R.string.setting_model_page_translate_prompt_vars))
-                    }
-                ) {
-                    OutlinedTextField(
-                        value = settings.translatePrompt,
-                        onValueChange = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    translatePrompt = it
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 10,
-                    )
-                    TextButton(
-                        onClick = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    translatePrompt = DEFAULT_TRANSLATION_PROMPT
-                                )
-                            )
-                        }
-                    ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
-                    }
-                }
-            }
         }
     }
-}
 
-@Composable
-private fun DefaultSuggestionModelSetting(
-    settings: Settings,
-    vm: SettingVM
-) {
-    var showModal by remember { mutableStateOf(false) }
-    ModelFeatureCard(
-        title = {
-            Text(
-                text = stringResource(R.string.setting_model_page_suggestion_model),
-                maxLines = 1
-            )
-        },
-        description = {
-            Text(stringResource(R.string.setting_model_page_suggestion_model_desc))
-        },
-        icon = {
-            Icon(ZionAppIcons.Assistant, null)
-        },
-        actions = {
-            Box(modifier = Modifier.weight(1f)) {
-                ModelSelector(
-                    modelId = settings.suggestionModelId,
-                    type = ModelType.CHAT,
-                    onSelect = {
-                        vm.updateSettings(
-                            settings.copy(
-                                suggestionModelId = it.id
-                            )
-                        )
-                    },
-                    providers = settings.providers,
-                    allowClear = true,
-                    modifier = Modifier.wrapContentWidth()
-                )
-            }
-            IconButton(
-                onClick = {
-                    showModal = true
-                },
-                colors = IconButtonDefaults.filledTonalIconButtonColors()
-            ) {
-                Icon(ZionAppIcons.Tool, null)
-            }
-        }
-    )
-
-    if (showModal) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showModal = false
+    selectorTarget?.let { section ->
+        DefaultModelSelectorSheet(
+            title = section.title,
+            selectedModelId = section.modelId,
+            required = section.required,
+            type = section.type,
+            providers = settings.providers,
+            onSelect = { model ->
+                section.onSelect(model)
+                selectorTarget = null
             },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    description = {
-                        Text(stringResource(R.string.setting_model_page_suggestion_prompt_vars))
-                    }
-                ) {
-                    OutlinedTextField(
-                        value = settings.suggestionPrompt,
-                        onValueChange = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    suggestionPrompt = it
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 8
-                    )
-                    TextButton(
-                        onClick = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    suggestionPrompt = DEFAULT_SUGGESTION_PROMPT
-                                )
-                            )
-                        }
-                    ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DefaultTitleModelSetting(
-    settings: Settings,
-    vm: SettingVM
-) {
-    var showModal by remember { mutableStateOf(false) }
-    ModelFeatureCard(
-        title = {
-            Text(stringResource(R.string.setting_model_page_title_model), maxLines = 1)
-        },
-        description = {
-            Text(stringResource(R.string.setting_model_page_title_model_desc))
-        },
-        icon = {
-            Icon(ZionAppIcons.Files, null)
-        },
-        actions = {
-            Box(modifier = Modifier.weight(1f)) {
-                ModelSelector(
-                    modelId = settings.titleModelId,
-                    type = ModelType.CHAT,
-                    onSelect = {
-                        vm.updateSettings(
-                            settings.copy(
-                                titleModelId = it.id
-                            )
-                        )
-                    },
-                    providers = settings.providers,
-                    allowClear = true,
-                    modifier = Modifier.wrapContentWidth()
-                )
-            }
-            IconButton(
-                onClick = {
-                    showModal = true
-                },
-                colors = IconButtonDefaults.filledTonalIconButtonColors()
-            ) {
-                Icon(ZionAppIcons.Tool, null)
-            }
-        }
-    )
-
-    if (showModal) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    description = {
-                        Text(stringResource(R.string.setting_model_page_suggestion_prompt_vars))
-                    }
-                ) {
-                    OutlinedTextField(
-                        value = settings.titlePrompt,
-                        onValueChange = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    titlePrompt = it
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 8
-                    )
-                    TextButton(
-                        onClick = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    titlePrompt = DEFAULT_TITLE_PROMPT
-                                )
-                            )
-                        }
-                    ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DefaultChatModelSetting(
-    settings: Settings,
-    vm: SettingVM
-) {
-    ModelFeatureCard(
-        icon = {
-            Icon(ZionAppIcons.ChatGPTLogo, null)
-        },
-        title = {
-            Text(stringResource(R.string.setting_model_page_chat_model), maxLines = 1)
-        },
-        description = {
-            Text(stringResource(R.string.setting_model_page_chat_model_desc))
-        },
-        actions = {
-            Box(modifier = Modifier.weight(1f)) {
-                ModelSelector(
-                    modelId = settings.chatModelId,
-                    type = ModelType.CHAT,
-                    onSelect = {
-                        vm.updateSettings(
-                            settings.copy(
-                                chatModelId = it.id
-                            )
-                        )
-                    },
-                    providers = settings.providers,
-                    modifier = Modifier.wrapContentWidth()
-                )
-            }
-        }
-    )
-}
-
-@Composable
-private fun DefaultOcrModelSetting(
-    settings: Settings,
-    vm: SettingVM
-) {
-    var showModal by remember { mutableStateOf(false) }
-    ModelFeatureCard(
-        title = {
-            Text(
-                stringResource(R.string.setting_model_page_ocr_model),
-                maxLines = 1
-            )
-        },
-        description = {
-            Text(stringResource(R.string.setting_model_page_ocr_model_desc))
-        },
-        icon = {
-            Icon(ZionAppIcons.Image, null)
-        },
-        actions = {
-            Box(modifier = Modifier.weight(1f)) {
-                ModelSelector(
-                    modelId = settings.ocrModelId,
-                    type = ModelType.CHAT,
-                    onSelect = {
-                        vm.updateSettings(
-                            settings.copy(
-                                ocrModelId = it.id
-                            )
-                        )
-                    },
-                    providers = settings.providers,
-                    modifier = Modifier.wrapContentWidth()
-                )
-            }
-            IconButton(
-                onClick = {
-                    showModal = true
-                },
-                colors = IconButtonDefaults.filledTonalIconButtonColors()
-            ) {
-                Icon(ZionAppIcons.Tool, null)
-            }
-        }
-    )
-
-    if (showModal) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    description = {
-                        Text(stringResource(R.string.setting_model_page_ocr_prompt_vars))
-                    }
-                ) {
-                    OutlinedTextField(
-                        value = settings.ocrPrompt,
-                        onValueChange = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    ocrPrompt = it
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 10,
-                    )
-                    TextButton(
-                        onClick = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    ocrPrompt = DEFAULT_OCR_PROMPT
-                                )
-                            )
-                        }
-                    ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DefaultCompressModelSetting(
-    settings: Settings,
-    vm: SettingVM
-) {
-    var showModal by remember { mutableStateOf(false) }
-    ModelFeatureCard(
-        title = {
-            Text(
-                stringResource(R.string.setting_model_page_compress_model),
-                maxLines = 1
-            )
-        },
-        description = {
-            Text(stringResource(R.string.setting_model_page_compress_model_desc))
-        },
-        icon = {
-            Icon(ZionAppIcons.Files, null)
-        },
-        actions = {
-            Box(modifier = Modifier.weight(1f)) {
-                ModelSelector(
-                    modelId = settings.compressModelId,
-                    type = ModelType.CHAT,
-                    onSelect = {
-                        vm.updateSettings(
-                            settings.copy(
-                                compressModelId = it.id
-                            )
-                        )
-                    },
-                    providers = settings.providers,
-                    modifier = Modifier.wrapContentWidth()
-                )
-            }
-            IconButton(
-                onClick = {
-                    showModal = true
-                },
-                colors = IconButtonDefaults.filledTonalIconButtonColors()
-            ) {
-                Icon(ZionAppIcons.Tool, null)
-            }
-        }
-    )
-
-    if (showModal) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showModal = false
-            },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FormItem(
-                    label = {
-                        Text(stringResource(R.string.setting_model_page_prompt))
-                    },
-                    description = {
-                        Text(stringResource(R.string.setting_model_page_compress_prompt_vars))
-                    }
-                ) {
-                    OutlinedTextField(
-                        value = settings.compressPrompt,
-                        onValueChange = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    compressPrompt = it
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 10,
-                    )
-                    TextButton(
-                        onClick = {
-                            vm.updateSettings(
-                                settings.copy(
-                                    compressPrompt = DEFAULT_COMPRESS_PROMPT
-                                )
-                            )
-                        }
-                    ) {
-                        Text(stringResource(R.string.setting_model_page_reset_to_default))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ModelFeatureCard(
-    modifier: Modifier = Modifier,
-    description: @Composable () -> Unit = {},
-    icon: @Composable () -> Unit,
-    title: @Composable () -> Unit,
-    actions: @Composable RowScope.() -> Unit
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = CustomColors.cardColors.containerColor
+            onDismiss = { selectorTarget = null }
         )
+    }
+
+    promptTarget?.let { section ->
+        ModelPromptSheet(
+            title = section.title,
+            prompt = section.prompt.orEmpty(),
+            helper = section.promptVariablesLabel.orEmpty(),
+            resetPrompt = section.resetPrompt.orEmpty(),
+            onPromptChange = {
+                section.onPromptChange?.invoke(it)
+            },
+            onDismiss = { promptTarget = null }
+        )
+    }
+}
+
+@Composable
+private fun DefaultModelSection(
+    title: String,
+    required: Boolean,
+    selectedName: String?,
+    onOpenSelector: () -> Unit,
+    onOpenPrompt: (() -> Unit)?,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            fontFamily = SourceSans3,
+            color = ZionTextSecondary,
+            modifier = Modifier.weight(1f)
+        )
+        if (required) {
+            Text(
+                text = "*",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = SourceSans3,
+                color = ZionTextSecondary
+            )
+        }
+        if (onOpenPrompt != null) {
+            TextButton(onClick = onOpenPrompt) {
+                Text(
+                    text = stringResource(R.string.setting_model_page_prompt),
+                    color = ZionTextPrimary,
+                    fontFamily = SourceSans3
+                )
+            }
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = ZionSectionItem)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onOpenSelector)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = selectedName ?: stringResource(R.string.not_set),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = SourceSans3,
+                color = if (selectedName.isNullOrBlank()) ZionTextSecondary else ZionTextPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = ZionAppIcons.ChevronRight,
+                contentDescription = null,
+                tint = ZionTextSecondary,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DefaultModelSelectorSheet(
+    title: String,
+    selectedModelId: kotlin.uuid.Uuid?,
+    required: Boolean,
+    type: ModelType,
+    providers: List<ProviderSetting>,
+    onSelect: (Model?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val enabledProviders = remember(providers, type) {
+        providers.fastFilter { provider ->
+            provider.enabled && provider.models.any { model -> model.type == type }
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Color(0xFFF1F1F1)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .heightIn(max = 640.dp)
+                .navigationBarsPadding()
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                        title()
-                    }
-                    ProvideTextStyle(
-                        MaterialTheme.typography.bodySmall.copy(
-                            color = LocalContentColor.current.copy(alpha = 0.6f)
-                        )
-                    ) {
-                        description()
-                    }
-                }
                 Box(
                     modifier = Modifier
-                        .size(40.dp),
-                    contentAlignment = Alignment.Center
+                        .width(40.dp)
+                        .height(4.dp)
+                        .background(ZionGrayLight, RoundedCornerShape(2.dp))
+                )
+            }
+
+            Text(
+                text = title,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = SourceSans3,
+                color = ZionTextPrimary,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            if (!required) {
+                TextButton(
+                    onClick = { onSelect(null) },
+                    modifier = Modifier.align(Alignment.End)
                 ) {
-                    icon()
+                Text(
+                        text = "Clear",
+                        color = ZionTextPrimary,
+                        fontFamily = SourceSans3
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                enabledProviders.forEach { provider ->
+                    val availableModels = provider.models.fastFilter { it.type == type }
+                    if (availableModels.isEmpty()) return@forEach
+
+                    Text(
+                        text = provider.name.uppercase(),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = SourceSans3,
+                        color = ZionTextSecondary,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        availableModels.forEach { model ->
+                            val selected = model.id == selectedModelId
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(22.dp),
+                                color = if (selected) ZionAccentNeutral else Color.White,
+                                border = BorderStroke(
+                                    width = 1.dp,
+                                    color = if (selected) ZionAccentNeutral else ZionAccentNeutralBorder
+                                ),
+                                onClick = { onSelect(model) }
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    AutoAIIcon(
+                                        name = model.modelId,
+                                        modifier = Modifier.size(22.dp),
+                                        color = Color.Transparent
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = model.displayName,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            fontFamily = SourceSans3,
+                                            color = if (selected) Color.White else ZionTextPrimary
+                                        )
+                                        Text(
+                                            text = provider.name,
+                                            fontSize = 13.sp,
+                                            fontFamily = SourceSans3,
+                                            color = if (selected) Color.White.copy(alpha = 0.75f) else ZionTextSecondary
+                                        )
+                                    }
+                                    if (selected) {
+                                        Icon(
+                                            imageVector = ZionAppIcons.Check,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = ZionAppIcons.ChevronRight,
+                                            contentDescription = null,
+                                            tint = ZionTextSecondary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModelPromptSheet(
+    title: String,
+    prompt: String,
+    helper: String,
+    resetPrompt: String,
+    onPromptChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Color(0xFFF1F1F1)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(40.dp)
+                        .height(4.dp)
+                        .background(ZionGrayLight, RoundedCornerShape(2.dp))
+                )
+            }
+
+            Text(
+                text = title,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = SourceSans3,
+                color = ZionTextPrimary
+            )
+
+            Text(
+                text = helper,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontFamily = SourceSans3,
+                color = ZionTextSecondary
+            )
+
+            OutlinedTextField(
+                value = prompt,
+                onValueChange = onPromptChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 180.dp),
+                maxLines = 12,
+                shape = RoundedCornerShape(18.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedIndicatorColor = ZionAccentNeutral,
+                    unfocusedIndicatorColor = ZionAccentNeutralBorder,
+                    focusedTextColor = ZionTextPrimary,
+                    unfocusedTextColor = ZionTextPrimary,
+                    cursorColor = ZionTextPrimary
+                )
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                actions()
+                TextButton(onClick = { onPromptChange(resetPrompt) }) {
+                    Text(
+                        text = stringResource(R.string.setting_model_page_reset_to_default),
+                        color = ZionTextPrimary,
+                        fontFamily = SourceSans3
+                    )
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(
+                        text = stringResource(R.string.chat_page_save),
+                        color = ZionTextPrimary,
+                        fontFamily = SourceSans3
+                    )
+                }
             }
         }
     }

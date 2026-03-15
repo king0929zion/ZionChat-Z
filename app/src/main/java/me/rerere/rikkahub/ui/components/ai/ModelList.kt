@@ -1,9 +1,12 @@
 package me.rerere.rikkahub.ui.components.ai
 
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
@@ -20,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -85,6 +89,12 @@ import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
 import me.rerere.rikkahub.ui.components.ui.icons.HeartIcon
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
+import me.rerere.rikkahub.ui.theme.SourceSans3
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutralBorder
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.ui.theme.extendColors
 import me.rerere.rikkahub.utils.toDp
 import org.koin.compose.koinInject
@@ -109,37 +119,73 @@ fun ModelSelector(
     if (!onlyIcon) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            TextButton(
-                onClick = {
-                    popup = true
-                },
+            Surface(
                 modifier = modifier
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(ZionSectionItem, RoundedCornerShape(18.dp))
+                    .combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = LocalIndication.current,
+                        onClick = { popup = true }
+                    ),
+                shape = RoundedCornerShape(18.dp),
+                color = ZionSectionItem,
+                border = BorderStroke(1.dp, ZionAccentNeutralBorder)
             ) {
-                model?.modelId?.let {
-                    AutoAIIcon(
-                        it, Modifier
-                            .padding(end = 4.dp)
-                            .size(36.dp),
-                        color = Color.Transparent
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.size(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        model?.modelId?.let {
+                            AutoAIIcon(
+                                it,
+                                Modifier.size(24.dp),
+                                color = Color.Transparent
+                            )
+                        } ?: Icon(
+                            imageVector = ZionAppIcons.ChatGPTLogo,
+                            contentDescription = null,
+                            tint = ZionTextPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Text(
+                        text = model?.displayName ?: stringResource(R.string.model_list_select_model),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = ZionTextPrimary,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = SourceSans3
+                        )
+                    )
+                    Icon(
+                        imageVector = ZionAppIcons.ChevronRight,
+                        contentDescription = null,
+                        tint = ZionTextSecondary,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
-                Text(
-                    text = model?.displayName ?: stringResource(R.string.model_list_select_model),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodySmall
-                )
             }
             if (allowClear && model != null) {
-                IconButton(
-                    onClick = {
-                        onSelect(Model())
-                    }
+                Surface(
+                    modifier = Modifier.size(34.dp),
+                    shape = CircleShape,
+                    color = ZionSectionItem,
+                    border = BorderStroke(1.dp, ZionAccentNeutralBorder),
+                    onClick = { onSelect(Model()) }
                 ) {
                     Icon(
-                        imageVector = HugeIcons.Cancel01,
-                        contentDescription = "Clear"
+                        imageVector = ZionAppIcons.Close,
+                        contentDescription = "Clear",
+                        tint = ZionTextPrimary,
+                        modifier = Modifier.padding(8.dp)
                     )
                 }
             }

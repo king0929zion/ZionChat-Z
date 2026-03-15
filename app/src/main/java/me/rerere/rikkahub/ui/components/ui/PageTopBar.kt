@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -62,16 +63,16 @@ fun Modifier.settingsBottomInsets(): Modifier =
 fun HeaderTranslucentBackdrop(
     modifier: Modifier = Modifier,
     containerColor: Color = ZionSurface,
-    containerAlpha: Float = 0.92f,
+    containerAlpha: Float = 0.82f,
 ) {
-    val topColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.94f))
-    val midColor = containerColor.copy(alpha = (containerAlpha * 0.66f).coerceIn(0.42f, 0.78f))
+    val topColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
+    val midColor = containerColor.copy(alpha = (containerAlpha * 0.66f).coerceIn(0.42f, 0.76f))
 
     Box(modifier = modifier) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Spacer(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .matchParentSize()
                     .graphicsLayer {
                         renderEffect = android.graphics.RenderEffect
                             .createBlurEffect(26f, 26f, Shader.TileMode.CLAMP)
@@ -82,7 +83,7 @@ fun HeaderTranslucentBackdrop(
 
         Spacer(
             modifier = Modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .background(
                     Brush.verticalGradient(
                         0.0f to topColor,
@@ -99,7 +100,7 @@ fun HeaderTranslucentBackdrop(
 fun FooterTranslucentBackdrop(
     modifier: Modifier = Modifier,
     containerColor: Color = ZionSurface,
-    containerAlpha: Float = 0.86f,
+    containerAlpha: Float = 0.82f,
 ) {
     val bottomColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
     val midColor = containerColor.copy(alpha = (containerAlpha * 0.66f).coerceIn(0.42f, 0.76f))
@@ -108,7 +109,7 @@ fun FooterTranslucentBackdrop(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Spacer(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .matchParentSize()
                     .graphicsLayer {
                         renderEffect = android.graphics.RenderEffect
                             .createBlurEffect(26f, 26f, Shader.TileMode.CLAMP)
@@ -119,7 +120,7 @@ fun FooterTranslucentBackdrop(
 
         Spacer(
             modifier = Modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .background(
                     Brush.verticalGradient(
                         0.0f to Color.Transparent,
@@ -164,14 +165,14 @@ fun PageTopBar(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = ZionSurface,
-    containerAlpha: Float = 0.92f,
+    containerAlpha: Float = 0.82f,
     fadeHeight: Dp = 0.dp,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
         HeaderTranslucentBackdrop(
             modifier = Modifier
-                .fillMaxSize(),
+                .matchParentSize(),
             containerColor = containerColor,
             containerAlpha = containerAlpha
         )

@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -46,6 +47,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.material3.BasicAlertDialog
@@ -77,6 +80,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -138,7 +142,8 @@ import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.hooks.ChatInputState
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
-import me.rerere.rikkahub.ui.theme.ZionAccentBlue
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutralBorder
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
@@ -219,6 +224,7 @@ fun ChatInput(
     Surface(
         color = Color.Transparent,
     ) {
+        val hasInputDecorations = state.messageContent.isNotEmpty() || state.isEditing()
         Column(
             modifier = modifier
                 .imePadding()
@@ -314,6 +320,7 @@ fun ChatInput(
                 Surface(
                     modifier = Modifier
                         .weight(1f)
+                        .height(IntrinsicSize.Min)
                         .clip(RoundedCornerShape(23.dp))
                         .then(
                             if (settings.displaySetting.enableBlurEffect) Modifier.hazeEffect(
@@ -326,7 +333,14 @@ fun ChatInput(
                     color = if (settings.displaySetting.enableBlurEffect) Color.Transparent else hazeTintColor,
                 ) {
                     Column(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = 12.dp,
+                                end = 6.dp,
+                                top = if (hasInputDecorations) 8.dp else 0.dp,
+                                bottom = if (hasInputDecorations) 8.dp else 0.dp
+                            ),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         if (state.messageContent.isNotEmpty()) {
@@ -464,7 +478,7 @@ private fun PreviewModeChip(
 ) {
     Surface(
         shape = RoundedCornerShape(18.dp),
-        color = if (active) ZionAccentBlue.copy(alpha = 0.16f) else ZionSectionItem,
+        color = if (active) ZionAccentNeutral else ZionSectionItem,
         modifier = Modifier
             .shadow(
                 elevation = if (active) 4.dp else 0.dp,
@@ -484,11 +498,11 @@ private fun PreviewModeChip(
                 imageVector = ZionAppIcons.Image,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp),
-                tint = if (active) ZionAccentBlue else ZionTextSecondary
+                tint = if (active) Color.White else ZionTextSecondary
             )
             Text(
                 text = stringResource(R.string.code_block_preview),
-                color = if (active) ZionAccentBlue else ZionTextPrimary,
+                color = if (active) Color.White else ZionTextPrimary,
                 fontFamily = SourceSans3,
                 fontSize = 14.sp,
                 fontWeight = if (active) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Medium
@@ -584,45 +598,54 @@ private fun TextInputRow(
                     .fillMaxWidth(),
                 contentAlignment = Alignment.BottomEnd
             ) {
-                TextField(
-                    state = state.textContent,
+                BasicTextField(
+                    value = state.textContent.text.toString(),
+                    onValueChange = { newValue -> state.setMessageText(newValue) },
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 46.dp, max = 132.dp)
                         .padding(end = 42.dp)
                         .contentReceiver(receiveContentListener)
-                        .onFocusChanged { },
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.chat_input_placeholder),
-                            style = TextStyle(
-                                fontSize = 17.sp,
-                                lineHeight = 22.sp,
-                                color = ZionTextSecondary,
-                                fontFamily = SourceSans3,
-                            )
-                        )
-                    },
-                    lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 6),
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = if (settings.displaySetting.sendOnEnter) ImeAction.Send else ImeAction.Default
-                    ),
-                    onKeyboardAction = {
-                        if (settings.displaySetting.sendOnEnter && !state.isEmpty()) {
-                            onSendMessage()
-                        }
-                    },
+                        .onFocusChanged { }
+                        .padding(top = 12.dp, bottom = 12.dp),
                     textStyle = TextStyle(
                         fontSize = 17.sp,
                         lineHeight = 22.sp,
                         color = ZionTextPrimary,
                         fontFamily = SourceSans3,
                     ),
-                    colors = TextFieldDefaults.colors().copy(
-                        unfocusedIndicatorColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
+                    cursorBrush = SolidColor(ZionTextPrimary),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = if (settings.displaySetting.sendOnEnter) ImeAction.Send else ImeAction.Default
                     ),
+                    keyboardActions = KeyboardActions(
+                        onSend = {
+                            if (settings.displaySetting.sendOnEnter && !state.isEmpty()) {
+                                onSendMessage()
+                            }
+                        }
+                    ),
+                    singleLine = false,
+                    maxLines = 6,
+                    decorationBox = { innerTextField ->
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            if (state.textContent.text.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.chat_input_placeholder),
+                                    style = TextStyle(
+                                        fontSize = 17.sp,
+                                        lineHeight = 22.sp,
+                                        color = ZionTextSecondary,
+                                        fontFamily = SourceSans3,
+                                    )
+                                )
+                            }
+                            innerTextField()
+                        }
+                    }
                 )
 
                 Box(
@@ -644,9 +667,9 @@ private fun TextInputRow(
                         )
                         .background(
                             color = when {
-                                loading -> ZionAccentBlue
+                                loading -> ZionAccentNeutral
                                 state.isEmpty() -> ZionSectionItem
-                                else -> ZionAccentBlue
+                                else -> ZionAccentNeutral
                             },
                             shape = CircleShape
                         )
@@ -1437,7 +1460,7 @@ private fun BigIconTextButton(
     val interactionSource = remember { MutableInteractionSource() }
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(18.dp))
             .clickable(
                 interactionSource = interactionSource, indication = LocalIndication.current, onClick = onClick
             )
@@ -1446,17 +1469,26 @@ private fun BigIconTextButton(
             }
             .wrapContentWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Surface(
-            tonalElevation = 2.dp, shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(18.dp),
+            color = ZionSectionItem,
+            border = BorderStroke(1.dp, ZionAccentNeutralBorder),
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
         ) {
             Box(
-                modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
+                modifier = Modifier.padding(horizontal = 28.dp, vertical = 14.dp)
             ) {
                 icon()
             }
         }
-        ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+        ProvideTextStyle(
+            MaterialTheme.typography.bodySmall.copy(
+                color = ZionTextPrimary,
+                fontFamily = SourceSans3
+            )
+        ) {
             text()
         }
     }

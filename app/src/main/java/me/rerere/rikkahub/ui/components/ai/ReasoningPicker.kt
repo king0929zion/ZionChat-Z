@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,6 +41,9 @@ import me.rerere.rikkahub.ui.components.ui.ToggleSurface
 import me.rerere.rikkahub.ui.components.ui.icons.ReasoningHigh
 import me.rerere.rikkahub.ui.components.ui.icons.ReasoningLow
 import me.rerere.rikkahub.ui.components.ui.icons.ReasoningMedium
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 
 @Composable
 fun ReasoningButton(
@@ -224,16 +228,16 @@ private fun ReasoningLevelCard(
 ) {
     val containerColor = animateColorAsState(
         if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
+            ZionAccentNeutral
         } else {
-            MaterialTheme.colorScheme.surface
+            ZionSectionItem
         }
     )
     val textColor = animateColorAsState(
         if (selected) {
-            MaterialTheme.colorScheme.onPrimaryContainer
+            Color.White
         } else {
-            MaterialTheme.colorScheme.onSurface
+            ZionTextPrimary
         }
     )
     Card(

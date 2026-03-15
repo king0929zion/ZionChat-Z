@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -25,14 +26,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.ArrowDown01
-import me.rerere.hugeicons.stroke.ArrowUp01
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutralBorder
 import me.rerere.rikkahub.ui.theme.SourceSans3
-import me.rerere.rikkahub.ui.theme.ZionGrayLight
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 
 @Composable
 fun <T> Select(
@@ -49,19 +49,19 @@ fun <T> Select(
 
     Box(modifier = modifier) {
         Surface(
-            color = ZionSurface,
+            color = ZionSectionItem,
             tonalElevation = 0.dp,
-            shadowElevation = 6.dp,
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(1.dp, ZionGrayLight)
+            shadowElevation = 0.dp,
+            shape = RoundedCornerShape(18.dp),
+            border = BorderStroke(1.dp, ZionAccentNeutralBorder)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(ZionSurface)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(ZionSectionItem)
                     .pressableScale { expanded = true }
-                    .padding(vertical = 10.dp, horizontal = 14.dp),
+                    .padding(vertical = 8.dp, horizontal = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -76,9 +76,10 @@ fun <T> Select(
                 )
                 trailing()
                 Icon(
-                    imageVector = if (expanded) HugeIcons.ArrowUp01 else HugeIcons.ArrowDown01,
+                    imageVector = ZionAppIcons.ChevronRight,
                     contentDescription = "expand",
-                    tint = ZionTextPrimary
+                    tint = ZionTextSecondary,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
@@ -86,7 +87,7 @@ fun <T> Select(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(18.dp),
             containerColor = ZionSurface,
             shadowElevation = 10.dp
         ) {
@@ -111,7 +112,7 @@ fun <T> Select(
                     },
                     modifier = Modifier
                         .padding(horizontal = 4.dp, vertical = 2.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(ZionSectionItem)
                 )
             }

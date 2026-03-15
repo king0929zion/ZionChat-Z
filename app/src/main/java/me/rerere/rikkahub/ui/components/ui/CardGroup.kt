@@ -4,23 +4,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemColors
-import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,7 +45,6 @@ import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 
 private val CardGroupCorner = 26.dp
 private val CardGroupItemSpacing = 2.dp
-private val CardGroupInnerCorner = 10.dp
 
 data class CardGroupItem(
     val onClick: (() -> Unit)?,
@@ -91,17 +91,9 @@ private fun CardGroupListItem(
     count: Int,
     index: Int,
 ) {
-    val isFirst = index == 0
-    val isLast = index == count - 1
-
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed = item.onClick != null && interactionSource.collectIsPressedAsState().value
-    val shape = RoundedCornerShape(
-        topStart = if (count == 1 || isFirst) CardGroupCorner else CardGroupInnerCorner,
-        topEnd = if (count == 1 || isFirst) CardGroupCorner else CardGroupInnerCorner,
-        bottomStart = if (count == 1 || isLast) CardGroupCorner else CardGroupInnerCorner,
-        bottomEnd = if (count == 1 || isLast) CardGroupCorner else CardGroupInnerCorner,
-    )
+    val shape = RoundedCornerShape(6.dp)
 
     Box(
         modifier = item.modifier
@@ -122,10 +114,43 @@ private fun CardGroupListItem(
                 }
             )
     ) {
-        ListItem(
-            headlineContent = {
-                androidx.compose.material3.ProvideTextStyle(
-                    TextStyle(
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 54.dp)
+                .padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (item.leadingContent != null) {
+                Box(
+                    modifier = Modifier.size(28.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    item.leadingContent.invoke()
+                }
+                Spacer(modifier = Modifier.size(14.dp))
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(
+                    if (item.overlineContent != null || item.supportingContent != null) 2.dp else 0.dp
+                )
+            ) {
+                item.overlineContent?.let { overline ->
+                    CompositionLocalProvider(
+                        LocalTextStyle provides TextStyle(
+                            fontFamily = SourceSans3,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = ZionTextSecondary
+                        )
+                    ) {
+                        overline()
+                    }
+                }
+                CompositionLocalProvider(
+                    LocalTextStyle provides TextStyle(
                         fontFamily = SourceSans3,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
@@ -134,51 +159,27 @@ private fun CardGroupListItem(
                 ) {
                     item.headlineContent()
                 }
-            },
-            overlineContent = item.overlineContent?.let { content ->
-                {
-                    androidx.compose.material3.ProvideTextStyle(
-                        TextStyle(
-                            fontFamily = SourceSans3,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp,
-                            color = ZionTextSecondary
-                        )
-                    ) {
-                        content()
-                    }
-                }
-            },
-            supportingContent = item.supportingContent?.let { content ->
-                {
-                    androidx.compose.material3.ProvideTextStyle(
-                        TextStyle(
+                item.supportingContent?.let { supporting ->
+                    CompositionLocalProvider(
+                        LocalTextStyle provides TextStyle(
                             fontFamily = SourceSans3,
                             fontWeight = FontWeight.Normal,
                             fontSize = 15.sp,
                             color = ZionTextSecondary
                         )
                     ) {
-                        content()
+                        supporting()
                     }
                 }
-            },
-            leadingContent = item.leadingContent,
-            trailingContent = {
-                when {
-                    item.trailingContent != null -> item.trailingContent.invoke()
-                    item.onClick != null -> DefaultCardGroupChevron()
-                }
-            },
-            colors = item.colors ?: ListItemDefaults.colors(
-                containerColor = Color.Transparent,
-                headlineColor = ZionTextPrimary,
-                supportingColor = ZionTextSecondary,
-                overlineColor = ZionTextSecondary,
-                leadingIconColor = ZionTextSecondary,
-                trailingIconColor = ZionTextSecondary
-            ),
-        )
+            }
+
+            Spacer(modifier = Modifier.size(8.dp))
+
+            when {
+                item.trailingContent != null -> item.trailingContent.invoke()
+                item.onClick != null -> DefaultCardGroupChevron()
+            }
+        }
     }
 }
 
@@ -217,7 +218,8 @@ fun CardGroup(
                     fontFamily = SourceSans3,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
-                    color = ZionTextSecondary
+                    color = ZionTextSecondary,
+                    letterSpacing = 0.4.sp
                 )
             ) {
                 Box(modifier = Modifier.padding(start = 12.dp, top = 4.dp, bottom = 8.dp)) {

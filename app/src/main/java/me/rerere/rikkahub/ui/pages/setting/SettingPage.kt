@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -78,6 +80,7 @@ import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.ColorMode
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.ui.theme.ZionBackground
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.utils.joinQQGroup
 import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.plus
@@ -102,6 +105,9 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 Button(onClick = {
                     vm.updateSettings(settings.copy(sponsorAlertDismissedAt = settings.launchCount))
                     navController.navigate(Screen.SettingDonate)
+                }, colors = ButtonDefaults.buttonColors(
+                    containerColor = ZionTextPrimary,
+                    contentColor = Color.White
                 }) {
                     Text(stringResource(R.string.setting_page_sponsor_alert_confirm))
                 }
@@ -109,6 +115,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
             dismissButton = {
                 TextButton(onClick = {
                     vm.updateSettings(settings.copy(sponsorAlertDismissedAt = settings.launchCount))
+                }, colors = TextButtonDefaults.textButtonColors(contentColor = ZionTextPrimary)
                 }) {
                     Text(stringResource(R.string.setting_page_sponsor_alert_dismiss))
                 }
@@ -149,11 +156,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
 
             item("generalSettings") {
                 var colorMode by rememberColorMode()
-                val selectedColorModeText = when (colorMode) {
-                    ColorMode.SYSTEM -> stringResource(R.string.setting_page_color_mode_system)
-                    ColorMode.LIGHT -> stringResource(R.string.setting_page_color_mode_light)
-                    ColorMode.DARK -> stringResource(R.string.setting_page_color_mode_dark)
-                }
                 CardGroup(
                     modifier = Modifier.padding(horizontal = 8.dp),
                     title = { Text(stringResource(R.string.setting_page_general_settings)) },
@@ -183,24 +185,20 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                             )
                         },
                         headlineContent = { Text(stringResource(R.string.setting_page_color_mode)) },
-                        supportingContent = { Text(selectedColorModeText) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingDisplay) },
                         leadingContent = { Icon(ZionAppIcons.User, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_display_setting_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_display_setting)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.Assistant) },
                         leadingContent = { Icon(ZionAppIcons.Assistant, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_assistant_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_assistant)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.Prompts) },
                         leadingContent = { Icon(ZionAppIcons.Files, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_prompts_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_prompts_title)) },
                     )
                 }
@@ -214,37 +212,31 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     item(
                         onClick = { navController.navigate(Screen.SettingModels) },
                         leadingContent = { Icon(ZionAppIcons.ChatGPTLogo, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_default_model_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_default_model)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingProvider) },
                         leadingContent = { Icon(ZionAppIcons.Tool, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_providers_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_providers)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingSearch) },
                         leadingContent = { Icon(ZionAppIcons.Globe, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_search_service_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_search_service)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingTTS) },
                         leadingContent = { Icon(ZionAppIcons.Volume, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_tts_service_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_tts_service)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingMcp) },
                         leadingContent = { Icon(ZionAppIcons.MCPTools, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_mcp_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_mcp)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingWeb) },
                         leadingContent = { Icon(ZionAppIcons.Globe, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_web_server_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_web_server)) },
                     )
                 }
@@ -261,24 +253,20 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     item(
                         onClick = { navController.navigate(Screen.Backup) },
                         leadingContent = { Icon(HugeIcons.Database02, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_data_backup_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_data_backup)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingFiles) },
                         leadingContent = { Icon(HugeIcons.ImageUpload, null) },
-                        supportingContent = {
-                            if (storageState.first == -1) {
-                                Text(stringResource(R.string.calculating))
-                            } else {
-                                Text(
-                                    stringResource(
-                                        R.string.setting_page_chat_storage_desc,
-                                        storageState.first,
-                                        storageState.second / 1024 / 1024.0
-                                    )
-                                )
-                            }
+                        trailingContent = {
+                            Text(
+                                text = if (storageState.first == -1) {
+                                    stringResource(R.string.calculating)
+                                } else {
+                                    "${storageState.first}"
+                                },
+                                color = ZionTextPrimary
+                            )
                         },
                         headlineContent = { Text(stringResource(R.string.setting_page_chat_storage)) },
                     )
@@ -297,7 +285,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     item(
                         onClick = { navController.navigate(Screen.SettingAbout) },
                         leadingContent = { Icon(ZionAppIcons.Info, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_about_desc)) },
                         trailingContent = {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -311,7 +298,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                                     Icon(
                                         imageVector = TencentQQIcon,
                                         contentDescription = "QQ",
-                                        tint = MaterialTheme.colorScheme.secondary
+                                        tint = ZionTextPrimary
                                     )
                                 }
                                 IconButton(
@@ -322,7 +309,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                                     Icon(
                                         imageVector = DiscordIcon,
                                         contentDescription = "Discord",
-                                        tint = MaterialTheme.colorScheme.secondary
+                                        tint = ZionTextPrimary
                                     )
                                 }
                             }
@@ -332,19 +319,16 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     item(
                         onClick = { context.openUrl("https://docs.rikka-ai.com/docs/basic/get-started") },
                         leadingContent = { Icon(HugeIcons.Book01, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_documentation_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_documentation)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.Log) },
                         leadingContent = { Icon(HugeIcons.Bookshelf01, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_request_logs_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_request_logs)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingDonate) },
                         leadingContent = { Icon(HugeIcons.InLove, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_donate_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_donate)) },
                     )
                     item(
@@ -359,7 +343,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                             }
                         },
                         leadingContent = { Icon(HugeIcons.Share04, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_share_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_share)) },
                     )
                 }
@@ -400,7 +383,8 @@ private fun ProviderConfigWarningCard(navController: Navigator) {
             TextButton(
                 onClick = {
                     navController.navigate(Screen.SettingProvider)
-                }
+                },
+                colors = TextButtonDefaults.textButtonColors(contentColor = ZionTextPrimary)
             ) {
                 Text(stringResource(R.string.setting_page_config))
             }

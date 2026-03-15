@@ -48,6 +48,7 @@ import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
 import me.rerere.rikkahub.ui.components.ui.ToggleSurface
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import org.koin.compose.koinInject
 
 @Composable
@@ -98,7 +99,7 @@ fun McpPickerButton(
                         }
                     ) {
                         Icon(
-                            imageVector = HugeIcons.McpServer,
+                            imageVector = ZionAppIcons.MCPTools,
                             contentDescription = stringResource(R.string.mcp_picker_title),
                         )
                     }
