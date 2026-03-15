@@ -442,6 +442,7 @@
   <string name="setting_model_page_ocr_model">OCR Model</string>
   <string name="setting_model_page_ocr_model_desc">Model used for optical character recognition on images</string>
   <string name="setting_model_page_ocr_prompt_vars">Variables: Image data: {images}</string>
+  <string name="default_model_screen_note">Configure default models for different tasks. Chat model is required, the rest are optional.</string>
   <string name="not_set">Not set</string>
   <string name="setting_model_page_prompt">Prompt</string>
   <string name="setting_model_page_reset_to_default">Reset to default</string>

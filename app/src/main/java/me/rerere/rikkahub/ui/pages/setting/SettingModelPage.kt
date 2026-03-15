@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -69,12 +68,13 @@ import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import org.koin.androidx.compose.koinViewModel
+import kotlin.uuid.Uuid
 
 private data class ModelSectionConfig(
     val key: String,
     val title: String,
     val required: Boolean,
-    val modelId: kotlin.uuid.Uuid?,
+    val modelId: Uuid,
     val type: ModelType,
     val prompt: String? = null,
     val promptVariablesLabel: String? = null,
@@ -98,7 +98,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
             modelId = settings.chatModelId,
             type = ModelType.CHAT,
             onSelect = { model ->
-                vm.updateSettings(settings.copy(chatModelId = model?.id))
+                vm.updateSettings(settings.copy(chatModelId = model?.id ?: settings.chatModelId))
             }
         ),
         ModelSectionConfig(
@@ -111,7 +111,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
             promptVariablesLabel = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
             resetPrompt = DEFAULT_TITLE_PROMPT,
             onSelect = { model ->
-                vm.updateSettings(settings.copy(titleModelId = model?.id))
+                vm.updateSettings(settings.copy(titleModelId = model?.id ?: Uuid.random()))
             },
             onPromptChange = { prompt ->
                 vm.updateSettings(settings.copy(titlePrompt = prompt))
@@ -127,7 +127,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
             promptVariablesLabel = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
             resetPrompt = DEFAULT_SUGGESTION_PROMPT,
             onSelect = { model ->
-                vm.updateSettings(settings.copy(suggestionModelId = model?.id))
+                vm.updateSettings(settings.copy(suggestionModelId = model?.id ?: Uuid.random()))
             },
             onPromptChange = { prompt ->
                 vm.updateSettings(settings.copy(suggestionPrompt = prompt))
@@ -143,7 +143,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
             promptVariablesLabel = stringResource(R.string.setting_model_page_translate_prompt_vars),
             resetPrompt = DEFAULT_TRANSLATION_PROMPT,
             onSelect = { model ->
-                vm.updateSettings(settings.copy(translateModeId = model?.id))
+                vm.updateSettings(settings.copy(translateModeId = model?.id ?: Uuid.random()))
             },
             onPromptChange = { prompt ->
                 vm.updateSettings(settings.copy(translatePrompt = prompt))
@@ -159,7 +159,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
             promptVariablesLabel = stringResource(R.string.setting_model_page_ocr_prompt_vars),
             resetPrompt = DEFAULT_OCR_PROMPT,
             onSelect = { model ->
-                vm.updateSettings(settings.copy(ocrModelId = model?.id))
+                vm.updateSettings(settings.copy(ocrModelId = model?.id ?: Uuid.random()))
             },
             onPromptChange = { prompt ->
                 vm.updateSettings(settings.copy(ocrPrompt = prompt))
@@ -175,7 +175,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
             promptVariablesLabel = stringResource(R.string.setting_model_page_compress_prompt_vars),
             resetPrompt = DEFAULT_COMPRESS_PROMPT,
             onSelect = { model ->
-                vm.updateSettings(settings.copy(compressModelId = model?.id))
+                vm.updateSettings(settings.copy(compressModelId = model?.id ?: Uuid.random()))
             },
             onPromptChange = { prompt ->
                 vm.updateSettings(settings.copy(compressPrompt = prompt))
@@ -327,7 +327,7 @@ private fun DefaultModelSection(
 @Composable
 private fun DefaultModelSelectorSheet(
     title: String,
-    selectedModelId: kotlin.uuid.Uuid?,
+    selectedModelId: Uuid,
     required: Boolean,
     type: ModelType,
     providers: List<ProviderSetting>,
