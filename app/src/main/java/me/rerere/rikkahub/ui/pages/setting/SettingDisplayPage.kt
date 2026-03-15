@@ -80,7 +80,8 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     ) {
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars),
             contentPadding = PaddingValues(
                 start = 8.dp,
                 end = 8.dp,

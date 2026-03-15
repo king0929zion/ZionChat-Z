@@ -36,15 +36,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
-import me.rerere.rikkahub.ui.theme.ZionBackground
-import me.rerere.rikkahub.ui.theme.ZionSectionItem
-import me.rerere.rikkahub.ui.theme.ZionSectionItemPressed
-import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 
 private val CardGroupCorner = 26.dp
 private val CardGroupItemSpacing = 2.dp
+private val SettingsPageBackgroundColor = Color(0xFFFFFFFF)
+private val SettingsItemContainerColor = Color(0xFFF1F1F1)
+private val SettingsItemPressedColor = Color(0xFFE5E5E5)
+private val SettingsGroupTitleColor = Color(0xFF6B6B6B)
 
 data class CardGroupItem(
     val onClick: (() -> Unit)?,
@@ -100,7 +100,7 @@ private fun CardGroupListItem(
             .fillMaxWidth()
             .clip(shape)
             .background(
-                if (isPressed) ZionSectionItemPressed else ZionSectionItem,
+                if (isPressed) SettingsItemPressedColor else SettingsItemContainerColor,
                 shape
             )
             .then(
@@ -143,7 +143,7 @@ private fun CardGroupListItem(
                             fontFamily = SourceSans3,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 13.sp,
-                            color = ZionTextSecondary
+                            color = SettingsGroupTitleColor
                         )
                     ) {
                         overline()
@@ -165,7 +165,7 @@ private fun CardGroupListItem(
                             fontFamily = SourceSans3,
                             fontWeight = FontWeight.Normal,
                             fontSize = 15.sp,
-                            color = ZionTextSecondary
+                            color = SettingsGroupTitleColor
                         )
                     ) {
                         supporting()
@@ -218,7 +218,7 @@ fun CardGroup(
                     fontFamily = SourceSans3,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
-                    color = ZionTextSecondary,
+                    color = SettingsGroupTitleColor,
                     letterSpacing = 0.4.sp
                 )
             ) {
@@ -232,7 +232,7 @@ fun CardGroup(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(CardGroupCorner))
-                .background(ZionSurface)
+                .background(SettingsPageBackgroundColor)
         ) {
             Column {
                 val count = scope.items.size
@@ -251,7 +251,7 @@ fun CardGroup(
 @Composable
 private fun CardGroupPreview() {
     Scaffold(
-        containerColor = ZionBackground,
+        containerColor = SettingsPageBackgroundColor,
     ) { innerPadding ->
         Column(
             modifier = Modifier

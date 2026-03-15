@@ -139,10 +139,9 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
     ) {
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars),
             contentPadding = PaddingValues(
-                start = 8.dp,
-                end = 8.dp,
                 top = PageTopBarContentTopPadding,
                 bottom = 16.dp,
             ),
@@ -157,7 +156,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
             item("generalSettings") {
                 var colorMode by rememberColorMode()
                 CardGroup(
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     title = { Text(stringResource(R.string.setting_page_general_settings)) },
                 ) {
                     item(
@@ -206,7 +205,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
 
             item("modelServices") {
                 CardGroup(
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     title = { Text(stringResource(R.string.setting_page_model_and_services)) },
                 ) {
                     item(
@@ -247,7 +246,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     value = filesManager.countChatFiles()
                 }
                 CardGroup(
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     title = { Text(stringResource(R.string.setting_page_data_settings)) },
                 ) {
                     item(
@@ -279,7 +278,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 val share = stringResource(R.string.setting_page_share)
                 val noShareApp = stringResource(R.string.setting_page_no_share_app)
                 CardGroup(
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     title = { Text(stringResource(R.string.setting_page_about)) },
                 ) {
                     item(
@@ -325,7 +324,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
 @Composable
 private fun ProviderConfigWarningCard(navController: Navigator) {
     Card(
-        modifier = Modifier.padding(8.dp),
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer
         )

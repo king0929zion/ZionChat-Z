@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.sp
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
-import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 
@@ -61,11 +60,11 @@ fun Modifier.settingsBottomInsets(): Modifier =
 @Composable
 fun HeaderTranslucentBackdrop(
     modifier: Modifier = Modifier,
-    containerColor: Color = ZionSurface,
-    containerAlpha: Float = 0.76f,
+    containerColor: Color = Color(0xFFFFFFFF),
+    containerAlpha: Float = 0.82f,
 ) {
-    val topColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.52f, 0.84f))
-    val midColor = containerColor.copy(alpha = (containerAlpha * 0.58f).coerceIn(0.24f, 0.56f))
+    val topColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
+    val midColor = containerColor.copy(alpha = (containerAlpha * 0.66f).coerceIn(0.42f, 0.76f))
 
     Box(modifier = modifier) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -74,7 +73,7 @@ fun HeaderTranslucentBackdrop(
                     .matchParentSize()
                     .graphicsLayer {
                         renderEffect = android.graphics.RenderEffect
-                            .createBlurEffect(18f, 18f, Shader.TileMode.CLAMP)
+                            .createBlurEffect(26f, 26f, Shader.TileMode.CLAMP)
                             .asComposeRenderEffect()
                     }
             )
@@ -98,11 +97,11 @@ fun HeaderTranslucentBackdrop(
 @Composable
 fun FooterTranslucentBackdrop(
     modifier: Modifier = Modifier,
-    containerColor: Color = ZionSurface,
-    containerAlpha: Float = 0.76f,
+    containerColor: Color = Color(0xFFFFFFFF),
+    containerAlpha: Float = 0.82f,
 ) {
-    val bottomColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.52f, 0.84f))
-    val midColor = containerColor.copy(alpha = (containerAlpha * 0.58f).coerceIn(0.24f, 0.56f))
+    val bottomColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
+    val midColor = containerColor.copy(alpha = (containerAlpha * 0.66f).coerceIn(0.42f, 0.76f))
 
     Box(modifier = modifier) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -111,7 +110,7 @@ fun FooterTranslucentBackdrop(
                     .matchParentSize()
                     .graphicsLayer {
                         renderEffect = android.graphics.RenderEffect
-                            .createBlurEffect(18f, 18f, Shader.TileMode.CLAMP)
+                            .createBlurEffect(26f, 26f, Shader.TileMode.CLAMP)
                             .asComposeRenderEffect()
                     }
             )
@@ -145,7 +144,7 @@ fun HeaderActionButton(
             .size(size)
             .headerActionButtonShadow(CircleShape)
             .clip(CircleShape)
-            .background(ZionSurface, CircleShape)
+            .background(Color.White, CircleShape)
             .pressableScale(pressedScale = 0.95f, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -163,8 +162,8 @@ fun PageTopBar(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    containerColor: Color = ZionSurface,
-    containerAlpha: Float = 0.76f,
+    containerColor: Color = Color(0xFFFFFFFF),
+    containerAlpha: Float = 0.92f,
     fadeHeight: Dp = 0.dp,
     trailing: (@Composable () -> Unit)? = null,
 ) {
@@ -199,9 +198,7 @@ fun PageTopBar(
                     color = ZionTextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(horizontal = 72.dp)
+                    modifier = Modifier.align(Alignment.Center)
                 )
 
                 if (trailing != null) {
@@ -228,7 +225,7 @@ fun SettingsPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ZionBackground)
+            .background(Color(0xFFFFFFFF))
     ) {
         content()
         PageTopBar(

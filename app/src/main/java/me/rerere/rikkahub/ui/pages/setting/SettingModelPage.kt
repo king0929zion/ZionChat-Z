@@ -190,6 +190,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
                 .verticalScroll(rememberScrollState())
                 .padding(top = PageTopBarContentTopPadding)
                 .padding(horizontal = 16.dp)
