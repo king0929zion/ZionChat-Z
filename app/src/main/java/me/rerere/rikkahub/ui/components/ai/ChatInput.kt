@@ -59,6 +59,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ProvideTextStyle
@@ -136,6 +137,7 @@ import me.rerere.rikkahub.ui.components.ui.InjectionSelector
 import me.rerere.rikkahub.ui.components.ui.KeepScreenOn
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionCamera
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionManager
+import me.rerere.rikkahub.ui.components.ui.permission.PermissionState
 import me.rerere.rikkahub.ui.components.ui.permission.rememberPermissionState
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
@@ -143,6 +145,7 @@ import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.hooks.ChatInputState
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutralBorder
@@ -188,6 +191,7 @@ fun ChatInput(
     val webSearchDisabledText = stringResource(R.string.web_search_disabled)
 
     val keyboardController = LocalSoftwareKeyboardController.current
+    val cameraPermissionState = rememberPermissionState(PermissionCamera)
 
     fun sendMessage() {
         keyboardController?.hide()
@@ -339,6 +343,7 @@ fun ChatInput(
                     conversation = conversation,
                     state = state,
                     assistant = assistant,
+                    cameraPermissionState = cameraPermissionState,
                     onCompressContext = onCompressContext,
                     onUpdateAssistant = onUpdateAssistant,
                     showInjectionSheet = showInjectionSheet,
@@ -863,7 +868,7 @@ private fun MediaFileInputRow(
                             Surface(
                                 modifier = Modifier.size(34.dp),
                                 shape = RoundedCornerShape(10.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                color = ZionGrayLighter,
                             ) {
                                 AsyncImage(
                                     model = part.url,
@@ -932,8 +937,8 @@ private fun AttachmentChip(
         shape = RoundedCornerShape(18.dp),
         tonalElevation = 1.dp,
         shadowElevation = 0.dp,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+        color = ZionGrayLighter,
+        border = BorderStroke(1.dp, ZionAccentNeutralBorder)
     ) {
         Row(
             modifier = Modifier
@@ -947,7 +952,10 @@ private fun AttachmentChip(
                 text = title,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = ZionTextPrimary,
+                    fontFamily = SourceSans3
+                ),
                 modifier = Modifier.widthIn(min = 40.dp, max = 180.dp),
             )
             Box(
@@ -960,7 +968,7 @@ private fun AttachmentChip(
                 Icon(
                     imageVector = ZionAppIcons.Close,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = ZionTextSecondary,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -975,7 +983,7 @@ private fun AttachmentLeadingIcon(
     Surface(
         modifier = Modifier.size(34.dp),
         shape = RoundedCornerShape(10.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = ZionGrayLighter,
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -984,7 +992,7 @@ private fun AttachmentLeadingIcon(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = ZionTextSecondary
             )
         }
     }
@@ -1016,6 +1024,7 @@ private fun FilesPicker(
     conversation: Conversation,
     assistant: Assistant,
     state: ChatInputState,
+    cameraPermissionState: PermissionState,
     onCompressContext: (additionalPrompt: String, targetTokens: Int, keepRecentMessages: Int) -> Job,
     onUpdateAssistant: (Assistant) -> Unit,
     showInjectionSheet: Boolean,
@@ -1039,7 +1048,7 @@ private fun FilesPicker(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            TakePicButton {
+            TakePicButton(cameraPermissionState = cameraPermissionState) {
                 state.addImages(it)
                 onDismiss()
             }
@@ -1074,59 +1083,85 @@ private fun FilesPicker(
         // Prompt Injections
         if (settings.modeInjections.isNotEmpty() || settings.lorebooks.isNotEmpty()) {
             val activeCount = assistant.modeInjectionIds.size + assistant.lorebookIds.size
-            ListItem(
-                leadingContent = {
-                    Icon(
-                        imageVector = HugeIcons.Book03,
-                        contentDescription = stringResource(R.string.chat_page_prompt_injections),
-                    )
-                },
-                headlineContent = {
-                    Text(stringResource(R.string.chat_page_prompt_injections))
-                },
-                trailingContent = {
-                    if (activeCount > 0) {
-                        Text(
-                            text = activeCount.toString(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = ZionTextPrimary,
-                        )
-                    }
-                },
+            Surface(
                 modifier = Modifier
-                    .clip(MaterialTheme.shapes.large)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
                     .clickable {
                         onShowInjectionSheetChange(true)
                     },
-            )
+                shape = RoundedCornerShape(20.dp),
+                color = ZionGrayLighter
+            ) {
+                ListItem(
+                    leadingContent = {
+                        Icon(
+                            imageVector = HugeIcons.Book03,
+                            contentDescription = stringResource(R.string.chat_page_prompt_injections),
+                        )
+                    },
+                    headlineContent = {
+                        Text(stringResource(R.string.chat_page_prompt_injections))
+                    },
+                    trailingContent = {
+                        if (activeCount > 0) {
+                            Text(
+                                text = activeCount.toString(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = ZionTextPrimary,
+                            )
+                        }
+                    },
+                    colors = ListItemDefaults.colors(
+                        containerColor = Color.Transparent,
+                        headlineColor = ZionTextPrimary,
+                        leadingIconColor = ZionTextSecondary,
+                        trailingIconColor = ZionTextSecondary
+                    ),
+                    modifier = Modifier.heightIn(min = 60.dp)
+                )
+            }
         }
 
         // Compress History Button
-        ListItem(
-            leadingContent = {
-                Icon(
-                    imageVector = HugeIcons.Package01,
-                    contentDescription = stringResource(R.string.chat_page_compress_context),
-                )
-            },
-            headlineContent = {
-                Text(stringResource(R.string.chat_page_compress_context))
-            },
-            trailingContent = {
-                if (conversation.messageNodes.isNotEmpty()) {
-                    Text(
-                        text = stringResource(R.string.chat_page_message_count, conversation.messageNodes.size),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = ZionTextSecondary,
-                    )
-                }
-            },
+        Surface(
             modifier = Modifier
-                .clip(MaterialTheme.shapes.large)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
                 .clickable {
                     onShowCompressDialogChange(true)
                 },
-        )
+            shape = RoundedCornerShape(20.dp),
+            color = ZionGrayLighter
+        ) {
+            ListItem(
+                leadingContent = {
+                    Icon(
+                        imageVector = HugeIcons.Package01,
+                        contentDescription = stringResource(R.string.chat_page_compress_context),
+                    )
+                },
+                headlineContent = {
+                    Text(stringResource(R.string.chat_page_compress_context))
+                },
+                trailingContent = {
+                    if (conversation.messageNodes.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.chat_page_message_count, conversation.messageNodes.size),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ZionTextSecondary,
+                        )
+                    }
+                },
+                colors = ListItemDefaults.colors(
+                    containerColor = Color.Transparent,
+                    headlineColor = ZionTextPrimary,
+                    leadingIconColor = ZionTextSecondary,
+                    trailingIconColor = ZionTextSecondary
+                ),
+                modifier = Modifier.heightIn(min = 60.dp)
+            )
+        }
     }
 
     // Injection Bottom Sheet
@@ -1311,9 +1346,10 @@ private fun ImagePickButton(onAddImages: (List<Uri>) -> Unit = {}) {
 }
 
 @Composable
-fun TakePicButton(onAddImages: (List<Uri>) -> Unit = {}) {
-    val cameraPermission = rememberPermissionState(PermissionCamera)
-
+fun TakePicButton(
+    cameraPermissionState: PermissionState,
+    onAddImages: (List<Uri>) -> Unit = {}
+) {
     val context = LocalContext.current
     val settings = LocalSettings.current
     val filesManager: FilesManager = koinInject()
@@ -1355,14 +1391,14 @@ fun TakePicButton(onAddImages: (List<Uri>) -> Unit = {}) {
 
     // 使用权限管理器包装
     PermissionManager(
-        permissionState = cameraPermission
+        permissionState = cameraPermissionState
     ) {
         BigIconTextButton(icon = {
             Icon(ZionAppIcons.Camera, null)
         }, text = {
             Text(stringResource(R.string.take_picture))
         }) {
-            if (cameraPermission.allRequiredPermissionsGranted) {
+            if (cameraPermissionState.allRequiredPermissionsGranted) {
                 // 权限已授权，直接启动相机
                 cameraOutputFile = context.cacheDir.resolve("camera_${Uuid.random()}.jpg")
                 cameraOutputUri = FileProvider.getUriForFile(
@@ -1371,7 +1407,7 @@ fun TakePicButton(onAddImages: (List<Uri>) -> Unit = {}) {
                 cameraLauncher.launch(cameraOutputUri!!)
             } else {
                 // 请求权限
-                cameraPermission.requestPermissions()
+                cameraPermissionState.requestPermissions()
             }
         }
     }
