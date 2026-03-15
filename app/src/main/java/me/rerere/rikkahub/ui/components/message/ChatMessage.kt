@@ -263,6 +263,9 @@ private fun MessagePartsBlock(
 ) {
     val context = LocalContext.current
     val contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+    val messageTextColor = Color(0xFF1C1C1E)
+    val userBubbleColor = Color(0xFFEEEEEE)
+    val assistantBubbleColor = Color.White
 
     // 消息输出HapticFeedback
     val hapticFeedback = LocalHapticFeedback.current
@@ -341,53 +344,46 @@ private fun MessagePartsBlock(
             is MessagePartBlock.ContentBlock -> key(block.index) {
                 when (val part = block.part) {
                     is UIMessagePart.Text -> {
+                        val renderedText = part.text.replaceRegexes(
+                            assistant = assistant,
+                            scope = if (role == MessageRole.USER) AssistantAffectScope.USER else AssistantAffectScope.ASSISTANT,
+                            visual = true,
+                        )
                         SelectionContainer {
                             if (role == MessageRole.USER) {
-                                Surface(
+                                MessageTextBubble(
                                     modifier = Modifier.animateContentSize(),
-                                    shape = MaterialTheme.shapes.medium,
-                                    tonalElevation = 2.dp,
-                                    onClick = { onUserMessageClick?.invoke() },
+                                    containerColor = userBubbleColor,
+                                    contentColor = messageTextColor,
+                                    onClick = onUserMessageClick,
                                 ) {
-                                    Column(modifier = Modifier.padding(8.dp)) {
-                                        MarkdownBlock(
-                                            content = part.text.replaceRegexes(
-                                                assistant = assistant,
-                                                scope = AssistantAffectScope.USER,
-                                                visual = true,
-                                            ),
-                                            onClickCitation = handleClickCitation
-                                        )
-                                    }
+                                    MarkdownBlock(
+                                        content = renderedText,
+                                        onClickCitation = handleClickCitation,
+                                        style = LocalTextStyle.current.copy(color = messageTextColor)
+                                    )
                                 }
                             } else {
                                 if (settings.displaySetting.showAssistantBubble) {
-                                    Surface(
+                                    MessageTextBubble(
                                         modifier = Modifier.animateContentSize(),
-                                        shape = MaterialTheme.shapes.medium,
-                                        tonalElevation = 2.dp,
+                                        containerColor = assistantBubbleColor,
+                                        contentColor = messageTextColor,
                                     ) {
-                                        Column(modifier = Modifier.padding(8.dp)) {
-                                            MarkdownBlock(
-                                                content = part.text.replaceRegexes(
-                                                    assistant = assistant,
-                                                    scope = AssistantAffectScope.ASSISTANT,
-                                                    visual = true,
-                                                ),
-                                                onClickCitation = handleClickCitation,
-                                            )
-                                        }
+                                        MarkdownBlock(
+                                            content = renderedText,
+                                            onClickCitation = handleClickCitation,
+                                            style = LocalTextStyle.current.copy(color = messageTextColor)
+                                        )
                                     }
                                 } else {
                                     MarkdownBlock(
-                                        content = part.text.replaceRegexes(
-                                            assistant = assistant,
-                                            scope = AssistantAffectScope.ASSISTANT,
-                                            visual = true,
-                                        ),
+                                        content = renderedText,
                                         onClickCitation = handleClickCitation,
+                                        style = LocalTextStyle.current.copy(color = messageTextColor),
                                         modifier = Modifier
                                             .animateContentSize()
+                                            .widthIn(max = 680.dp)
                                     )
                                 }
                             }
@@ -583,6 +579,50 @@ private fun MessagePartsBlock(
                 }
             ) {
                 Text(stringResource(R.string.citations_count, annotations.size))
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessageTextBubble(
+    modifier: Modifier = Modifier,
+    containerColor: Color,
+    contentColor: Color,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    if (onClick != null) {
+        Surface(
+            modifier = modifier.widthIn(max = 680.dp),
+            shape = RoundedCornerShape(18.dp),
+            color = containerColor,
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
+            onClick = onClick,
+        ) {
+            ProvideTextStyle(LocalTextStyle.current.copy(color = contentColor)) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                ) {
+                    content()
+                }
+            }
+        }
+    } else {
+        Surface(
+            modifier = modifier.widthIn(max = 680.dp),
+            shape = RoundedCornerShape(18.dp),
+            color = containerColor,
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
+        ) {
+            ProvideTextStyle(LocalTextStyle.current.copy(color = contentColor)) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                ) {
+                    content()
+                }
             }
         }
     }
