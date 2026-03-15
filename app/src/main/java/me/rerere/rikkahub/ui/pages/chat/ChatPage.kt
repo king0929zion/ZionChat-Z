@@ -505,9 +505,9 @@ private fun TopBar(
                         overflow = TextOverflow.Ellipsis,
                         color = ZionTextPrimary,
                         fontFamily = SourceSans3,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 11.dp)
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(horizontal = 22.dp, vertical = 10.dp)
                     )
                 }
             }

@@ -274,6 +274,13 @@ fun ChatInput(
                     modifier = Modifier
                         .weight(1f)
                         .height(IntrinsicSize.Min)
+                        .shadow(
+                            elevation = 14.dp,
+                            shape = RoundedCornerShape(23.dp),
+                            clip = false,
+                            ambientColor = Color.Black.copy(alpha = 0.09f),
+                            spotColor = Color.Black.copy(alpha = 0.09f)
+                        )
                         .clip(RoundedCornerShape(23.dp))
                         .then(
                             if (settings.displaySetting.enableBlurEffect) Modifier.hazeEffect(
@@ -425,7 +432,6 @@ private fun ToolMenuBottomSheet(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .safeDrawingPadding()
                     .padding(top = 96.dp)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -442,7 +448,8 @@ private fun ToolMenuBottomSheet(
                         .fillMaxWidth()
                         .heightIn(max = 620.dp)
                         .verticalScroll(rememberScrollState())
-                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
+                        .navigationBarsPadding(),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Box(

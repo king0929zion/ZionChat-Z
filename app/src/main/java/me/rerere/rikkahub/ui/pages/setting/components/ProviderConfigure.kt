@@ -1,28 +1,46 @@
 package me.rerere.rikkahub.ui.pages.setting.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Checkbox
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.dokar.sonner.ToastType
+import me.rerere.ai.provider.BalanceOption
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.DEFAULT_PROVIDERS
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
+import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import kotlin.reflect.KClass
 
@@ -33,48 +51,188 @@ fun ProviderConfigure(
     onEdit: (provider: ProviderSetting) -> Unit
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier
     ) {
-        // Type
         if (!provider.builtIn) {
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth()
+            ProviderTypeSelector(
+                provider = provider,
+                onEdit = onEdit
+            )
+        }
+
+        when (provider) {
+            is ProviderSetting.OpenAI -> ProviderConfigureOpenAI(provider, onEdit)
+            is ProviderSetting.Google -> ProviderConfigureGoogle(provider, onEdit)
+            is ProviderSetting.Claude -> ProviderConfigureClaude(provider, onEdit)
+        }
+    }
+}
+
+private fun ProviderSetting.withAlwaysEnabledDefaults(): ProviderSetting {
+    return copyProvider(
+        enabled = true,
+        balanceOption = BalanceOption()
+    )
+}
+
+@Composable
+private fun ProviderTypeSelector(
+    provider: ProviderSetting,
+    onEdit: (ProviderSetting) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        ProviderSetting.Types.forEach { type ->
+            val selected = provider::class == type
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = if (selected) ZionAccentNeutral else ZionGrayLighter,
+                modifier = Modifier.clickable {
+                    onEdit(provider.convertTo(type).withAlwaysEnabledDefaults())
+                }
             ) {
-                ProviderSetting.Types.forEachIndexed { index, type ->
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = ProviderSetting.Types.size
-                        ),
-                        label = {
-                            Text(type.simpleName ?: "")
-                        },
-                        selected = provider::class == type,
-                        onClick = {
-                            onEdit(provider.convertTo(type))
-                        }
+                Text(
+                    text = type.simpleName ?: "",
+                    color = if (selected) Color.White else ZionTextPrimary,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProviderField(
+    title: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = 1,
+    textStyle: TextStyle = TextStyle.Default,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    isError: Boolean = false,
+    supportingText: String? = null,
+) {
+    val resolvedTextStyle = if (textStyle == TextStyle.Default) {
+        MaterialTheme.typography.bodyLarge
+    } else {
+        textStyle
+    }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = title,
+            color = ZionTextSecondary,
+            style = MaterialTheme.typography.labelMedium
+        )
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = if (singleLine) 56.dp else 112.dp),
+            singleLine = singleLine,
+            minLines = minLines,
+            maxLines = maxLines,
+            textStyle = resolvedTextStyle.copy(
+                color = ZionTextPrimary,
+                fontSize = 16.sp
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = keyboardType,
+                imeAction = if (singleLine) ImeAction.Next else ImeAction.Default
+            ),
+            shape = RoundedCornerShape(24.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
+                unfocusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
+                disabledContainerColor = ZionGrayLighter,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                focusedTextColor = ZionTextPrimary,
+                unfocusedTextColor = ZionTextPrimary,
+                cursorColor = ZionAccentNeutral,
+                focusedPlaceholderColor = ZionTextSecondary,
+                unfocusedPlaceholderColor = ZionTextSecondary
+            ),
+            placeholder = {
+                Text(
+                    text = title,
+                    color = ZionTextSecondary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            supportingText = supportingText?.let {
+                {
+                    Text(
+                        text = it,
+                        color = if (isError) Color(0xFFC62828) else ZionTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
-        }
+        )
+    }
+}
 
-        // [!] just for debugging
-        // Text(JsonInstant.encodeToString(provider), fontSize = 10.sp)
-
-        // Provider Configure
-        when (provider) {
-            is ProviderSetting.OpenAI -> {
-                ProviderConfigureOpenAI(provider, onEdit)
+@Composable
+private fun ProviderToggleCard(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    supportingText: String? = null,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = ZionGrayLighter
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = title,
+                    color = ZionTextPrimary,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                if (!supportingText.isNullOrBlank()) {
+                    Text(
+                        text = supportingText,
+                        color = ZionTextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
-
-            is ProviderSetting.Google -> {
-                ProviderConfigureGoogle(provider, onEdit)
-            }
-
-            is ProviderSetting.Claude -> {
-                ProviderConfigureClaude(provider, onEdit)
-            }
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = ZionAccentNeutral,
+                    checkedBorderColor = Color.Transparent,
+                    uncheckedThumbColor = Color.White,
+                    uncheckedTrackColor = ZionGrayLight,
+                    uncheckedBorderColor = Color.Transparent
+                )
+            )
         }
     }
 }
@@ -237,88 +395,56 @@ private fun ColumnScope.ProviderConfigureOpenAI(
     onEdit: (provider: ProviderSetting.OpenAI) -> Unit
 ) {
     val toaster = LocalToaster.current
-
-    provider.description()
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(stringResource(id = R.string.setting_provider_page_enable), modifier = Modifier.weight(1f))
-        Checkbox(
-            checked = provider.enabled,
-            onCheckedChange = {
-                onEdit(provider.copy(enabled = it))
-            }
-        )
-    }
-
-    OutlinedTextField(
+    ProviderField(
+        title = stringResource(id = R.string.setting_provider_page_name),
         value = provider.name,
         onValueChange = {
-            onEdit(provider.copy(name = it.trim()))
-        },
-        label = {
-            Text(stringResource(id = R.string.setting_provider_page_name))
-        },
-        modifier = Modifier.fillMaxWidth(),
+            onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
+        }
     )
-
-    OutlinedTextField(
+    ProviderField(
+        title = stringResource(id = R.string.setting_provider_page_api_key),
         value = provider.apiKey,
         onValueChange = {
-            onEdit(provider.copy(apiKey = it.trim()))
+            onEdit(provider.copy(apiKey = it.trim(), enabled = true, balanceOption = BalanceOption()))
         },
-        label = {
-            Text(stringResource(id = R.string.setting_provider_page_api_key))
-        },
-        modifier = Modifier.fillMaxWidth(),
-        maxLines = 3,
+        singleLine = false,
+        minLines = 1,
+        maxLines = 4
     )
-
-    OutlinedTextField(
+    ProviderField(
+        title = stringResource(id = R.string.setting_provider_page_api_base_url),
         value = provider.baseUrl,
         onValueChange = {
-            onEdit(provider.copy(baseUrl = it.trim()))
+            onEdit(provider.copy(baseUrl = it.trim(), enabled = true, balanceOption = BalanceOption()))
         },
-        label = {
-            Text(stringResource(id = R.string.setting_provider_page_api_base_url))
-        },
-        modifier = Modifier.fillMaxWidth()
+        keyboardType = KeyboardType.Uri
     )
-
     if (!provider.useResponseApi) {
-        OutlinedTextField(
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_api_path),
             value = provider.chatCompletionsPath,
             onValueChange = {
-                onEdit(provider.copy(chatCompletionsPath = it.trim()))
+                onEdit(provider.copy(chatCompletionsPath = it.trim(), enabled = true, balanceOption = BalanceOption()))
             },
-            label = {
-                Text(stringResource(id = R.string.setting_provider_page_api_path))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !provider.builtIn
+            keyboardType = KeyboardType.Uri
         )
     }
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(stringResource(id = R.string.setting_provider_page_response_api), modifier = Modifier.weight(1f))
-        val responseAPIWarning = stringResource(id = R.string.setting_provider_page_response_api_warning)
-        Checkbox(
-            checked = provider.useResponseApi,
-            onCheckedChange = {
-                onEdit(provider.copy(useResponseApi = it))
-
-                if (it && provider.baseUrl.toHttpUrlOrNull()?.host != "api.openai.com") {
-                    toaster.show(
-                        message = responseAPIWarning,
-                        type = ToastType.Warning
-                    )
-                }
+    val responseAPIWarning = stringResource(id = R.string.setting_provider_page_response_api_warning)
+    ProviderToggleCard(
+        title = stringResource(id = R.string.setting_provider_page_response_api),
+        checked = provider.useResponseApi,
+        supportingText = if (provider.baseUrl.toHttpUrlOrNull()?.host != "api.openai.com") responseAPIWarning else null,
+        onCheckedChange = {
+            onEdit(provider.copy(useResponseApi = it, enabled = true, balanceOption = BalanceOption()))
+            if (it && provider.baseUrl.toHttpUrlOrNull()?.host != "api.openai.com") {
+                toaster.show(
+                    message = responseAPIWarning,
+                    type = ToastType.Warning
+                )
             }
-        )
-    }
+        }
+    )
 }
 
 @Composable
@@ -326,69 +452,38 @@ private fun ColumnScope.ProviderConfigureClaude(
     provider: ProviderSetting.Claude,
     onEdit: (provider: ProviderSetting.Claude) -> Unit
 ) {
-    provider.description()
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(stringResource(id = R.string.setting_provider_page_enable), modifier = Modifier.weight(1f))
-        Checkbox(
-            checked = provider.enabled,
-            onCheckedChange = {
-                onEdit(provider.copy(enabled = it))
-            }
-        )
-    }
-
-    OutlinedTextField(
+    ProviderField(
+        title = stringResource(id = R.string.setting_provider_page_name),
         value = provider.name,
         onValueChange = {
-            onEdit(provider.copy(name = it.trim()))
-        },
-        label = {
-            Text(stringResource(id = R.string.setting_provider_page_name))
-        },
-        modifier = Modifier.fillMaxWidth(),
-        maxLines = 3,
+            onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
+        }
     )
-
-    OutlinedTextField(
+    ProviderField(
+        title = stringResource(id = R.string.setting_provider_page_api_key),
         value = provider.apiKey,
         onValueChange = {
-            onEdit(provider.copy(apiKey = it.trim()))
+            onEdit(provider.copy(apiKey = it.trim(), enabled = true, balanceOption = BalanceOption()))
         },
-        label = {
-            Text(stringResource(id = R.string.setting_provider_page_api_key))
-        },
-        modifier = Modifier.fillMaxWidth(),
-        maxLines = 3,
+        singleLine = false,
+        minLines = 1,
+        maxLines = 4
     )
-
-    OutlinedTextField(
+    ProviderField(
+        title = stringResource(id = R.string.setting_provider_page_api_base_url),
         value = provider.baseUrl,
         onValueChange = {
-            onEdit(provider.copy(baseUrl = it.trim()))
+            onEdit(provider.copy(baseUrl = it.trim(), enabled = true, balanceOption = BalanceOption()))
         },
-        label = {
-            Text(stringResource(id = R.string.setting_provider_page_api_base_url))
-        },
-        modifier = Modifier.fillMaxWidth()
+        keyboardType = KeyboardType.Uri
     )
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            stringResource(id = R.string.setting_provider_page_claude_prompt_caching),
-            modifier = Modifier.weight(1f)
-        )
-        Checkbox(
-            checked = provider.promptCaching,
-            onCheckedChange = {
-                onEdit(provider.copy(promptCaching = it))
-            }
-        )
-    }
+    ProviderToggleCard(
+        title = stringResource(id = R.string.setting_provider_page_claude_prompt_caching),
+        checked = provider.promptCaching,
+        onCheckedChange = {
+            onEdit(provider.copy(promptCaching = it, enabled = true, balanceOption = BalanceOption()))
+        }
+    )
 }
 
 @Composable
@@ -396,116 +491,75 @@ private fun ColumnScope.ProviderConfigureGoogle(
     provider: ProviderSetting.Google,
     onEdit: (provider: ProviderSetting.Google) -> Unit
 ) {
-    provider.description()
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(stringResource(id = R.string.setting_provider_page_enable), modifier = Modifier.weight(1f))
-        Checkbox(
-            checked = provider.enabled,
-            onCheckedChange = {
-                onEdit(provider.copy(enabled = it))
-            }
-        )
-    }
-
-    OutlinedTextField(
+    ProviderField(
+        title = stringResource(id = R.string.setting_provider_page_name),
         value = provider.name,
         onValueChange = {
-            onEdit(provider.copy(name = it.trim()))
-        },
-        label = {
-            Text(stringResource(id = R.string.setting_provider_page_name))
-        },
-        modifier = Modifier.fillMaxWidth()
+            onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
+        }
+    )
+    ProviderToggleCard(
+        title = stringResource(id = R.string.setting_provider_page_vertex_ai),
+        checked = provider.vertexAI,
+        onCheckedChange = {
+            onEdit(provider.copy(vertexAI = it, enabled = true, balanceOption = BalanceOption()))
+        }
     )
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(stringResource(id = R.string.setting_provider_page_vertex_ai), modifier = Modifier.weight(1f))
-        Checkbox(
-            checked = provider.vertexAI,
-            onCheckedChange = {
-                onEdit(provider.copy(vertexAI = it))
-            }
-        )
-    }
-
     if (!provider.vertexAI) {
-        OutlinedTextField(
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_api_key),
             value = provider.apiKey,
             onValueChange = {
-                onEdit(provider.copy(apiKey = it.trim()))
+                onEdit(provider.copy(apiKey = it.trim(), enabled = true, balanceOption = BalanceOption()))
             },
-            label = {
-                Text(stringResource(id = R.string.setting_provider_page_api_key))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            maxLines = 3,
+            singleLine = false,
+            minLines = 1,
+            maxLines = 4
         )
 
-        OutlinedTextField(
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_api_base_url),
             value = provider.baseUrl,
             onValueChange = {
-                onEdit(provider.copy(baseUrl = it.trim()))
+                onEdit(provider.copy(baseUrl = it.trim(), enabled = true, balanceOption = BalanceOption()))
             },
-            label = {
-                Text(stringResource(id = R.string.setting_provider_page_api_base_url))
-            },
-            modifier = Modifier.fillMaxWidth(),
+            keyboardType = KeyboardType.Uri,
             isError = !provider.baseUrl.endsWith("/v1beta"),
-            supportingText = if (!provider.baseUrl.endsWith("/v1beta")) {
-                {
-                    Text("The base URL usually ends with `/v1beta`")
-                }
-            } else null
+            supportingText = if (!provider.baseUrl.endsWith("/v1beta")) "The base URL usually ends with `/v1beta`" else null
         )
     } else {
-        OutlinedTextField(
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_service_account_email),
             value = provider.serviceAccountEmail,
             onValueChange = {
-                onEdit(provider.copy(serviceAccountEmail = it.trim()))
-            },
-            label = {
-                Text(stringResource(id = R.string.setting_provider_page_service_account_email))
-            },
-            modifier = Modifier.fillMaxWidth()
+                onEdit(provider.copy(serviceAccountEmail = it.trim(), enabled = true, balanceOption = BalanceOption()))
+            }
         )
-        OutlinedTextField(
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_private_key),
             value = provider.privateKey,
             onValueChange = {
-                onEdit(provider.copy(privateKey = it.trim()))
+                onEdit(provider.copy(privateKey = it.trim(), enabled = true, balanceOption = BalanceOption()))
             },
-            label = {
-                Text(stringResource(id = R.string.setting_provider_page_private_key))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            maxLines = 6,
-            minLines = 3,
-            textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = JetbrainsMono),
+            singleLine = false,
+            minLines = 4,
+            maxLines = 8,
+            textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = JetbrainsMono)
         )
-        OutlinedTextField(
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_location),
             value = provider.location,
             onValueChange = {
-                onEdit(provider.copy(location = it.trim()))
-            },
-            label = {
-                // https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations#available-regions
-                Text(stringResource(id = R.string.setting_provider_page_location))
-            },
-            modifier = Modifier.fillMaxWidth()
+                onEdit(provider.copy(location = it.trim(), enabled = true, balanceOption = BalanceOption()))
+            }
         )
-        OutlinedTextField(
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_project_id),
             value = provider.projectId,
             onValueChange = {
-                onEdit(provider.copy(projectId = it.trim()))
-            },
-            label = {
-                Text(stringResource(id = R.string.setting_provider_page_project_id))
-            },
-            modifier = Modifier.fillMaxWidth()
+                onEdit(provider.copy(projectId = it.trim(), enabled = true, balanceOption = BalanceOption()))
+            }
         )
     }
 }

@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -86,6 +87,10 @@ import me.rerere.rikkahub.ui.components.ui.Favicon
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.theme.extendColors
+import me.rerere.rikkahub.ui.theme.ZionDivider
+import me.rerere.rikkahub.ui.theme.ZionSurface
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionUserMessageBubble
 import me.rerere.rikkahub.utils.JsonInstant
 import me.rerere.rikkahub.utils.base64Encode
 import me.rerere.rikkahub.utils.openUrl
@@ -263,9 +268,10 @@ private fun MessagePartsBlock(
 ) {
     val context = LocalContext.current
     val contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
-    val messageTextColor = Color(0xFF1C1C1E)
-    val userBubbleColor = Color(0xFFEEEEEE)
-    val assistantBubbleColor = Color.White
+    val messageTextColor = ZionTextPrimary
+    val userBubbleColor = ZionUserMessageBubble
+    val assistantBubbleColor = ZionSurface
+    val assistantBubbleBorder = ZionDivider.copy(alpha = 0.92f)
 
     // 消息输出HapticFeedback
     val hapticFeedback = LocalHapticFeedback.current
@@ -364,26 +370,17 @@ private fun MessagePartsBlock(
                                     )
                                 }
                             } else {
-                                if (settings.displaySetting.showAssistantBubble) {
-                                    MessageTextBubble(
-                                        modifier = Modifier.animateContentSize(),
-                                        containerColor = assistantBubbleColor,
-                                        contentColor = messageTextColor,
-                                    ) {
-                                        MarkdownBlock(
-                                            content = renderedText,
-                                            onClickCitation = handleClickCitation,
-                                            style = LocalTextStyle.current.copy(color = messageTextColor)
-                                        )
-                                    }
-                                } else {
+                                MessageTextBubble(
+                                    modifier = Modifier.animateContentSize(),
+                                    containerColor = assistantBubbleColor,
+                                    contentColor = messageTextColor,
+                                    borderColor = assistantBubbleBorder,
+                                ) {
                                     MarkdownBlock(
                                         content = renderedText,
                                         onClickCitation = handleClickCitation,
                                         style = LocalTextStyle.current.copy(color = messageTextColor),
-                                        modifier = Modifier
-                                            .animateContentSize()
-                                            .widthIn(max = 680.dp)
+                                        modifier = Modifier.animateContentSize()
                                     )
                                 }
                             }
@@ -589,6 +586,7 @@ private fun MessageTextBubble(
     modifier: Modifier = Modifier,
     containerColor: Color,
     contentColor: Color,
+    borderColor: Color? = null,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
@@ -597,6 +595,7 @@ private fun MessageTextBubble(
             modifier = modifier.widthIn(max = 680.dp),
             shape = RoundedCornerShape(18.dp),
             color = containerColor,
+            border = borderColor?.let { BorderStroke(1.dp, it) },
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
             onClick = onClick,
@@ -614,6 +613,7 @@ private fun MessageTextBubble(
             modifier = modifier.widthIn(max = 680.dp),
             shape = RoundedCornerShape(18.dp),
             color = containerColor,
+            border = borderColor?.let { BorderStroke(1.dp, it) },
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
         ) {

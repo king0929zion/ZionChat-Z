@@ -42,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -217,7 +218,7 @@ fun MarkdownBlock(
     val (preprocessed, astTree) = data
     ProvideTextStyle(style) {
         Column(
-            modifier = modifier.padding(start = 4.dp)
+            modifier = modifier
         ) {
             astTree.children.fastForEach { child ->
                 MarkdownNode(
@@ -559,6 +560,7 @@ private fun MarkdownNode(
             Text(
                 text = text,
                 modifier = modifier,
+                color = LocalTextStyle.current.color.takeOrElse { MaterialTheme.colorScheme.onSurface }
             )
         }
 
@@ -757,6 +759,7 @@ private fun Paragraph(
             softWrap = true,
             overflow = TextOverflow.Visible,
             style = LocalTextStyle.current.copy(
+                color = LocalTextStyle.current.color.takeOrElse { MaterialTheme.colorScheme.onSurface },
                 lineHeight = if (hasInlineMath && enableLatexRendering) TextUnit.Unspecified else LocalTextStyle.current.lineHeight
             )
         )
@@ -846,9 +849,15 @@ private fun AnnotatedString.Builder.appendMarkdownNodeContent(
                     it
                 }.replace(BREAK_LINE_REGEX, "\n")
             }
-            append(
-                text = text,
-            )
+            withStyle(
+                SpanStyle(
+                    color = style.color.takeOrElse { colorScheme.onSurface }
+                )
+            ) {
+                append(
+                    text = text,
+                )
+            }
         }
 
         node.type == MarkdownElementTypes.EMPH -> {

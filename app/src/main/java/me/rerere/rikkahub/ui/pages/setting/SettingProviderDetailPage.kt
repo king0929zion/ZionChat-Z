@@ -42,6 +42,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
@@ -93,6 +94,7 @@ import com.dokar.sonner.ToastType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.rerere.ai.provider.BuiltInTools
+import me.rerere.ai.provider.BalanceOption
 import me.rerere.ai.provider.Modality
 import me.rerere.ai.provider.Model
 import me.rerere.ai.provider.ModelAbility
@@ -107,7 +109,6 @@ import me.rerere.rikkahub.ui.components.ai.ModelAbilityTag
 import me.rerere.rikkahub.ui.components.ai.ModelModalityTag
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.ai.ModelTypeTag
-import me.rerere.rikkahub.ui.components.ai.ProviderBalanceText
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
@@ -123,10 +124,10 @@ import me.rerere.rikkahub.ui.pages.assistant.detail.CustomBodies
 import me.rerere.rikkahub.ui.pages.assistant.detail.CustomHeaders
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConfigure
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConnectionTester
-import me.rerere.rikkahub.ui.pages.setting.components.SettingProviderBalanceOption
 import me.rerere.rikkahub.ui.pages.setting.components.isUsingDefaultBaseUrl
 import me.rerere.rikkahub.ui.pages.setting.components.resetBaseUrlToDefault
 import me.rerere.rikkahub.ui.theme.extendColors
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
 import me.rerere.rikkahub.utils.UiState
 import me.rerere.rikkahub.utils.plus
 import org.koin.androidx.compose.koinViewModel
@@ -134,6 +135,13 @@ import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.uuid.Uuid
+
+private fun ProviderSetting.withAlwaysEnabledDefaults(): ProviderSetting {
+    return copyProvider(
+        enabled = true,
+        balanceOption = BalanceOption()
+    )
+}
 
 @Composable
 fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
@@ -146,10 +154,11 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
     val context = LocalContext.current
 
     val onEdit = { newProvider: ProviderSetting ->
+        val normalizedProvider = newProvider.withAlwaysEnabledDefaults()
         val newSettings = settings.copy(
             providers = settings.providers.map {
-                if (newProvider.id == it.id) {
-                    newProvider
+                if (normalizedProvider.id == it.id) {
+                    normalizedProvider
                 } else {
                     it
                 }
@@ -251,7 +260,7 @@ private fun SettingProviderConfigPage(
     onEdit: (ProviderSetting) -> Unit,
     onDelete: () -> Unit
 ) {
-    var internalProvider by remember(provider) { mutableStateOf(provider) }
+    var internalProvider by remember(provider) { mutableStateOf(provider.withAlwaysEnabledDefaults()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -265,18 +274,9 @@ private fun SettingProviderConfigPage(
         ProviderConfigure(
             provider = internalProvider,
             onEdit = {
-                internalProvider = it
+                internalProvider = it.withAlwaysEnabledDefaults()
             }
         )
-
-        if (internalProvider is ProviderSetting.OpenAI) {
-            SettingProviderBalanceOption(
-                provider = internalProvider,
-                balanceOption = internalProvider.balanceOption,
-                onEdit = { internalProvider = internalProvider.copyProvider(balanceOption = it) }
-            )
-            ProviderBalanceText(providerSetting = provider, style = MaterialTheme.typography.labelSmall)
-        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -301,7 +301,7 @@ private fun SettingProviderConfigPage(
 
             IconButton(
                 onClick = {
-                    internalProvider = internalProvider.resetBaseUrlToDefault()
+                    internalProvider = internalProvider.resetBaseUrlToDefault().withAlwaysEnabledDefaults()
                 },
                 enabled = !internalProvider.isUsingDefaultBaseUrl(),
             ) {
@@ -313,15 +313,19 @@ private fun SettingProviderConfigPage(
 
             Button(
                 onClick = {
-                    onEdit(internalProvider)
-                }
+                    onEdit(internalProvider.withAlwaysEnabledDefaults())
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ZionAccentNeutral,
+                    contentColor = Color.White
+                )
             ) {
                 Text(stringResource(R.string.setting_provider_page_save))
             }
         }
 
         // 硅基流动图标
-        if (provider is ProviderSetting.OpenAI && provider.baseUrl.contains("siliconflow.cn")) {
+        if (internalProvider is ProviderSetting.OpenAI && internalProvider.baseUrl.contains("siliconflow.cn")) {
             SiliconFlowPowerByIcon(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
