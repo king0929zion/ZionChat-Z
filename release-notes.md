@@ -1,3 +1,8 @@
+## v0.0.7
+
+- 修复 `v0.0.6` 自动签名构建暴露的编译问题：纠正 Provider 配置页的 `KeyboardOptions` 导入和详情页 OpenAI Provider 的 smart cast，用新的构建版本恢复自动签名 Release。
+- 延续这轮 ZionChat 收口：聊天消息继续固定为更稳定的 Zion 气泡显示，Provider 配置页保留新的大圆角椭圆输入体系、移除 `enable` 和余额入口，并让已配置 Provider 默认视为启用。
+
 ## v0.0.6
 
 - 修复聊天页消息仍然“看不见”的显示问题：助手和用户消息统一回到更接近 ZionChat 的显式消息气泡，补上消息边界与更稳定的正文颜色传递，避免 markdown 子节点继续把颜色冲掉导致白底白字或对比度过低。

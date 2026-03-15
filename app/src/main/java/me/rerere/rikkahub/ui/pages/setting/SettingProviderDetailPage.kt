@@ -325,7 +325,8 @@ private fun SettingProviderConfigPage(
         }
 
         // 硅基流动图标
-        if (internalProvider is ProviderSetting.OpenAI && internalProvider.baseUrl.contains("siliconflow.cn")) {
+        val openAiProvider = internalProvider as? ProviderSetting.OpenAI
+        if (openAiProvider != null && openAiProvider.baseUrl.contains("siliconflow.cn")) {
             SiliconFlowPowerByIcon(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
