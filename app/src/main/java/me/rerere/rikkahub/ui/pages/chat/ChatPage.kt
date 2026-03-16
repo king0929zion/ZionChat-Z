@@ -506,7 +506,7 @@ private fun TopBar(
                         color = ZionTextPrimary,
                         fontFamily = SourceSans3,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         modifier = Modifier.padding(horizontal = 22.dp, vertical = 10.dp)
                     )
                 }

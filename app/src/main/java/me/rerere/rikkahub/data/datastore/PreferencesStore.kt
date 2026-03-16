@@ -151,20 +151,20 @@ class SettingsStore(
                     JsonInstant.decodeFromString(it)
                 } ?: emptyList(),
                 chatModelId = preferences[SELECT_MODEL]?.let { Uuid.parse(it) }
-                    ?: DEFAULT_UNSET_MODEL_ID,
+                    ?: DEFAULT_AUTO_MODEL_ID,
                 titleModelId = preferences[TITLE_MODEL]?.let { Uuid.parse(it) }
-                    ?: DEFAULT_UNSET_MODEL_ID,
+                    ?: DEFAULT_AUTO_MODEL_ID,
                 translateModeId = preferences[TRANSLATE_MODEL]?.let { Uuid.parse(it) }
-                    ?: DEFAULT_UNSET_MODEL_ID,
+                    ?: DEFAULT_AUTO_MODEL_ID,
                 suggestionModelId = preferences[SUGGESTION_MODEL]?.let { Uuid.parse(it) }
-                    ?: DEFAULT_UNSET_MODEL_ID,
+                    ?: DEFAULT_AUTO_MODEL_ID,
                 imageGenerationModelId = preferences[IMAGE_GENERATION_MODEL]?.let { Uuid.parse(it) } ?: Uuid.random(),
                 titlePrompt = preferences[TITLE_PROMPT] ?: DEFAULT_TITLE_PROMPT,
                 translatePrompt = preferences[TRANSLATION_PROMPT] ?: DEFAULT_TRANSLATION_PROMPT,
                 suggestionPrompt = preferences[SUGGESTION_PROMPT] ?: DEFAULT_SUGGESTION_PROMPT,
                 ocrModelId = preferences[OCR_MODEL]?.let { Uuid.parse(it) } ?: Uuid.random(),
                 ocrPrompt = preferences[OCR_PROMPT] ?: DEFAULT_OCR_PROMPT,
-                compressModelId = preferences[COMPRESS_MODEL]?.let { Uuid.parse(it) } ?: DEFAULT_UNSET_MODEL_ID,
+                compressModelId = preferences[COMPRESS_MODEL]?.let { Uuid.parse(it) } ?: DEFAULT_AUTO_MODEL_ID,
                 compressPrompt = preferences[COMPRESS_PROMPT] ?: DEFAULT_COMPRESS_PROMPT,
                 assistantId = preferences[SELECT_ASSISTANT]?.let { Uuid.parse(it) }
                     ?: DEFAULT_ASSISTANT_ID,
@@ -217,10 +217,7 @@ class SettingsStore(
             )
         }
         .map {
-            var providers = it.providers
-                .filterNot(::isRemovedBuiltInProvider)
-                .ifEmpty { DEFAULT_PROVIDERS }
-                .toMutableList()
+            var providers = it.providers.ifEmpty { DEFAULT_PROVIDERS }.toMutableList()
             DEFAULT_PROVIDERS.forEach { defaultProvider ->
                 if (providers.none { it.id == defaultProvider.id }) {
                     providers.add(defaultProvider.copyProvider())
@@ -248,22 +245,7 @@ class SettingsStore(
                     ttsProviders.add(defaultTTSProvider.copyProvider())
                 }
             }
-            val validModelIds = providers.flatMap { provider -> provider.models }.map { model -> model.id }.toSet()
-            fun normalizeModelId(modelId: Uuid): Uuid {
-                return if (modelId == LEGACY_AUTO_MODEL_ID || modelId !in validModelIds) {
-                    DEFAULT_UNSET_MODEL_ID
-                } else {
-                    modelId
-                }
-            }
             it.copy(
-                chatModelId = normalizeModelId(it.chatModelId),
-                titleModelId = normalizeModelId(it.titleModelId),
-                translateModeId = normalizeModelId(it.translateModeId),
-                suggestionModelId = normalizeModelId(it.suggestionModelId),
-                imageGenerationModelId = normalizeModelId(it.imageGenerationModelId),
-                ocrModelId = normalizeModelId(it.ocrModelId),
-                compressModelId = normalizeModelId(it.compressModelId),
                 providers = providers,
                 assistants = assistants,
                 ttsProviders = ttsProviders
@@ -349,9 +331,7 @@ class SettingsStore(
             preferences[COMPRESS_MODEL] = settings.compressModelId.toString()
             preferences[COMPRESS_PROMPT] = settings.compressPrompt
 
-            preferences[PROVIDERS] = JsonInstant.encodeToString(
-                settings.providers.filterNot(::isRemovedBuiltInProvider)
-            )
+            preferences[PROVIDERS] = JsonInstant.encodeToString(settings.providers)
 
             preferences[ASSISTANTS] = JsonInstant.encodeToString(settings.assistants)
             preferences[SELECT_ASSISTANT] = settings.assistantId.toString()
@@ -465,17 +445,17 @@ data class Settings(
     val displaySetting: DisplaySetting = DisplaySetting(),
     val enableWebSearch: Boolean = false,
     val favoriteModels: List<Uuid> = emptyList(),
-    val chatModelId: Uuid = DEFAULT_UNSET_MODEL_ID,
-    val titleModelId: Uuid = DEFAULT_UNSET_MODEL_ID,
-    val imageGenerationModelId: Uuid = DEFAULT_UNSET_MODEL_ID,
+    val chatModelId: Uuid = Uuid.random(),
+    val titleModelId: Uuid = Uuid.random(),
+    val imageGenerationModelId: Uuid = Uuid.random(),
     val titlePrompt: String = DEFAULT_TITLE_PROMPT,
-    val translateModeId: Uuid = DEFAULT_UNSET_MODEL_ID,
+    val translateModeId: Uuid = Uuid.random(),
     val translatePrompt: String = DEFAULT_TRANSLATION_PROMPT,
-    val suggestionModelId: Uuid = DEFAULT_UNSET_MODEL_ID,
+    val suggestionModelId: Uuid = Uuid.random(),
     val suggestionPrompt: String = DEFAULT_SUGGESTION_PROMPT,
-    val ocrModelId: Uuid = DEFAULT_UNSET_MODEL_ID,
+    val ocrModelId: Uuid = Uuid.random(),
     val ocrPrompt: String = DEFAULT_OCR_PROMPT,
-    val compressModelId: Uuid = DEFAULT_UNSET_MODEL_ID,
+    val compressModelId: Uuid = Uuid.random(),
     val compressPrompt: String = DEFAULT_COMPRESS_PROMPT,
     val assistantId: Uuid = DEFAULT_ASSISTANT_ID,
     val providers: List<ProviderSetting> = DEFAULT_PROVIDERS,

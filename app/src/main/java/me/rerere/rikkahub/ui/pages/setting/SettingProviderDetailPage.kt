@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +28,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -50,8 +54,11 @@ import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -106,6 +113,7 @@ import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.ShareSheet
+import me.rerere.rikkahub.ui.components.ui.SiliconFlowPowerByIcon
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
 import me.rerere.rikkahub.ui.components.ui.rememberShareSheetState
@@ -117,15 +125,9 @@ import me.rerere.rikkahub.ui.pages.assistant.detail.CustomHeaders
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConfigure
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConnectionTester
 import me.rerere.rikkahub.ui.pages.setting.components.isUsingDefaultBaseUrl
-import me.rerere.rikkahub.ui.pages.setting.components.normalizeResponseApiSelection
 import me.rerere.rikkahub.ui.pages.setting.components.resetBaseUrlToDefault
-import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.extendColors
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
-import me.rerere.rikkahub.ui.theme.ZionGrayLighter
-import me.rerere.rikkahub.ui.theme.ZionSectionItem
-import me.rerere.rikkahub.ui.theme.ZionTextPrimary
-import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.UiState
 import me.rerere.rikkahub.utils.plus
 import org.koin.androidx.compose.koinViewModel
@@ -135,14 +137,10 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.uuid.Uuid
 
 private fun ProviderSetting.withAlwaysEnabledDefaults(): ProviderSetting {
-    val normalizedProvider = copyProvider(
+    return copyProvider(
         enabled = true,
         balanceOption = BalanceOption()
     )
-    return when (normalizedProvider) {
-        is ProviderSetting.OpenAI -> normalizedProvider.normalizeResponseApiSelection()
-        else -> normalizedProvider
-    }
 }
 
 @Composable
@@ -192,28 +190,40 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
             }
         }
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = PageTopBarContentTopPadding + 12.dp)
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ProviderDetailTabs(
-                selectedIndex = pager.currentPage,
-                onSelect = { index ->
-                    scope.launch {
-                        pager.animateScrollToPage(index)
-                    }
+        Scaffold(
+            containerColor = Color.Transparent,
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = pager.currentPage == 0,
+                        label = { Text(stringResource(id = R.string.setting_provider_page_configuration)) },
+                        icon = { Icon(HugeIcons.Tools, null) },
+                        onClick = {
+                            scope.launch {
+                                pager.animateScrollToPage(0)
+                            }
+                        }
+                    )
+                    NavigationBarItem(
+                        selected = pager.currentPage == 1,
+                        label = { Text(stringResource(id = R.string.setting_provider_page_models)) },
+                        icon = { Icon(HugeIcons.Package01, null) },
+                        onClick = {
+                            scope.launch {
+                                pager.animateScrollToPage(1)
+                            }
+                        }
+                    )
                 }
-            )
-
+            }
+        ) { innerPadding ->
             HorizontalPager(
                 state = pager,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
+                    .fillMaxSize()
+                    .padding(top = PageTopBarContentTopPadding)
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
             ) { page ->
                 when (page) {
                     0 -> {
@@ -239,41 +249,6 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProviderDetailTabs(
-    selectedIndex: Int,
-    onSelect: (Int) -> Unit,
-) {
-    val labels = listOf(
-        stringResource(id = R.string.setting_provider_page_configuration),
-        stringResource(id = R.string.setting_provider_page_models)
-    )
-    SingleChoiceSegmentedButtonRow(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        labels.forEachIndexed { index, label ->
-            SegmentedButton(
-                selected = selectedIndex == index,
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = labels.size),
-                onClick = { onSelect(index) },
-                colors = SegmentedButtonDefaults.colors(
-                    activeContainerColor = ZionAccentNeutral,
-                    activeContentColor = Color.White,
-                    inactiveContainerColor = ZionGrayLighter,
-                    inactiveContentColor = ZionTextPrimary,
-                    inactiveBorderColor = ZionGrayLighter,
-                    activeBorderColor = ZionAccentNeutral,
-                )
-            ) {
-                Text(
-                    text = label,
-                    fontFamily = SourceSans3
-                )
             }
         }
     }
@@ -347,6 +322,16 @@ private fun SettingProviderConfigPage(
             ) {
                 Text(stringResource(R.string.setting_provider_page_save))
             }
+        }
+
+        // 硅基流动图标
+        val openAiProvider = internalProvider as? ProviderSetting.OpenAI
+        if (openAiProvider != null && openAiProvider.baseUrl.contains("siliconflow.cn")) {
+            SiliconFlowPowerByIcon(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 16.dp)
+            )
         }
     }
 

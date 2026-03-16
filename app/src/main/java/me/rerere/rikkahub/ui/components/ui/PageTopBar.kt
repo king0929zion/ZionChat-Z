@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
-import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
@@ -62,10 +61,10 @@ fun Modifier.settingsBottomInsets(): Modifier =
 fun HeaderTranslucentBackdrop(
     modifier: Modifier = Modifier,
     containerColor: Color = Color(0xFFFFFFFF),
-    containerAlpha: Float = 0.76f,
+    containerAlpha: Float = 0.82f,
 ) {
-    val topColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.56f, 0.84f))
-    val midColor = containerColor.copy(alpha = (containerAlpha * 0.54f).coerceIn(0.24f, 0.62f))
+    val topColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
+    val midColor = containerColor.copy(alpha = (containerAlpha * 0.66f).coerceIn(0.42f, 0.76f))
 
     Box(modifier = modifier) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -86,8 +85,8 @@ fun HeaderTranslucentBackdrop(
                 .background(
                     Brush.verticalGradient(
                         0.0f to topColor,
-                        0.44f to topColor,
-                        0.7f to midColor,
+                        0.52f to topColor,
+                        0.78f to midColor,
                         1.0f to Color.Transparent
                     )
                 )
@@ -99,10 +98,10 @@ fun HeaderTranslucentBackdrop(
 fun FooterTranslucentBackdrop(
     modifier: Modifier = Modifier,
     containerColor: Color = Color(0xFFFFFFFF),
-    containerAlpha: Float = 0.76f,
+    containerAlpha: Float = 0.82f,
 ) {
-    val bottomColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.56f, 0.84f))
-    val midColor = containerColor.copy(alpha = (containerAlpha * 0.54f).coerceIn(0.24f, 0.62f))
+    val bottomColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
+    val midColor = containerColor.copy(alpha = (containerAlpha * 0.66f).coerceIn(0.42f, 0.76f))
 
     Box(modifier = modifier) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -164,7 +163,7 @@ fun PageTopBar(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = Color(0xFFFFFFFF),
-    containerAlpha: Float = 0.78f,
+    containerAlpha: Float = 0.92f,
     fadeHeight: Dp = 0.dp,
     trailing: (@Composable () -> Unit)? = null,
 ) {
@@ -226,7 +225,7 @@ fun SettingsPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ZionBackground)
+            .background(Color(0xFFFFFFFF))
     ) {
         content()
         PageTopBar(

@@ -36,19 +36,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
-import me.rerere.rikkahub.ui.theme.ZionBackground
-import me.rerere.rikkahub.ui.theme.ZionGrayLight
-import me.rerere.rikkahub.ui.theme.ZionSectionItem
-import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 
 private val CardGroupCorner = 26.dp
 private val CardGroupItemSpacing = 2.dp
-private val SettingsPageBackgroundColor = ZionBackground
-private val SettingsItemContainerColor = ZionSectionItem
-private val SettingsItemPressedColor = ZionGrayLight
-private val SettingsGroupTitleColor = ZionTextSecondary
+private val SettingsPageBackgroundColor = Color(0xFFFFFFFF)
+private val SettingsItemContainerColor = Color(0xFFF1F1F1)
+private val SettingsItemPressedColor = Color(0xFFE5E5E5)
+private val SettingsGroupTitleColor = Color(0xFF6B6B6B)
 
 data class CardGroupItem(
     val onClick: (() -> Unit)?,
@@ -236,7 +232,7 @@ fun CardGroup(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(CardGroupCorner))
-                .background(ZionSurface)
+                .background(SettingsPageBackgroundColor)
         ) {
             Column {
                 val count = scope.items.size

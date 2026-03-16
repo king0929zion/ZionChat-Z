@@ -136,46 +136,39 @@ fun ChatMessage(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         if (!message.parts.isEmptyUIMessage()) {
-            when (message.role) {
-                MessageRole.ASSISTANT -> {
-                    ChatMessageAssistantAvatar(
-                        message = message,
-                        model = model,
-                        assistant = assistant,
-                        loading = loading,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                MessageRole.USER -> {
-                    ChatMessageUserAvatar(
-                        message = message,
-                        avatar = settings.userAvatar,
-                        nickname = settings.userNickname,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                else -> Unit
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+            ) {
+                ChatMessageAssistantAvatar(
+                    message = message,
+                    model = model,
+                    assistant = assistant,
+                    loading = loading,
+                    modifier = Modifier.weight(1f)
+                )
+                ChatMessageUserAvatar(
+                    message = message,
+                    avatar = settings.userAvatar,
+                    nickname = settings.userNickname,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
         ProvideTextStyle(textStyle) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = if (message.role == MessageRole.USER) Alignment.CenterEnd else Alignment.CenterStart
-            ) {
-                MessagePartsBlock(
-                    assistant = assistant,
-                    role = message.role,
-                    model = model,
-                    parts = message.parts,
-                    annotations = message.annotations,
-                    loading = loading,
-                    onToolApproval = onToolApproval,
-                    onToolAnswer = onToolAnswer,
-                    onUserMessageClick = if (message.role == MessageRole.USER) onEdit else null,
-                )
-            }
+            MessagePartsBlock(
+                assistant = assistant,
+                role = message.role,
+                parts = message.parts,
+                annotations = message.annotations,
+                loading = loading,
+                model = model,
+                onToolApproval = onToolApproval,
+                onToolAnswer = onToolAnswer,
+                onUserMessageClick = if (message.role == MessageRole.USER) onEdit else null,
+            )
 
             message.translation?.let { translation ->
                 CollapsibleTranslationText(

@@ -265,17 +265,13 @@ private fun ChatListNormal(
 
         LazyColumn(
             state = state,
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                top = innerPadding.calculateTopPadding() + 12.dp,
-                end = 16.dp,
-                bottom = innerPadding.calculateBottomPadding() + 32.dp,
-            ),
+            contentPadding = PaddingValues(16.dp) + PaddingValues(bottom = 32.dp + innerPadding.calculateBottomPadding()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState),
+                .hazeSource(state = hazeState)
+                .padding(top = innerPadding.calculateTopPadding()),
         ) {
             itemsIndexed(
                 items = conversation.messageNodes,
@@ -357,7 +353,7 @@ private fun ChatListNormal(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding()),
+                .padding(innerPadding),
         ) {
             // 错误消息卡片
             ErrorCardsDisplay(
@@ -558,7 +554,7 @@ private fun ChatListPreview(
 
     Column(
         modifier = Modifier
-            .padding(top = innerPadding.calculateTopPadding() + 12.dp)
+            .padding(top = innerPadding.calculateTopPadding())
             .fillMaxSize(),
     ) {
         // 搜索框

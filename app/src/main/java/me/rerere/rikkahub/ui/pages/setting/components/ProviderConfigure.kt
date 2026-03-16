@@ -29,11 +29,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dokar.sonner.ToastType
 import me.rerere.ai.provider.BalanceOption
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.DEFAULT_PROVIDERS
-import me.rerere.rikkahub.ui.theme.SourceSans3
+import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
@@ -131,27 +132,26 @@ private fun ProviderField(
         Text(
             text = title,
             color = ZionTextSecondary,
-            style = MaterialTheme.typography.labelMedium.copy(fontFamily = SourceSans3)
+            style = MaterialTheme.typography.labelMedium
         )
         TextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = if (singleLine) 58.dp else 112.dp),
+                .heightIn(min = if (singleLine) 56.dp else 112.dp),
             singleLine = singleLine,
             minLines = minLines,
             maxLines = maxLines,
             textStyle = resolvedTextStyle.copy(
                 color = ZionTextPrimary,
-                fontFamily = if (resolvedTextStyle.fontFamily == FontFamily.Default) SourceSans3 else resolvedTextStyle.fontFamily,
                 fontSize = 16.sp
             ),
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType,
                 imeAction = if (singleLine) ImeAction.Next else ImeAction.Default
             ),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(24.dp),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
                 unfocusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
@@ -169,7 +169,7 @@ private fun ProviderField(
                 Text(
                     text = title,
                     color = ZionTextSecondary,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = SourceSans3)
+                    style = MaterialTheme.typography.bodyMedium
                 )
             },
             supportingText = supportingText?.let {
@@ -177,7 +177,7 @@ private fun ProviderField(
                     Text(
                         text = it,
                         color = if (isError) Color(0xFFC62828) else ZionTextSecondary,
-                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = SourceSans3)
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -211,13 +211,13 @@ private fun ProviderToggleCard(
                 Text(
                     text = title,
                     color = ZionTextPrimary,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontFamily = SourceSans3)
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 if (!supportingText.isNullOrBlank()) {
                     Text(
                         text = supportingText,
                         color = ZionTextSecondary,
-                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = SourceSans3)
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -340,16 +340,6 @@ internal fun ProviderSetting.isUsingDefaultBaseUrl(): Boolean {
     return baseUrl == defaultBaseUrlForReset()
 }
 
-internal fun String.isOfficialOpenAIResponseBaseUrl(): Boolean {
-    val url = trim().trimEnd('/').toHttpUrlOrNull() ?: return false
-    return url.host.equals(OPENAI_OFFICIAL_HOST, ignoreCase = true) &&
-        url.encodedPath.normalizePath() == V1_SUFFIX
-}
-
-internal fun ProviderSetting.OpenAI.normalizeResponseApiSelection(): ProviderSetting.OpenAI {
-    return copy(useResponseApi = useResponseApi && baseUrl.isOfficialOpenAIResponseBaseUrl())
-}
-
 private fun String.convertToTargetBaseUrl(targetDefaultBaseUrl: String): String {
     val sourceUrl = this.toHttpUrlOrNull() ?: return this
     val sourceHost = sourceUrl.host.lowercase()
@@ -404,31 +394,19 @@ private fun ColumnScope.ProviderConfigureOpenAI(
     provider: ProviderSetting.OpenAI,
     onEdit: (provider: ProviderSetting.OpenAI) -> Unit
 ) {
-    val supportsResponseApi = provider.baseUrl.isOfficialOpenAIResponseBaseUrl()
+    val toaster = LocalToaster.current
     ProviderField(
         title = stringResource(id = R.string.setting_provider_page_name),
         value = provider.name,
         onValueChange = {
-            onEdit(
-                provider.copy(
-                    name = it.trim(),
-                    enabled = true,
-                    balanceOption = BalanceOption()
-                ).normalizeResponseApiSelection()
-            )
+            onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
         }
     )
     ProviderField(
         title = stringResource(id = R.string.setting_provider_page_api_key),
         value = provider.apiKey,
         onValueChange = {
-            onEdit(
-                provider.copy(
-                    apiKey = it.trim(),
-                    enabled = true,
-                    balanceOption = BalanceOption()
-                ).normalizeResponseApiSelection()
-            )
+            onEdit(provider.copy(apiKey = it.trim(), enabled = true, balanceOption = BalanceOption()))
         },
         singleLine = false,
         minLines = 1,
@@ -438,49 +416,35 @@ private fun ColumnScope.ProviderConfigureOpenAI(
         title = stringResource(id = R.string.setting_provider_page_api_base_url),
         value = provider.baseUrl,
         onValueChange = {
-            val newBaseUrl = it.trim()
-            onEdit(
-                provider.copy(
-                    baseUrl = newBaseUrl,
-                    useResponseApi = provider.useResponseApi && newBaseUrl.isOfficialOpenAIResponseBaseUrl(),
-                    enabled = true,
-                    balanceOption = BalanceOption()
-                )
-            )
+            onEdit(provider.copy(baseUrl = it.trim(), enabled = true, balanceOption = BalanceOption()))
         },
         keyboardType = KeyboardType.Uri
     )
-    if (!provider.useResponseApi || !supportsResponseApi) {
+    if (!provider.useResponseApi) {
         ProviderField(
             title = stringResource(id = R.string.setting_provider_page_api_path),
             value = provider.chatCompletionsPath,
             onValueChange = {
-                onEdit(
-                    provider.copy(
-                        chatCompletionsPath = it.trim(),
-                        enabled = true,
-                        balanceOption = BalanceOption()
-                    ).normalizeResponseApiSelection()
-                )
+                onEdit(provider.copy(chatCompletionsPath = it.trim(), enabled = true, balanceOption = BalanceOption()))
             },
             keyboardType = KeyboardType.Uri
         )
     }
-    if (supportsResponseApi) {
-        ProviderToggleCard(
-            title = stringResource(id = R.string.setting_provider_page_response_api),
-            checked = provider.useResponseApi,
-            onCheckedChange = {
-                onEdit(
-                    provider.copy(
-                        useResponseApi = it,
-                        enabled = true,
-                        balanceOption = BalanceOption()
-                    ).normalizeResponseApiSelection()
+    val responseAPIWarning = stringResource(id = R.string.setting_provider_page_response_api_warning)
+    ProviderToggleCard(
+        title = stringResource(id = R.string.setting_provider_page_response_api),
+        checked = provider.useResponseApi,
+        supportingText = if (provider.baseUrl.toHttpUrlOrNull()?.host != "api.openai.com") responseAPIWarning else null,
+        onCheckedChange = {
+            onEdit(provider.copy(useResponseApi = it, enabled = true, balanceOption = BalanceOption()))
+            if (it && provider.baseUrl.toHttpUrlOrNull()?.host != "api.openai.com") {
+                toaster.show(
+                    message = responseAPIWarning,
+                    type = ToastType.Warning
                 )
             }
-        )
-    }
+        }
+    )
 }
 
 @Composable
