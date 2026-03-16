@@ -19,7 +19,16 @@ import kotlin.uuid.Uuid
 
 val DEFAULT_AUTO_MODEL_ID = Uuid.parse("b7055fb4-39f9-4042-a88a-0d80ed76cf08")
 
-val DEFAULT_PROVIDERS = listOf(
+val REMOVED_DEFAULT_PROVIDER_IDS = setOf(
+    Uuid.parse("a8d2d463-e8c0-41f2-b89e-f5eb8e716cce"),
+    Uuid.parse("1b1395ed-b702-4aeb-8bc1-b681c4456953"),
+    Uuid.parse("da020a90-f7b3-4c29-b90e-c511a0630630"),
+    Uuid.parse("89e67540-32fe-4c62-9970-2e9aed9bd59d"),
+    Uuid.parse("da93779f-3956-48cc-82ef-67bb482eaaf7"),
+    Uuid.parse("ef5d149b-8e34-404b-818c-6ec242e5c3c5"),
+)
+
+private val ALL_DEFAULT_PROVIDERS = listOf(
     ProviderSetting.OpenAI(
         id = Uuid.parse("a8d2d463-e8c0-41f2-b89e-f5eb8e716cce"),
         name = "RikkaHub",
@@ -327,3 +336,7 @@ val DEFAULT_PROVIDERS = listOf(
         }
     ),
 )
+
+val DEFAULT_PROVIDERS = ALL_DEFAULT_PROVIDERS.filterNot { provider ->
+    provider.id in REMOVED_DEFAULT_PROVIDER_IDS
+}

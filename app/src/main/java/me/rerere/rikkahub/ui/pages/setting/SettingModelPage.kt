@@ -64,6 +64,7 @@ import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutralBorder
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
@@ -91,16 +92,6 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
     var promptTarget by remember { mutableStateOf<ModelSectionConfig?>(null) }
 
     val sections = listOf(
-        ModelSectionConfig(
-            key = "chat",
-            title = "CHAT",
-            required = true,
-            modelId = settings.chatModelId,
-            type = ModelType.CHAT,
-            onSelect = { model ->
-                vm.updateSettings(settings.copy(chatModelId = model?.id ?: settings.chatModelId))
-            }
-        ),
         ModelSectionConfig(
             key = "title",
             title = stringResource(R.string.setting_model_page_title_model).uppercase(),
@@ -209,7 +200,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
                 )
 
                 if (index != sections.lastIndex) {
-                    Box(modifier = Modifier.height(16.dp))
+                    Box(modifier = Modifier.height(14.dp))
                 }
             }
 
@@ -264,7 +255,7 @@ private fun DefaultModelSection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 8.dp, bottom = 8.dp),
+            .padding(start = 8.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -344,7 +335,7 @@ private fun DefaultModelSelectorSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Color(0xFFF1F1F1)
+        containerColor = ZionSectionItem
     ) {
         Column(
             modifier = Modifier
@@ -381,8 +372,8 @@ private fun DefaultModelSelectorSheet(
                     onClick = { onSelect(null) },
                     modifier = Modifier.align(Alignment.End)
                 ) {
-                Text(
-                        text = "Clear",
+                    Text(
+                        text = stringResource(R.string.history_page_clear),
                         color = ZionTextPrimary,
                         fontFamily = SourceSans3
                     )
@@ -405,7 +396,7 @@ private fun DefaultModelSelectorSheet(
                         fontWeight = FontWeight.Medium,
                         fontFamily = SourceSans3,
                         color = ZionTextSecondary,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.padding(start = 8.dp, bottom = 2.dp)
                     )
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -414,7 +405,7 @@ private fun DefaultModelSelectorSheet(
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(22.dp),
-                                color = if (selected) ZionAccentNeutral else Color.White,
+                                color = if (selected) ZionAccentNeutral else ZionGrayLight.copy(alpha = 0.35f),
                                 border = BorderStroke(
                                     width = 1.dp,
                                     color = if (selected) ZionAccentNeutral else ZionAccentNeutralBorder
@@ -485,7 +476,7 @@ private fun ModelPromptSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Color(0xFFF1F1F1)
+        containerColor = ZionSectionItem
     ) {
         Column(
             modifier = Modifier
@@ -531,8 +522,8 @@ private fun ModelPromptSheet(
                 maxLines = 12,
                 shape = RoundedCornerShape(18.dp),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = ZionGrayLighter,
+                    unfocusedContainerColor = ZionGrayLighter,
                     focusedIndicatorColor = ZionAccentNeutral,
                     unfocusedIndicatorColor = ZionAccentNeutralBorder,
                     focusedTextColor = ZionTextPrimary,

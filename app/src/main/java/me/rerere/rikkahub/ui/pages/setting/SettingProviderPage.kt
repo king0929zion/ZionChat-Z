@@ -64,6 +64,8 @@ import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConfigure
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
@@ -71,7 +73,7 @@ import me.rerere.rikkahub.utils.ImageUtils
 import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.Uuid
 
-private val ProviderCardGray = Color(0xFFF1F1F1)
+private val ProviderCardGray = ZionSectionItem
 
 private data class ProviderPresetSpec(
     val name: String,
@@ -276,7 +278,7 @@ private fun AddProviderSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Color.White
+        containerColor = ZionSectionItem
     ) {
         Column(
             modifier = Modifier
@@ -421,7 +423,7 @@ private fun ProviderOutlineBadge(label: String) {
     Box(
         modifier = Modifier
             .height(22.dp)
-            .background(ProviderCardGray, RoundedCornerShape(11.dp))
+            .background(ZionGrayLighter, RoundedCornerShape(11.dp))
             .border(1.dp, ZionTextPrimary, RoundedCornerShape(11.dp))
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center

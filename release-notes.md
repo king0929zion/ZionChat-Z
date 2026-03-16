@@ -1,3 +1,11 @@
+## v0.0.11
+
+- 侧边栏按 ZionChat 结构收口为 `New chat`、`Images`、`Statistics`，隐藏多余入口，底部头像卡片整块进入设置页。
+- 默认模型页改为 `Default Model`，移除独立 `Chat model` 配置卡片，收紧标题与选择器间距，并同步更新相关说明文案。
+- 内置 Provider 仅移除 `RikkaHub`、`AiHubMix`、`小马算力`、`JuheNext`、`302.AI`、`腾讯Hunyuan`，升级后会自动清理旧数据和失效模型引用。
+- `Response API` 仅对 OpenAI 官方 `api.openai.com` 显示，非官方地址会自动关闭该选项；同时移除额外提示文案和硅基流动的 powered-by 图。
+- 统一默认模型页、Provider 页、侧边栏和设置头部的 Zion 主灰，并修正聊天页列表与输入区 padding 叠加导致的内容遮挡问题。
+
 ## v0.0.10
 
 - 回退应用代码到上一个可用发布版 `v0.0.7` 的界面与交互状态，撤回 `v0.0.8/v0.0.9` 这轮默认模型、Provider、侧边栏和聊天可见性收口改动。

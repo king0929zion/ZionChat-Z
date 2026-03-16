@@ -21,23 +21,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,7 +46,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import kotlinx.coroutines.launch
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.Settings
@@ -63,8 +56,6 @@ import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.Navigator
-import me.rerere.rikkahub.ui.hooks.EditStateContent
-import me.rerere.rikkahub.ui.hooks.useEditState
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionAccentBlue
@@ -82,26 +73,14 @@ fun ChatDrawerContent(
     settings: Settings,
     current: Conversation,
 ) {
-    val scope = rememberCoroutineScope()
     val conversations = vm.conversations.collectAsLazyPagingItems()
     val conversationListState = rememberLazyListState()
     val conversationJobs by vm.conversationJobs.collectAsStateWithLifecycle(initialValue = emptyMap())
     val currentAssistant = settings.getCurrentAssistant()
 
-    val nicknameEditState = useEditState<String> { newNickname ->
-        vm.updateSettings(
-            settings.copy(
-                displaySetting = settings.displaySetting.copy(
-                    userNickname = newNickname
-                )
-            )
-        )
-    }
-
     var showMoveToAssistantSheet by remember { mutableStateOf(false) }
     var conversationToMove by remember { mutableStateOf<Conversation?>(null) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var showToolsMenu by remember { mutableStateOf(false) }
 
     ModalDrawerSheet(
         modifier = Modifier.width(280.dp),
@@ -123,67 +102,19 @@ fun ChatDrawerContent(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 SidebarMenuEntry(
-                    icon = ZionAppIcons.Assistant,
-                    label = stringResource(R.string.assistant_page_title),
-                    onClick = { navController.navigate(Screen.Assistant) }
+                    icon = ZionAppIcons.NewChat,
+                    label = "New chat",
+                    onClick = { navigateToChatPage(navController) }
                 )
                 SidebarMenuEntry(
-                    icon = ZionAppIcons.History,
-                    label = stringResource(R.string.chat_page_history),
-                    onClick = { navController.navigate(Screen.History) }
-                )
-                SidebarMenuEntry(
-                    icon = ZionAppIcons.Favorite,
-                    label = stringResource(R.string.favorite_page_title),
-                    onClick = { navController.navigate(Screen.Favorite) }
+                    icon = ZionAppIcons.Image,
+                    label = "Images",
+                    onClick = { navController.navigate(Screen.ImageGen) }
                 )
                 SidebarMenuEntry(
                     icon = ZionAppIcons.Stats,
-                    label = stringResource(R.string.stats_page_title),
+                    label = "Statistics",
                     onClick = { navController.navigate(Screen.Stats) }
-                )
-                Box {
-                    SidebarMenuEntry(
-                        icon = ZionAppIcons.Tool,
-                        label = stringResource(R.string.menu),
-                        onClick = { showToolsMenu = true }
-                    )
-                    DropdownMenu(
-                        expanded = showToolsMenu,
-                        onDismissRequest = { showToolsMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.chat_page_menu_ai_translator)) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = ZionAppIcons.Globe,
-                                    contentDescription = null
-                                )
-                            },
-                            onClick = {
-                                showToolsMenu = false
-                                navController.navigate(Screen.Translator)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.chat_page_menu_image_generation)) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = ZionAppIcons.Image,
-                                    contentDescription = null
-                                )
-                            },
-                            onClick = {
-                                showToolsMenu = false
-                                navController.navigate(Screen.ImageGen)
-                            }
-                        )
-                    }
-                }
-                SidebarMenuEntry(
-                    icon = ZionAppIcons.Settings,
-                    label = stringResource(R.string.settings),
-                    onClick = { navController.navigate(Screen.Setting) }
                 )
             }
 
@@ -226,50 +157,9 @@ fun ChatDrawerContent(
                 assistantName = currentAssistant.name.ifBlank {
                     stringResource(R.string.assistant_page_default_assistant)
                 },
-                onClick = { navController.navigate(Screen.Setting) },
-                onEditNickname = {
-                    nicknameEditState.open(settings.displaySetting.userNickname)
-                }
+                onClick = { navController.navigate(Screen.Setting) }
             )
         }
-    }
-
-    nicknameEditState.EditStateContent { nickname, onUpdate ->
-        AlertDialog(
-            onDismissRequest = {
-                nicknameEditState.dismiss()
-            },
-            title = {
-                Text(stringResource(R.string.chat_page_edit_nickname))
-            },
-            text = {
-                OutlinedTextField(
-                    value = nickname,
-                    onValueChange = onUpdate,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text(stringResource(R.string.chat_page_nickname_placeholder)) }
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        nicknameEditState.confirm()
-                    }
-                ) {
-                    Text(stringResource(R.string.chat_page_save))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        nicknameEditState.dismiss()
-                    }
-                ) {
-                    Text(stringResource(R.string.chat_page_cancel))
-                }
-            }
-        )
     }
 
     if (showMoveToAssistantSheet) {
@@ -303,11 +193,8 @@ fun ChatDrawerContent(
                             onClick = {
                                 conversationToMove?.let { conversation ->
                                     vm.moveConversationToAssistant(conversation, assistant.id)
-                                    scope.launch {
-                                        bottomSheetState.hide()
-                                        showMoveToAssistantSheet = false
-                                        conversationToMove = null
-                                    }
+                                    showMoveToAssistantSheet = false
+                                    conversationToMove = null
                                 }
                             }
                         )
@@ -423,13 +310,13 @@ private fun SidebarProfileCard(
     avatar: Avatar,
     assistantName: String,
     onClick: () -> Unit,
-    onEditNickname: () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp)
             .clip(RoundedCornerShape(12.dp))
+            .background(ZionSectionItem, RoundedCornerShape(12.dp))
             .pressableScale(
                 pressedScale = 0.98f,
                 onClick = onClick
@@ -459,7 +346,6 @@ private fun SidebarProfileCard(
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.clickable(onClick = onEditNickname)
                 )
                 Text(
                     text = assistantName,

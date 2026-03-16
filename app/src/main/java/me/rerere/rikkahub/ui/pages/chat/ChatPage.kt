@@ -273,6 +273,7 @@ private fun ChatPageContent(
     ) {
         AssistantBackground(setting = setting)
         Scaffold(
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             topBar = {
                 TopBar(
                     bigScreen = bigScreen,

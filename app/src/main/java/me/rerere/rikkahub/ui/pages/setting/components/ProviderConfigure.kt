@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,12 +30,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dokar.sonner.ToastType
 import me.rerere.ai.provider.BalanceOption
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.DEFAULT_PROVIDERS
-import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
@@ -394,7 +393,14 @@ private fun ColumnScope.ProviderConfigureOpenAI(
     provider: ProviderSetting.OpenAI,
     onEdit: (provider: ProviderSetting.OpenAI) -> Unit
 ) {
-    val toaster = LocalToaster.current
+    val supportsResponseApi = provider.baseUrl.toHttpUrlOrNull()?.host?.lowercase() == OPENAI_OFFICIAL_HOST
+
+    LaunchedEffect(provider.baseUrl, provider.useResponseApi) {
+        if (!supportsResponseApi && provider.useResponseApi) {
+            onEdit(provider.copy(useResponseApi = false, enabled = true, balanceOption = BalanceOption()))
+        }
+    }
+
     ProviderField(
         title = stringResource(id = R.string.setting_provider_page_name),
         value = provider.name,
@@ -420,7 +426,7 @@ private fun ColumnScope.ProviderConfigureOpenAI(
         },
         keyboardType = KeyboardType.Uri
     )
-    if (!provider.useResponseApi) {
+    if (!supportsResponseApi || !provider.useResponseApi) {
         ProviderField(
             title = stringResource(id = R.string.setting_provider_page_api_path),
             value = provider.chatCompletionsPath,
@@ -430,21 +436,15 @@ private fun ColumnScope.ProviderConfigureOpenAI(
             keyboardType = KeyboardType.Uri
         )
     }
-    val responseAPIWarning = stringResource(id = R.string.setting_provider_page_response_api_warning)
-    ProviderToggleCard(
-        title = stringResource(id = R.string.setting_provider_page_response_api),
-        checked = provider.useResponseApi,
-        supportingText = if (provider.baseUrl.toHttpUrlOrNull()?.host != "api.openai.com") responseAPIWarning else null,
-        onCheckedChange = {
-            onEdit(provider.copy(useResponseApi = it, enabled = true, balanceOption = BalanceOption()))
-            if (it && provider.baseUrl.toHttpUrlOrNull()?.host != "api.openai.com") {
-                toaster.show(
-                    message = responseAPIWarning,
-                    type = ToastType.Warning
-                )
+    if (supportsResponseApi) {
+        ProviderToggleCard(
+            title = stringResource(id = R.string.setting_provider_page_response_api),
+            checked = provider.useResponseApi,
+            onCheckedChange = {
+                onEdit(provider.copy(useResponseApi = it, enabled = true, balanceOption = BalanceOption()))
             }
-        }
-    )
+        )
+    }
 }
 
 @Composable

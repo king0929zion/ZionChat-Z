@@ -204,14 +204,13 @@ private fun ChatListNormal(
     var isRecentScroll by remember { mutableStateOf(false) }
     val conversationUpdated by rememberUpdatedState(conversation)
     val density = LocalDensity.current
+    val listTopPadding = innerPadding.calculateTopPadding() + 16.dp
+    val listBottomPadding = innerPadding.calculateBottomPadding() + 20.dp
 
     fun List<LazyListItemInfo>.isAtBottom(): Boolean {
-        val lastItem = lastOrNull() ?: return false
-        val inputBarHeight = with(density) { innerPadding.calculateBottomPadding().toPx() }
-        val lastPos = lastItem.offset + lastItem.size
-        val inputPos = (state.layoutInfo.viewportEndOffset - inputBarHeight.roundToInt())
-        // println("lastPos = $lastPos, inputPos = $inputPos  | ${lastPos <= inputPos - 8}")
-        return lastPos <= inputPos - 8
+        val lastItem = lastOrNull() ?: return true
+        val viewportBottom = state.layoutInfo.viewportEndOffset
+        return lastItem.offset + lastItem.size <= viewportBottom - 8
     }
 
     // 聊天选择
@@ -265,13 +264,17 @@ private fun ChatListNormal(
 
         LazyColumn(
             state = state,
-            contentPadding = PaddingValues(16.dp) + PaddingValues(bottom = 32.dp + innerPadding.calculateBottomPadding()),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = listTopPadding,
+                bottom = listBottomPadding
+            ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .hazeSource(state = hazeState)
-                .padding(top = innerPadding.calculateTopPadding()),
+                .hazeSource(state = hazeState),
         ) {
             itemsIndexed(
                 items = conversation.messageNodes,
@@ -353,7 +356,7 @@ private fun ChatListNormal(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(bottom = innerPadding.calculateBottomPadding()),
         ) {
             // 错误消息卡片
             ErrorCardsDisplay(
@@ -554,7 +557,6 @@ private fun ChatListPreview(
 
     Column(
         modifier = Modifier
-            .padding(top = innerPadding.calculateTopPadding())
             .fillMaxSize(),
     ) {
         // 搜索框
@@ -563,7 +565,12 @@ private fun ChatListPreview(
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = innerPadding.calculateTopPadding() + 8.dp,
+                    bottom = 8.dp
+                ),
             placeholder = { Text(stringResource(R.string.history_page_search)) },
             leadingIcon = {
                 Icon(
@@ -590,7 +597,12 @@ private fun ChatListPreview(
 
         // 消息预览
         LazyColumn(
-            contentPadding = PaddingValues(16.dp) + PaddingValues(bottom = 32.dp + innerPadding.calculateBottomPadding()),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 8.dp,
+                bottom = innerPadding.calculateBottomPadding() + 20.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxWidth()

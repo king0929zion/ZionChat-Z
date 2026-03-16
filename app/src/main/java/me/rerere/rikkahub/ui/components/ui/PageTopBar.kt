@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
+import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
@@ -60,7 +61,7 @@ fun Modifier.settingsBottomInsets(): Modifier =
 @Composable
 fun HeaderTranslucentBackdrop(
     modifier: Modifier = Modifier,
-    containerColor: Color = Color(0xFFFFFFFF),
+    containerColor: Color = ZionBackground,
     containerAlpha: Float = 0.82f,
 ) {
     val topColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
@@ -97,7 +98,7 @@ fun HeaderTranslucentBackdrop(
 @Composable
 fun FooterTranslucentBackdrop(
     modifier: Modifier = Modifier,
-    containerColor: Color = Color(0xFFFFFFFF),
+    containerColor: Color = ZionBackground,
     containerAlpha: Float = 0.82f,
 ) {
     val bottomColor = containerColor.copy(alpha = containerAlpha.coerceIn(0.62f, 0.9f))
@@ -162,7 +163,7 @@ fun PageTopBar(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    containerColor: Color = Color(0xFFFFFFFF),
+    containerColor: Color = ZionBackground,
     containerAlpha: Float = 0.92f,
     fadeHeight: Dp = 0.dp,
     trailing: (@Composable () -> Unit)? = null,
@@ -225,7 +226,7 @@ fun SettingsPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFFFFF))
+            .background(ZionBackground)
     ) {
         content()
         PageTopBar(

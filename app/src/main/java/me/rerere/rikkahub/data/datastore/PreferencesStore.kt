@@ -42,11 +42,13 @@ import me.rerere.rikkahub.utils.toMutableStateFlow
 import me.rerere.search.SearchCommonOptions
 import me.rerere.search.SearchServiceOptions
 import me.rerere.tts.provider.TTSProviderSetting
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import kotlin.uuid.Uuid
 
 private const val TAG = "PreferencesStore"
+private const val OPENAI_OFFICIAL_HOST = "api.openai.com"
 
 private val Context.settingsStore by preferencesDataStore(
     name = "settings",
@@ -216,86 +218,7 @@ class SettingsStore(
                 sponsorAlertDismissedAt = preferences[SPONSOR_ALERT_DISMISSED_AT] ?: 0,
             )
         }
-        .map {
-            var providers = it.providers.ifEmpty { DEFAULT_PROVIDERS }.toMutableList()
-            DEFAULT_PROVIDERS.forEach { defaultProvider ->
-                if (providers.none { it.id == defaultProvider.id }) {
-                    providers.add(defaultProvider.copyProvider())
-                }
-            }
-            providers = providers.map { provider ->
-                val defaultProvider = DEFAULT_PROVIDERS.find { it.id == provider.id }
-                if (defaultProvider != null) {
-                    provider.copyProvider(
-                        builtIn = defaultProvider.builtIn,
-                        description = defaultProvider.description,
-                        shortDescription = defaultProvider.shortDescription,
-                    )
-                } else provider
-            }.toMutableList()
-            val assistants = it.assistants.ifEmpty { DEFAULT_ASSISTANTS }.toMutableList()
-            DEFAULT_ASSISTANTS.forEach { defaultAssistant ->
-                if (assistants.none { it.id == defaultAssistant.id }) {
-                    assistants.add(defaultAssistant.copy())
-                }
-            }
-            val ttsProviders = it.ttsProviders.ifEmpty { DEFAULT_TTS_PROVIDERS }.toMutableList()
-            DEFAULT_TTS_PROVIDERS.forEach { defaultTTSProvider ->
-                if (ttsProviders.none { provider -> provider.id == defaultTTSProvider.id }) {
-                    ttsProviders.add(defaultTTSProvider.copyProvider())
-                }
-            }
-            it.copy(
-                providers = providers,
-                assistants = assistants,
-                ttsProviders = ttsProviders
-            )
-        }
-        .map { settings ->
-            // 去重并清理无效引用
-            val validMcpServerIds = settings.mcpServers.map { it.id }.toSet()
-            val validModeInjectionIds = settings.modeInjections.map { it.id }.toSet()
-            val validLorebookIds = settings.lorebooks.map { it.id }.toSet()
-            settings.copy(
-                providers = settings.providers.distinctBy { it.id }.map { provider ->
-                    when (provider) {
-                        is ProviderSetting.OpenAI -> provider.copy(
-                            models = provider.models.distinctBy { model -> model.id }
-                        )
-
-                        is ProviderSetting.Google -> provider.copy(
-                            models = provider.models.distinctBy { model -> model.id }
-                        )
-
-                        is ProviderSetting.Claude -> provider.copy(
-                            models = provider.models.distinctBy { model -> model.id }
-                        )
-                    }
-                },
-                assistants = settings.assistants.distinctBy { it.id }.map { assistant ->
-                    assistant.copy(
-                        // 过滤掉不存在的 MCP 服务器 ID
-                        mcpServers = assistant.mcpServers.filter { serverId ->
-                            serverId in validMcpServerIds
-                        }.toSet(),
-                        // 过滤掉不存在的模式注入 ID
-                        modeInjectionIds = assistant.modeInjectionIds.filter { id ->
-                            id in validModeInjectionIds
-                        }.toSet(),
-                        // 过滤掉不存在的 Lorebook ID
-                        lorebookIds = assistant.lorebookIds.filter { id ->
-                            id in validLorebookIds
-                        }.toSet()
-                    )
-                },
-                ttsProviders = settings.ttsProviders.distinctBy { it.id },
-                favoriteModels = settings.favoriteModels.filter { uuid ->
-                    settings.providers.flatMap { it.models }.any { it.id == uuid }
-                },
-                modeInjections = settings.modeInjections.distinctBy { it.id },
-                lorebooks = settings.lorebooks.distinctBy { it.id },
-            )
-        }
+        .map { settings -> settings.mergeBuiltInsAndSanitize() }
         .onEach {
             get<PebbleEngine>().templateCache.invalidateAll()
         }
@@ -309,55 +232,56 @@ class SettingsStore(
             Log.w(TAG, "Cannot update dummy settings")
             return
         }
-        settingsFlow.value = settings
+        val sanitizedSettings = settings.mergeBuiltInsAndSanitize()
+        settingsFlow.value = sanitizedSettings
         dataStore.edit { preferences ->
-            preferences[DYNAMIC_COLOR] = settings.dynamicColor
-            preferences[THEME_ID] = settings.themeId
-            preferences[DEVELOPER_MODE] = settings.developerMode
-            preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(settings.displaySetting)
+            preferences[DYNAMIC_COLOR] = sanitizedSettings.dynamicColor
+            preferences[THEME_ID] = sanitizedSettings.themeId
+            preferences[DEVELOPER_MODE] = sanitizedSettings.developerMode
+            preferences[DISPLAY_SETTING] = JsonInstant.encodeToString(sanitizedSettings.displaySetting)
 
-            preferences[ENABLE_WEB_SEARCH] = settings.enableWebSearch
-            preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(settings.favoriteModels)
-            preferences[SELECT_MODEL] = settings.chatModelId.toString()
-            preferences[TITLE_MODEL] = settings.titleModelId.toString()
-            preferences[TRANSLATE_MODEL] = settings.translateModeId.toString()
-            preferences[SUGGESTION_MODEL] = settings.suggestionModelId.toString()
-            preferences[IMAGE_GENERATION_MODEL] = settings.imageGenerationModelId.toString()
-            preferences[TITLE_PROMPT] = settings.titlePrompt
-            preferences[TRANSLATION_PROMPT] = settings.translatePrompt
-            preferences[SUGGESTION_PROMPT] = settings.suggestionPrompt
-            preferences[OCR_MODEL] = settings.ocrModelId.toString()
-            preferences[OCR_PROMPT] = settings.ocrPrompt
-            preferences[COMPRESS_MODEL] = settings.compressModelId.toString()
-            preferences[COMPRESS_PROMPT] = settings.compressPrompt
+            preferences[ENABLE_WEB_SEARCH] = sanitizedSettings.enableWebSearch
+            preferences[FAVORITE_MODELS] = JsonInstant.encodeToString(sanitizedSettings.favoriteModels)
+            preferences[SELECT_MODEL] = sanitizedSettings.chatModelId.toString()
+            preferences[TITLE_MODEL] = sanitizedSettings.titleModelId.toString()
+            preferences[TRANSLATE_MODEL] = sanitizedSettings.translateModeId.toString()
+            preferences[SUGGESTION_MODEL] = sanitizedSettings.suggestionModelId.toString()
+            preferences[IMAGE_GENERATION_MODEL] = sanitizedSettings.imageGenerationModelId.toString()
+            preferences[TITLE_PROMPT] = sanitizedSettings.titlePrompt
+            preferences[TRANSLATION_PROMPT] = sanitizedSettings.translatePrompt
+            preferences[SUGGESTION_PROMPT] = sanitizedSettings.suggestionPrompt
+            preferences[OCR_MODEL] = sanitizedSettings.ocrModelId.toString()
+            preferences[OCR_PROMPT] = sanitizedSettings.ocrPrompt
+            preferences[COMPRESS_MODEL] = sanitizedSettings.compressModelId.toString()
+            preferences[COMPRESS_PROMPT] = sanitizedSettings.compressPrompt
 
-            preferences[PROVIDERS] = JsonInstant.encodeToString(settings.providers)
+            preferences[PROVIDERS] = JsonInstant.encodeToString(sanitizedSettings.providers)
 
-            preferences[ASSISTANTS] = JsonInstant.encodeToString(settings.assistants)
-            preferences[SELECT_ASSISTANT] = settings.assistantId.toString()
-            preferences[ASSISTANT_TAGS] = JsonInstant.encodeToString(settings.assistantTags)
+            preferences[ASSISTANTS] = JsonInstant.encodeToString(sanitizedSettings.assistants)
+            preferences[SELECT_ASSISTANT] = sanitizedSettings.assistantId.toString()
+            preferences[ASSISTANT_TAGS] = JsonInstant.encodeToString(sanitizedSettings.assistantTags)
 
-            preferences[SEARCH_SERVICES] = JsonInstant.encodeToString(settings.searchServices)
-            preferences[SEARCH_COMMON] = JsonInstant.encodeToString(settings.searchCommonOptions)
-            preferences[SEARCH_SELECTED] = settings.searchServiceSelected.coerceIn(0, settings.searchServices.size - 1)
+            preferences[SEARCH_SERVICES] = JsonInstant.encodeToString(sanitizedSettings.searchServices)
+            preferences[SEARCH_COMMON] = JsonInstant.encodeToString(sanitizedSettings.searchCommonOptions)
+            preferences[SEARCH_SELECTED] = sanitizedSettings.searchServiceSelected.coerceIn(0, sanitizedSettings.searchServices.size - 1)
 
-            preferences[MCP_SERVERS] = JsonInstant.encodeToString(settings.mcpServers)
-            preferences[WEBDAV_CONFIG] = JsonInstant.encodeToString(settings.webDavConfig)
-            preferences[S3_CONFIG] = JsonInstant.encodeToString(settings.s3Config)
-            preferences[TTS_PROVIDERS] = JsonInstant.encodeToString(settings.ttsProviders)
-            settings.selectedTTSProviderId?.let {
+            preferences[MCP_SERVERS] = JsonInstant.encodeToString(sanitizedSettings.mcpServers)
+            preferences[WEBDAV_CONFIG] = JsonInstant.encodeToString(sanitizedSettings.webDavConfig)
+            preferences[S3_CONFIG] = JsonInstant.encodeToString(sanitizedSettings.s3Config)
+            preferences[TTS_PROVIDERS] = JsonInstant.encodeToString(sanitizedSettings.ttsProviders)
+            sanitizedSettings.selectedTTSProviderId.let {
                 preferences[SELECTED_TTS_PROVIDER] = it.toString()
-            } ?: preferences.remove(SELECTED_TTS_PROVIDER)
-            preferences[MODE_INJECTIONS] = JsonInstant.encodeToString(settings.modeInjections)
-            preferences[LOREBOOKS] = JsonInstant.encodeToString(settings.lorebooks)
-            preferences[WEB_SERVER_ENABLED] = settings.webServerEnabled
-            preferences[WEB_SERVER_PORT] = settings.webServerPort
-            preferences[WEB_SERVER_JWT_ENABLED] = settings.webServerJwtEnabled
-            preferences[WEB_SERVER_ACCESS_PASSWORD] = settings.webServerAccessPassword
-            preferences[WEB_SERVER_LOCALHOST_ONLY] = settings.webServerLocalhostOnly
-            preferences[BACKUP_REMINDER_CONFIG] = JsonInstant.encodeToString(settings.backupReminderConfig)
-            preferences[LAUNCH_COUNT] = settings.launchCount
-            preferences[SPONSOR_ALERT_DISMISSED_AT] = settings.sponsorAlertDismissedAt
+            }
+            preferences[MODE_INJECTIONS] = JsonInstant.encodeToString(sanitizedSettings.modeInjections)
+            preferences[LOREBOOKS] = JsonInstant.encodeToString(sanitizedSettings.lorebooks)
+            preferences[WEB_SERVER_ENABLED] = sanitizedSettings.webServerEnabled
+            preferences[WEB_SERVER_PORT] = sanitizedSettings.webServerPort
+            preferences[WEB_SERVER_JWT_ENABLED] = sanitizedSettings.webServerJwtEnabled
+            preferences[WEB_SERVER_ACCESS_PASSWORD] = sanitizedSettings.webServerAccessPassword
+            preferences[WEB_SERVER_LOCALHOST_ONLY] = sanitizedSettings.webServerLocalhostOnly
+            preferences[BACKUP_REMINDER_CONFIG] = JsonInstant.encodeToString(sanitizedSettings.backupReminderConfig)
+            preferences[LAUNCH_COUNT] = sanitizedSettings.launchCount
+            preferences[SPONSOR_ALERT_DISMISSED_AT] = sanitizedSettings.sponsorAlertDismissedAt
         }
     }
 
@@ -432,6 +356,114 @@ class SettingsStore(
                 }
             )
         }
+    }
+}
+
+private fun Settings.mergeBuiltInsAndSanitize(): Settings {
+    var providers = providers.ifEmpty { DEFAULT_PROVIDERS }
+        .filterNot { provider -> provider.id in REMOVED_DEFAULT_PROVIDER_IDS }
+        .toMutableList()
+    DEFAULT_PROVIDERS.forEach { defaultProvider ->
+        if (providers.none { it.id == defaultProvider.id }) {
+            providers.add(defaultProvider.copyProvider())
+        }
+    }
+    providers = providers.map { provider ->
+        val defaultProvider = DEFAULT_PROVIDERS.find { it.id == provider.id }
+        val mergedProvider = if (defaultProvider != null) {
+            provider.copyProvider(
+                builtIn = defaultProvider.builtIn,
+                description = defaultProvider.description,
+                shortDescription = defaultProvider.shortDescription,
+            )
+        } else {
+            provider
+        }
+        mergedProvider.sanitizeProvider()
+    }.distinctBy { it.id }.toMutableList()
+
+    val assistants = assistants.ifEmpty { DEFAULT_ASSISTANTS }.toMutableList().apply {
+        DEFAULT_ASSISTANTS.forEach { defaultAssistant ->
+            if (none { it.id == defaultAssistant.id }) {
+                add(defaultAssistant.copy())
+            }
+        }
+    }
+
+    val ttsProviders = ttsProviders.ifEmpty { DEFAULT_TTS_PROVIDERS }.toMutableList().apply {
+        DEFAULT_TTS_PROVIDERS.forEach { defaultTTSProvider ->
+            if (none { provider -> provider.id == defaultTTSProvider.id }) {
+                add(defaultTTSProvider.copyProvider())
+            }
+        }
+    }
+
+    return copy(
+        providers = providers,
+        assistants = assistants,
+        ttsProviders = ttsProviders
+    ).sanitizeInvalidReferences()
+}
+
+private fun Settings.sanitizeInvalidReferences(): Settings {
+    val validMcpServerIds = mcpServers.map { it.id }.toSet()
+    val validModeInjectionIds = modeInjections.map { it.id }.toSet()
+    val validLorebookIds = lorebooks.map { it.id }.toSet()
+    val validModelIds = providers.flatMap { it.models }.map { it.id }.toSet()
+
+    val sanitizedAssistants = assistants.distinctBy { it.id }.map { assistant ->
+        assistant.copy(
+            chatModelId = assistant.chatModelId?.takeIf { it in validModelIds },
+            mcpServers = assistant.mcpServers.filter { serverId ->
+                serverId in validMcpServerIds
+            }.toSet(),
+            modeInjectionIds = assistant.modeInjectionIds.filter { id ->
+                id in validModeInjectionIds
+            }.toSet(),
+            lorebookIds = assistant.lorebookIds.filter { id ->
+                id in validLorebookIds
+            }.toSet()
+        )
+    }
+    val validAssistantIds = sanitizedAssistants.map { it.id }.toSet()
+
+    return copy(
+        chatModelId = chatModelId.takeIf { it in validModelIds } ?: Uuid.random(),
+        titleModelId = titleModelId.takeIf { it in validModelIds } ?: Uuid.random(),
+        imageGenerationModelId = imageGenerationModelId.takeIf { it in validModelIds } ?: Uuid.random(),
+        translateModeId = translateModeId.takeIf { it in validModelIds } ?: Uuid.random(),
+        suggestionModelId = suggestionModelId.takeIf { it in validModelIds } ?: Uuid.random(),
+        ocrModelId = ocrModelId.takeIf { it in validModelIds } ?: Uuid.random(),
+        compressModelId = compressModelId.takeIf { it in validModelIds } ?: Uuid.random(),
+        assistantId = assistantId.takeIf { it in validAssistantIds }
+            ?: sanitizedAssistants.firstOrNull()?.id
+            ?: DEFAULT_ASSISTANT_ID,
+        assistants = sanitizedAssistants,
+        ttsProviders = ttsProviders.distinctBy { it.id },
+        favoriteModels = favoriteModels.filter { uuid -> uuid in validModelIds },
+        modeInjections = modeInjections.distinctBy { it.id },
+        lorebooks = lorebooks.distinctBy { it.id },
+    )
+}
+
+private fun ProviderSetting.sanitizeProvider(): ProviderSetting {
+    return when (this) {
+        is ProviderSetting.OpenAI -> copy(
+            models = models.distinctBy { model -> model.id },
+            useResponseApi = if (baseUrl.toHttpUrlOrNull()?.host?.lowercase() == OPENAI_OFFICIAL_HOST) {
+                useResponseApi
+            } else {
+                false
+            }
+        )
+
+        is ProviderSetting.Google -> copy(
+            models = models.distinctBy { model -> model.id }
+        )
+
+        is ProviderSetting.Claude -> copy(
+            models = models.distinctBy { model -> model.id }
+        )
     }
 }
 

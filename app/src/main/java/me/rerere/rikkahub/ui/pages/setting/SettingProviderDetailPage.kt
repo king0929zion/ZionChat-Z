@@ -113,7 +113,6 @@ import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.ShareSheet
-import me.rerere.rikkahub.ui.components.ui.SiliconFlowPowerByIcon
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
 import me.rerere.rikkahub.ui.components.ui.rememberShareSheetState
@@ -322,16 +321,6 @@ private fun SettingProviderConfigPage(
             ) {
                 Text(stringResource(R.string.setting_provider_page_save))
             }
-        }
-
-        // 硅基流动图标
-        val openAiProvider = internalProvider as? ProviderSetting.OpenAI
-        if (openAiProvider != null && openAiProvider.baseUrl.contains("siliconflow.cn")) {
-            SiliconFlowPowerByIcon(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 16.dp)
-            )
         }
     }
 
