@@ -136,13 +136,31 @@ jobs:
             app/build/outputs/mapping/release/**
           if-no-files-found: error
 
+      - name: Extract current release notes
+        id: release_notes
+        shell: bash
+        run: |
+          notes_file="release-notes-${{ steps.version.outputs.version_name }}.md"
+          awk -v heading="## v${{ steps.version.outputs.version_name }}" '
+            $0 == heading { capture = 1 }
+            capture && $0 ~ /^## v/ && $0 != heading { exit }
+            capture { print }
+          ' release-notes.md > "$notes_file"
+
+          if [ ! -s "$notes_file" ]; then
+            echo "Failed to extract release notes for v${{ steps.version.outputs.version_name }}"
+            exit 1
+          fi
+
+          echo "path=$notes_file" >> "$GITHUB_OUTPUT"
+
       - name: Publish GitHub Release with APK
         uses: softprops/action-gh-release@v2
         if: success()
         with:
           tag_name: v${{ steps.version.outputs.version_name }}
           name: v${{ steps.version.outputs.version_name }}
-          body_path: release-notes.md
+          body_path: ${{ steps.release_notes.outputs.path }}
           files: |
             app/build/outputs/apk/release/*.apk
           fail_on_unmatched_files: true

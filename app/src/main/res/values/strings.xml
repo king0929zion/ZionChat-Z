@@ -449,7 +449,7 @@
   <string name="setting_model_page_suggestion_model">Chat Suggestion Model</string>
   <string name="setting_model_page_suggestion_model_desc">Model used to generate conversation suggestions, recommend using fast and inexpensive models</string>
   <string name="setting_model_page_suggestion_prompt_vars">Variables: Conversation content: {content}, Language: {locale}</string>
-  <string name="setting_model_page_title">Model Settings</string>
+  <string name="setting_model_page_title">Default Model</string>
   <string name="setting_model_page_title_model">Title Summary Model</string>
   <string name="setting_model_page_title_model_desc">Model used to summarize conversation titles, recommend using fast and inexpensive models</string>
   <string name="setting_model_page_translate_model">Translation Model</string>
@@ -477,7 +477,7 @@
   <string name="setting_page_data_backup">Data Backup</string>
   <string name="setting_page_data_backup_desc">Backup and restore app data</string>
   <string name="setting_page_data_settings">Data Settings</string>
-  <string name="setting_page_default_model">Default Model and Prompt</string>
+  <string name="setting_page_default_model">Default Model</string>
   <string name="setting_page_default_model_desc">Set default models for each feature</string>
   <string name="setting_page_display_setting">Display Settings</string>
   <string name="setting_page_display_setting_desc">Manage display settings</string>
@@ -578,7 +578,8 @@
   <string name="setting_provider_page_test_connection">Test Connection</string>
   <string name="setting_provider_page_test_success">Test Successful</string>
   <string name="setting_provider_page_text">Text</string>
-  <string name="setting_provider_page_title">Providers</string>
+  <string name="setting_provider_page_title">Model Services</string>
+  <string name="sidebar_images">Images</string>
   <string name="setting_provider_page_tool">Tool</string>
   <string name="setting_provider_page_vertex_ai">Vertex AI</string>
   <string name="setting_tts_page_add">Add</string>

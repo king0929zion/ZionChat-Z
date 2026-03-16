@@ -349,9 +349,10 @@ private fun MarkdownNode(
         // Checkbox
         GFMTokenTypes.CHECK_BOX -> {
             val isChecked = node.getTextInNode(content).trim() == "[x]"
+            val checkboxColor = LocalTextStyle.current.color.takeOrElse { MaterialTheme.colorScheme.onSurface }
             Surface(
                 shape = RoundedCornerShape(2.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                color = checkboxColor.copy(alpha = 0.08f),
                 modifier = modifier,
             ) {
                 Box(
@@ -364,7 +365,7 @@ private fun MarkdownNode(
                         Icon(
                             imageVector = HugeIcons.Tick01,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = checkboxColor
                         )
                     }
                 }
@@ -374,8 +375,8 @@ private fun MarkdownNode(
         // 引用块
         MarkdownElementTypes.BLOCK_QUOTE -> {
             ProvideTextStyle(LocalTextStyle.current.copy(fontStyle = FontStyle.Italic)) {
-                val borderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                val bgColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+                val borderColor = LocalTextStyle.current.color.takeOrElse { MaterialTheme.colorScheme.onSurface }.copy(alpha = 0.16f)
+                val bgColor = LocalTextStyle.current.color.takeOrElse { MaterialTheme.colorScheme.onSurface }.copy(alpha = 0.05f)
                 Column(
                     modifier = Modifier
                         .drawWithContent {
@@ -407,7 +408,7 @@ private fun MarkdownNode(
             val context = LocalContext.current
             Text(
                 text = linkText,
-                color = MaterialTheme.colorScheme.primary,
+                color = LocalTextStyle.current.color.takeOrElse { MaterialTheme.colorScheme.onSurface },
                 textDecoration = TextDecoration.Underline,
                 modifier = modifier.clickable {
                     val intent = Intent(Intent.ACTION_VIEW, linkDest.toUri())
@@ -450,7 +451,7 @@ private fun MarkdownNode(
         MarkdownTokenTypes.HORIZONTAL_RULE -> {
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 16.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                color = LocalTextStyle.current.color.takeOrElse { MaterialTheme.colorScheme.onSurface }.copy(alpha = 0.18f),
                 thickness = 0.5.dp
             )
         }
@@ -654,7 +655,7 @@ private fun ListItemNode(
                 Text(
                     text = bulletText,
                     modifier = Modifier.alignByBaseline(),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = LocalTextStyle.current.color.takeOrElse { MaterialTheme.colorScheme.onSurface }.copy(alpha = 0.72f),
                 )
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -957,7 +958,8 @@ private fun AnnotatedString.Builder.appendMarkdownNodeContent(
                 withLink(LinkAnnotation.Url(linkDest)) {
                     withStyle(
                         SpanStyle(
-                            color = colorScheme.primary, textDecoration = TextDecoration.Underline
+                            color = style.color.takeOrElse { colorScheme.onSurface },
+                            textDecoration = TextDecoration.Underline
                         )
                     ) {
                         append(linkText)

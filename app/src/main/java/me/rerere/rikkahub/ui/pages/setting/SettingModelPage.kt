@@ -15,9 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -91,16 +89,6 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
     var promptTarget by remember { mutableStateOf<ModelSectionConfig?>(null) }
 
     val sections = listOf(
-        ModelSectionConfig(
-            key = "chat",
-            title = "CHAT",
-            required = true,
-            modelId = settings.chatModelId,
-            type = ModelType.CHAT,
-            onSelect = { model ->
-                vm.updateSettings(settings.copy(chatModelId = model?.id ?: settings.chatModelId))
-            }
-        ),
         ModelSectionConfig(
             key = "title",
             title = stringResource(R.string.setting_model_page_title_model).uppercase(),
@@ -190,9 +178,8 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
                 .verticalScroll(rememberScrollState())
-                .padding(top = PageTopBarContentTopPadding)
+                .padding(top = PageTopBarContentTopPadding + 12.dp)
                 .padding(horizontal = 16.dp)
         ) {
             sections.forEachIndexed { index, section ->

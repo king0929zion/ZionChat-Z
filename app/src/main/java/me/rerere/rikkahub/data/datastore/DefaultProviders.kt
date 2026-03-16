@@ -17,30 +17,35 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
 import kotlin.uuid.Uuid
 
-val DEFAULT_AUTO_MODEL_ID = Uuid.parse("b7055fb4-39f9-4042-a88a-0d80ed76cf08")
+val LEGACY_AUTO_MODEL_ID = Uuid.parse("b7055fb4-39f9-4042-a88a-0d80ed76cf08")
+val DEFAULT_UNSET_MODEL_ID = Uuid.parse("00000000-0000-0000-0000-000000000001")
+
+private val REMOVED_BUILT_IN_PROVIDER_IDS = setOf(
+    Uuid.parse("a8d2d463-e8c0-41f2-b89e-f5eb8e716cce"),
+    Uuid.parse("1b1395ed-b702-4aeb-8bc1-b681c4456953"),
+    Uuid.parse("da020a90-f7b3-4c29-b90e-c511a0630630"),
+    Uuid.parse("89e67540-32fe-4c62-9970-2e9aed9bd59d"),
+    Uuid.parse("da93779f-3956-48cc-82ef-67bb482eaaf7"),
+    Uuid.parse("ef5d149b-8e34-404b-818c-6ec242e5c3c5"),
+)
+
+private val REMOVED_BUILT_IN_PROVIDER_NAMES = setOf(
+    "rikkahub",
+    "aihubmix",
+    "小马算力",
+    "juhenext",
+    "302.ai",
+    "腾讯hunyuan",
+)
+
+fun isRemovedBuiltInProvider(provider: ProviderSetting): Boolean {
+    return provider.builtIn && (
+        provider.id in REMOVED_BUILT_IN_PROVIDER_IDS ||
+            provider.name.trim().lowercase() in REMOVED_BUILT_IN_PROVIDER_NAMES
+        )
+}
 
 val DEFAULT_PROVIDERS = listOf(
-    ProviderSetting.OpenAI(
-        id = Uuid.parse("a8d2d463-e8c0-41f2-b89e-f5eb8e716cce"),
-        name = "RikkaHub",
-        baseUrl = "https://api.rikka-ai.com/v1",
-        apiKey = "",
-        enabled = true,
-        builtIn = true,
-        description = {
-            Text(stringResource(R.string.rikkahub_provider_description))
-        },
-        models = listOf(
-            Model(
-                id = DEFAULT_AUTO_MODEL_ID,
-                modelId = "auto",
-                displayName = "Auto",
-                inputModalities = listOf(Modality.TEXT),
-                outputModalities = listOf(Modality.TEXT),
-                abilities = listOf(ModelAbility.TOOL, ModelAbility.REASONING),
-            )
-        )
-    ),
     ProviderSetting.OpenAI(
         id = Uuid.parse("1eeea727-9ee5-4cae-93e6-6fb01a4d051e"),
         name = "OpenAI",
@@ -54,74 +59,6 @@ val DEFAULT_PROVIDERS = listOf(
         apiKey = "",
         enabled = true,
         builtIn = true
-    ),
-    ProviderSetting.OpenAI(
-        id = Uuid.parse("1b1395ed-b702-4aeb-8bc1-b681c4456953"),
-        name = "AiHubMix",
-        baseUrl = "https://aihubmix.com/v1",
-        apiKey = "",
-        enabled = true,
-        builtIn = true,
-        description = {
-            Text(
-                text = buildAnnotatedString {
-                    append("提供 OpenAI、Claude、Google Gemini 等主流模型的高并发和稳定服务")
-                    appendLine()
-                    append("官网：")
-                    withLink(LinkAnnotation.Url("https://aihubmix.com?aff=pG7r")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("https://aihubmix.com")
-                        }
-                    }
-                    appendLine()
-                    append("充值: ")
-                    withLink(LinkAnnotation.Url("https://console.aihubmix.com/topup")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("https://console.aihubmix.com/topup")
-                        }
-                    }
-                }
-            )
-        },
-        shortDescription = {
-            Text(
-                text = "支持gpt, claude, gemini等200+模型"
-            )
-        },
-        models = listOf(
-            Model(
-                id = Uuid.parse("ea7b9574-e590-42ac-a9ac-01e3aa213f4f"),
-                modelId = "gpt-5",
-                displayName = "GPT 5",
-                inputModalities = listOf(Modality.TEXT, Modality.IMAGE),
-                outputModalities = listOf(Modality.TEXT),
-                abilities = listOf(ModelAbility.TOOL, ModelAbility.REASONING),
-            ),
-            Model(
-                id = Uuid.parse("5c33502d-2307-40bd-83fc-133f504bb0c9"),
-                modelId = "claude-sonnet-4-5-20250929",
-                displayName = "Claude Sonnet 4.5",
-                inputModalities = listOf(Modality.TEXT, Modality.IMAGE),
-                outputModalities = listOf(Modality.TEXT),
-                abilities = listOf(ModelAbility.TOOL, ModelAbility.REASONING),
-            ),
-            Model(
-                id = Uuid.parse("64081a31-4331-4ead-91bc-96e05497431a"),
-                modelId = "DeepSeek-V3.2-Exp",
-                displayName = "DeepSeek V3.2 Exp",
-                inputModalities = listOf(Modality.TEXT),
-                outputModalities = listOf(Modality.TEXT),
-                abilities = listOf(ModelAbility.TOOL),
-            ),
-            Model(
-                id = Uuid.parse("71d7f143-4ce1-49b5-b70d-7a6620a4e716"),
-                modelId = "qwen3-max",
-                displayName = "Qwen3 Max",
-                inputModalities = listOf(Modality.TEXT),
-                outputModalities = listOf(Modality.TEXT),
-                abilities = listOf(ModelAbility.TOOL),
-            ),
-        )
     ),
     ProviderSetting.OpenAI(
         id = Uuid.parse("56a94d29-c88b-41c5-8e09-38a7612d6cf8"),
@@ -186,22 +123,6 @@ val DEFAULT_PROVIDERS = listOf(
         )
     ),
     ProviderSetting.OpenAI(
-        id = Uuid.parse("da020a90-f7b3-4c29-b90e-c511a0630630"),
-        name = "小马算力",
-        baseUrl = "https://api.tokenpony.cn/v1",
-        apiKey = "",
-        enabled = false,
-        builtIn = true,
-        description = {
-            MarkdownBlock(
-                content = """
-                    小马算力是一家提供国产模型的API网关服务，使用统一接口接入多种模型
-                    官网: [tokenpony.cn](https://www.tokenpony.cn/79clb)
-                """.trimIndent()
-            )
-        }
-    ),
-    ProviderSetting.OpenAI(
         id = Uuid.parse("f76cae46-069a-4334-ab8e-224e4979e58c"),
         name = "阿里云百炼",
         baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -242,54 +163,6 @@ val DEFAULT_PROVIDERS = listOf(
         id = Uuid.parse("f4f8870e-82d3-495b-9b64-d58e508b3b2c"),
         name = "阶跃星辰",
         baseUrl = "https://api.stepfun.com/v1",
-        apiKey = "",
-        enabled = false,
-        builtIn = true
-    ),
-    ProviderSetting.OpenAI(
-        id = Uuid.parse("89e67540-32fe-4c62-9970-2e9aed9bd59d"),
-        name = "JuheNext",
-        baseUrl = "https://api.juheai.top/v1",
-        apiKey = "",
-        enabled = false,
-        builtIn = true,
-        description = {
-            Text(
-                text = buildAnnotatedString {
-                    append("一站式API中转平台, 官网：")
-                    withLink(LinkAnnotation.Url("https://api.juheai.top/register?aff=qG7E")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("https://api.juheai.top")
-                        }
-                    }
-                }
-            )
-        }
-    ),
-    ProviderSetting.OpenAI(
-        id = Uuid.parse("da93779f-3956-48cc-82ef-67bb482eaaf7"),
-        name = "302.AI",
-        baseUrl = "https://api.302.ai/v1",
-        apiKey = "",
-        enabled = false,
-        builtIn = true,
-        description = {
-            Text(
-                text = buildAnnotatedString {
-                    append("企业级AI服务, 官网：")
-                    withLink(LinkAnnotation.Url("https://302.ai/")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("https://302.ai/")
-                        }
-                    }
-                }
-            )
-        }
-    ),
-    ProviderSetting.OpenAI(
-        id = Uuid.parse("ef5d149b-8e34-404b-818c-6ec242e5c3c5"),
-        name = "腾讯Hunyuan",
-        baseUrl = "https://api.hunyuan.cloud.tencent.com/v1",
         apiKey = "",
         enabled = false,
         builtIn = true

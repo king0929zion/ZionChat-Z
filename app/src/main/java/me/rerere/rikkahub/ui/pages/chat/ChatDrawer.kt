@@ -88,20 +88,9 @@ fun ChatDrawerContent(
     val conversationJobs by vm.conversationJobs.collectAsStateWithLifecycle(initialValue = emptyMap())
     val currentAssistant = settings.getCurrentAssistant()
 
-    val nicknameEditState = useEditState<String> { newNickname ->
-        vm.updateSettings(
-            settings.copy(
-                displaySetting = settings.displaySetting.copy(
-                    userNickname = newNickname
-                )
-            )
-        )
-    }
-
     var showMoveToAssistantSheet by remember { mutableStateOf(false) }
     var conversationToMove by remember { mutableStateOf<Conversation?>(null) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var showToolsMenu by remember { mutableStateOf(false) }
 
     ModalDrawerSheet(
         modifier = Modifier.width(280.dp),
@@ -123,67 +112,19 @@ fun ChatDrawerContent(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 SidebarMenuEntry(
-                    icon = ZionAppIcons.Assistant,
-                    label = stringResource(R.string.assistant_page_title),
-                    onClick = { navController.navigate(Screen.Assistant) }
+                    icon = ZionAppIcons.NewChat,
+                    label = stringResource(R.string.chat_page_new_chat),
+                    onClick = { navigateToChatPage(navController) }
                 )
                 SidebarMenuEntry(
-                    icon = ZionAppIcons.History,
-                    label = stringResource(R.string.chat_page_history),
-                    onClick = { navController.navigate(Screen.History) }
-                )
-                SidebarMenuEntry(
-                    icon = ZionAppIcons.Favorite,
-                    label = stringResource(R.string.favorite_page_title),
-                    onClick = { navController.navigate(Screen.Favorite) }
+                    icon = ZionAppIcons.Image,
+                    label = stringResource(R.string.sidebar_images),
+                    onClick = { navController.navigate(Screen.ImageGen) }
                 )
                 SidebarMenuEntry(
                     icon = ZionAppIcons.Stats,
                     label = stringResource(R.string.stats_page_title),
                     onClick = { navController.navigate(Screen.Stats) }
-                )
-                Box {
-                    SidebarMenuEntry(
-                        icon = ZionAppIcons.Tool,
-                        label = stringResource(R.string.menu),
-                        onClick = { showToolsMenu = true }
-                    )
-                    DropdownMenu(
-                        expanded = showToolsMenu,
-                        onDismissRequest = { showToolsMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.chat_page_menu_ai_translator)) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = ZionAppIcons.Globe,
-                                    contentDescription = null
-                                )
-                            },
-                            onClick = {
-                                showToolsMenu = false
-                                navController.navigate(Screen.Translator)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.chat_page_menu_image_generation)) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = ZionAppIcons.Image,
-                                    contentDescription = null
-                                )
-                            },
-                            onClick = {
-                                showToolsMenu = false
-                                navController.navigate(Screen.ImageGen)
-                            }
-                        )
-                    }
-                }
-                SidebarMenuEntry(
-                    icon = ZionAppIcons.Settings,
-                    label = stringResource(R.string.settings),
-                    onClick = { navController.navigate(Screen.Setting) }
                 )
             }
 
@@ -226,50 +167,9 @@ fun ChatDrawerContent(
                 assistantName = currentAssistant.name.ifBlank {
                     stringResource(R.string.assistant_page_default_assistant)
                 },
-                onClick = { navController.navigate(Screen.Setting) },
-                onEditNickname = {
-                    nicknameEditState.open(settings.displaySetting.userNickname)
-                }
+                onClick = { navController.navigate(Screen.Setting) }
             )
         }
-    }
-
-    nicknameEditState.EditStateContent { nickname, onUpdate ->
-        AlertDialog(
-            onDismissRequest = {
-                nicknameEditState.dismiss()
-            },
-            title = {
-                Text(stringResource(R.string.chat_page_edit_nickname))
-            },
-            text = {
-                OutlinedTextField(
-                    value = nickname,
-                    onValueChange = onUpdate,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text(stringResource(R.string.chat_page_nickname_placeholder)) }
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        nicknameEditState.confirm()
-                    }
-                ) {
-                    Text(stringResource(R.string.chat_page_save))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        nicknameEditState.dismiss()
-                    }
-                ) {
-                    Text(stringResource(R.string.chat_page_cancel))
-                }
-            }
-        )
     }
 
     if (showMoveToAssistantSheet) {
@@ -423,7 +323,6 @@ private fun SidebarProfileCard(
     avatar: Avatar,
     assistantName: String,
     onClick: () -> Unit,
-    onEditNickname: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -458,8 +357,7 @@ private fun SidebarProfileCard(
                     fontWeight = FontWeight.SemiBold,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.clickable(onClick = onEditNickname)
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = assistantName,
@@ -532,7 +430,7 @@ private fun AssistantItem(
                         text = stringResource(R.string.assistant_page_current_assistant),
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = SourceSans3,
-                        color = ZionAccentBlue
+                        color = ZionTextSecondary
                     )
                 }
             }

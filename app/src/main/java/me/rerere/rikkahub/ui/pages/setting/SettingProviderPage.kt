@@ -19,9 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -64,6 +62,7 @@ import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConfigure
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
@@ -71,7 +70,7 @@ import me.rerere.rikkahub.utils.ImageUtils
 import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.Uuid
 
-private val ProviderCardGray = Color(0xFFF1F1F1)
+private val ProviderCardGray = ZionSectionItem
 
 private data class ProviderPresetSpec(
     val name: String,
@@ -147,28 +146,22 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(top = PageTopBarContentTopPadding)
+                .padding(top = PageTopBarContentTopPadding + 12.dp)
                 .padding(horizontal = 16.dp)
-                .padding(top = 12.dp, bottom = 16.dp),
+                .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             settings.providers.forEach { provider ->
                 ProviderServiceRow(
                     iconName = provider.name,
                     title = provider.name,
-                    enabled = provider.enabled,
+                    enabled = true,
                     onClick = {
                         navController.navigate(
                             Screen.SettingProviderDetail(providerId = provider.id.toString())
                         )
                     },
-                    badges = buildList {
-                        add(ProviderBadge(label = "Token"))
-                        if (!provider.enabled) {
-                            add(ProviderBadge(label = stringResource(R.string.setting_provider_page_disabled)))
-                        }
-                    }
+                    badges = emptyList()
                 )
             }
 
@@ -185,7 +178,7 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                     onClick = {
                         draftProvider = preset.createProvider()
                     },
-                    badges = listOf(ProviderBadge(label = "Token"))
+                    badges = emptyList()
                 )
             }
         }
