@@ -1,3 +1,8 @@
+## v0.0.9
+
+- 修复 `v0.0.8` 自动签名构建暴露的 Provider 详情页编译问题：改回当前 Material3 版本可用的 `SegmentedButton` 参数形式，并去掉错误的 `weight` 导入，恢复自动签名 Release。
+- 延续 `v0.0.8` 的 ZionChat 收口：继续保留新的灰阶、默认模型页、Provider 列表与聊天消息可见性修复。
+
 ## v0.0.8
 
 - 修复 Release 说明重复：GitHub Actions 现在只提取当前版本对应的段落发布，不再把整份 `release-notes.md` 重复挂到每个 Release。

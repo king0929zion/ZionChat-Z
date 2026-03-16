@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -259,13 +258,9 @@ private fun ProviderDetailTabs(
     ) {
         labels.forEachIndexed { index, label ->
             SegmentedButton(
-                checked = selectedIndex == index,
+                selected = selectedIndex == index,
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = labels.size),
-                onCheckedChange = { checked ->
-                    if (checked) {
-                        onSelect(index)
-                    }
-                },
+                onClick = { onSelect(index) },
                 colors = SegmentedButtonDefaults.colors(
                     activeContainerColor = ZionAccentNeutral,
                     activeContentColor = Color.White,
