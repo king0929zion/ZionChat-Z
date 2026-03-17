@@ -232,18 +232,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                         title = { Text(stringResource(R.string.setting_page_message_display_settings)) },
                     ) {
                         item(
-                            headlineContent = { Text(stringResource(R.string.setting_display_page_show_user_avatar_title)) },
-                            supportingContent = { Text(stringResource(R.string.setting_display_page_show_user_avatar_desc)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = displaySetting.showUserAvatar,
-                                    onCheckedChange = {
-                                        updateDisplaySetting(displaySetting.copy(showUserAvatar = it))
-                                    }
-                                )
-                            },
-                        )
-                        item(
                             headlineContent = { Text(stringResource(R.string.setting_display_page_show_assistant_bubble_title)) },
                             supportingContent = { Text(stringResource(R.string.setting_display_page_show_assistant_bubble_desc)) },
                             trailingContent = {
@@ -251,18 +239,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     checked = displaySetting.showAssistantBubble,
                                     onCheckedChange = {
                                         updateDisplaySetting(displaySetting.copy(showAssistantBubble = it))
-                                    }
-                                )
-                            },
-                        )
-                        item(
-                            headlineContent = { Text(stringResource(R.string.setting_display_page_chat_list_model_icon_title)) },
-                            supportingContent = { Text(stringResource(R.string.setting_display_page_chat_list_model_icon_desc)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = displaySetting.showModelIcon,
-                                    onCheckedChange = {
-                                        updateDisplaySetting(displaySetting.copy(showModelIcon = it))
                                     }
                                 )
                             },
@@ -447,32 +423,6 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 )
                             },
                         )
-                        item(
-                            headlineContent = { Text(stringResource(R.string.setting_display_page_show_message_jumper_title)) },
-                            supportingContent = { Text(stringResource(R.string.setting_display_page_show_message_jumper_desc)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = displaySetting.showMessageJumper,
-                                    onCheckedChange = {
-                                        updateDisplaySetting(displaySetting.copy(showMessageJumper = it))
-                                    }
-                                )
-                            },
-                        )
-                        if (displaySetting.showMessageJumper) {
-                            item(
-                                headlineContent = { Text(stringResource(R.string.setting_display_page_message_jumper_position_title)) },
-                                supportingContent = { Text(stringResource(R.string.setting_display_page_message_jumper_position_desc)) },
-                                trailingContent = {
-                                    Switch(
-                                        checked = displaySetting.messageJumperOnLeft,
-                                        onCheckedChange = {
-                                            updateDisplaySetting(displaySetting.copy(messageJumperOnLeft = it))
-                                        }
-                                    )
-                                },
-                            )
-                        }
                         item(
                             headlineContent = { Text(stringResource(R.string.setting_display_page_enable_auto_scroll_title)) },
                             supportingContent = { Text(stringResource(R.string.setting_display_page_enable_auto_scroll_desc)) },

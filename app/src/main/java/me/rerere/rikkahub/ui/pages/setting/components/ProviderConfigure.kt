@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -37,7 +36,7 @@ import me.rerere.rikkahub.data.datastore.DEFAULT_PROVIDERS
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
-import me.rerere.rikkahub.ui.theme.ZionGrayLighter
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -51,7 +50,7 @@ fun ProviderConfigure(
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier
+        modifier = modifier.padding(top = 8.dp)
     ) {
         if (!provider.builtIn) {
             ProviderTypeSelector(
@@ -89,7 +88,7 @@ private fun ProviderTypeSelector(
             val selected = provider::class == type
             Surface(
                 shape = RoundedCornerShape(22.dp),
-                color = if (selected) ZionAccentNeutral else ZionGrayLighter,
+                color = if (selected) ZionAccentNeutral else ZionSectionItem,
                 modifier = Modifier.clickable {
                     onEdit(provider.convertTo(type).withAlwaysEnabledDefaults())
                 }
@@ -126,7 +125,7 @@ private fun ProviderField(
     }
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             text = title,
@@ -152,9 +151,9 @@ private fun ProviderField(
             ),
             shape = RoundedCornerShape(24.dp),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
-                unfocusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
-                disabledContainerColor = ZionGrayLighter,
+                focusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionSectionItem,
+                unfocusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionSectionItem,
+                disabledContainerColor = ZionSectionItem,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
@@ -194,7 +193,7 @@ private fun ProviderToggleCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = ZionGrayLighter
+        color = ZionSectionItem
     ) {
         Row(
             modifier = Modifier
@@ -413,10 +412,7 @@ private fun ColumnScope.ProviderConfigureOpenAI(
         value = provider.apiKey,
         onValueChange = {
             onEdit(provider.copy(apiKey = it.trim(), enabled = true, balanceOption = BalanceOption()))
-        },
-        singleLine = false,
-        minLines = 1,
-        maxLines = 4
+        }
     )
     ProviderField(
         title = stringResource(id = R.string.setting_provider_page_api_base_url),
@@ -464,10 +460,7 @@ private fun ColumnScope.ProviderConfigureClaude(
         value = provider.apiKey,
         onValueChange = {
             onEdit(provider.copy(apiKey = it.trim(), enabled = true, balanceOption = BalanceOption()))
-        },
-        singleLine = false,
-        minLines = 1,
-        maxLines = 4
+        }
     )
     ProviderField(
         title = stringResource(id = R.string.setting_provider_page_api_base_url),
@@ -512,10 +505,7 @@ private fun ColumnScope.ProviderConfigureGoogle(
             value = provider.apiKey,
             onValueChange = {
                 onEdit(provider.copy(apiKey = it.trim(), enabled = true, balanceOption = BalanceOption()))
-            },
-            singleLine = false,
-            minLines = 1,
-            maxLines = 4
+            }
         )
 
         ProviderField(

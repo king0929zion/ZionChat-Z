@@ -13,7 +13,6 @@ import me.rerere.rikkahub.ui.pages.stats.StatsVM
 import me.rerere.rikkahub.ui.pages.imggen.ImgGenVM
 import me.rerere.rikkahub.ui.pages.prompts.PromptVM
 import me.rerere.rikkahub.ui.pages.setting.SettingVM
-import me.rerere.rikkahub.ui.pages.share.handler.ShareHandlerVM
 import me.rerere.rikkahub.ui.pages.translator.TranslatorVM
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -46,12 +45,6 @@ val viewModelModule = module {
         )
     }
     viewModelOf(::TranslatorVM)
-    viewModel<ShareHandlerVM> {
-        ShareHandlerVM(
-            text = it.get(),
-            settingsStore = get(),
-        )
-    }
     viewModelOf(::BackupVM)
     viewModelOf(::ImgGenVM)
     viewModelOf(::DeveloperVM)

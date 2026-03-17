@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -114,6 +115,7 @@ import me.rerere.rikkahub.ui.components.ai.ModelModalityTag
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
 import me.rerere.rikkahub.ui.components.ai.ModelTypeTag
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
+import me.rerere.rikkahub.ui.components.ui.FooterTranslucentBackdrop
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.ShareSheet
@@ -203,44 +205,51 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             containerColor = Color.Transparent,
             bottomBar = {
-                NavigationBar(
-                    containerColor = ZionBackground.copy(alpha = 0.96f),
-                    tonalElevation = 0.dp
-                ) {
-                    NavigationBarItem(
-                        selected = pager.currentPage == 0,
-                        label = { Text(stringResource(id = R.string.setting_provider_page_configuration)) },
-                        icon = { Icon(HugeIcons.Tools, null) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = ZionTextPrimary,
-                            selectedTextColor = ZionTextPrimary,
-                            unselectedIconColor = ZionTextSecondary,
-                            unselectedTextColor = ZionTextSecondary,
-                            indicatorColor = ZionSectionItem
-                        ),
-                        onClick = {
-                            scope.launch {
-                                pager.animateScrollToPage(0)
-                            }
-                        }
+                Box {
+                    FooterTranslucentBackdrop(
+                        modifier = Modifier.matchParentSize(),
+                        containerColor = ZionBackground,
+                        containerAlpha = 0.9f
                     )
-                    NavigationBarItem(
-                        selected = pager.currentPage == 1,
-                        label = { Text(stringResource(id = R.string.setting_provider_page_models)) },
-                        icon = { Icon(HugeIcons.Package01, null) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = ZionTextPrimary,
-                            selectedTextColor = ZionTextPrimary,
-                            unselectedIconColor = ZionTextSecondary,
-                            unselectedTextColor = ZionTextSecondary,
-                            indicatorColor = ZionSectionItem
-                        ),
-                        onClick = {
-                            scope.launch {
-                                pager.animateScrollToPage(1)
+                    NavigationBar(
+                        containerColor = Color.Transparent,
+                        tonalElevation = 0.dp
+                    ) {
+                        NavigationBarItem(
+                            selected = pager.currentPage == 0,
+                            label = { Text(stringResource(id = R.string.setting_provider_page_configuration)) },
+                            icon = { Icon(HugeIcons.Tools, null) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = ZionTextPrimary,
+                                selectedTextColor = ZionTextPrimary,
+                                unselectedIconColor = ZionTextSecondary,
+                                unselectedTextColor = ZionTextSecondary,
+                                indicatorColor = ZionSectionItem
+                            ),
+                            onClick = {
+                                scope.launch {
+                                    pager.animateScrollToPage(0)
+                                }
                             }
-                        }
-                    )
+                        )
+                        NavigationBarItem(
+                            selected = pager.currentPage == 1,
+                            label = { Text(stringResource(id = R.string.setting_provider_page_models)) },
+                            icon = { Icon(HugeIcons.Package01, null) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = ZionTextPrimary,
+                                selectedTextColor = ZionTextPrimary,
+                                unselectedIconColor = ZionTextSecondary,
+                                unselectedTextColor = ZionTextSecondary,
+                                indicatorColor = ZionSectionItem
+                            ),
+                            onClick = {
+                                scope.launch {
+                                    pager.animateScrollToPage(1)
+                                }
+                            }
+                        )
+                    }
                 }
             }
         ) { innerPadding ->
@@ -248,7 +257,7 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                 state = pager,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = PageTopBarContentTopPadding)
+                    .padding(top = PageTopBarContentTopPadding + 8.dp)
                     .padding(innerPadding)
                     .consumeWindowInsets(innerPadding)
             ) { page ->
@@ -295,8 +304,8 @@ private fun SettingProviderConfigPage(
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         ProviderConfigure(
             provider = internalProvider,
@@ -308,7 +317,7 @@ private fun SettingProviderConfigPage(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
-            color = ZionGrayLighter
+            color = ZionSectionItem
         ) {
             Row(
                 modifier = Modifier
@@ -1310,7 +1319,7 @@ private fun ModelCard(
     ) {
         OutlinedCard(
             colors = CardDefaults.outlinedCardColors(
-                containerColor = ZionGrayLighter
+                containerColor = ZionSectionItem
             ),
             border = BorderStroke(1.dp, ZionGrayLight)
         ) {
@@ -1412,7 +1421,7 @@ private fun BuiltInToolsSettings(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = ZionGrayLighter
+                    containerColor = ZionSectionItem
                 )
             ) {
                 Row(
@@ -1480,7 +1489,7 @@ private fun ProviderOverrideSettings(
             OutlinedCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.outlinedCardColors(
-                    containerColor = ZionGrayLighter
+                    containerColor = ZionSectionItem
                 ),
                 border = BorderStroke(1.dp, ZionGrayLight)
             ) {
