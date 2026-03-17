@@ -204,8 +204,8 @@ private fun ChatListNormal(
     var isRecentScroll by remember { mutableStateOf(false) }
     val conversationUpdated by rememberUpdatedState(conversation)
     val density = LocalDensity.current
-    val listTopPadding = innerPadding.calculateTopPadding() + 16.dp
-    val listBottomPadding = innerPadding.calculateBottomPadding() + 20.dp
+    val listTopPadding = innerPadding.calculateTopPadding() + 8.dp
+    val listBottomPadding = innerPadding.calculateBottomPadding() + 14.dp
 
     fun List<LazyListItemInfo>.isAtBottom(): Boolean {
         val lastItem = lastOrNull() ?: return true

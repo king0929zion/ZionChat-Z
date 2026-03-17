@@ -219,6 +219,7 @@ fun ChatInput(
     var toolMenuPage by remember { mutableStateOf(ToolMenuPage.Tools) }
     var showInjectionSheet by remember { mutableStateOf(false) }
     var showCompressDialog by remember { mutableStateOf(false) }
+    var toolMenuDismissSignal by remember { mutableStateOf(0) }
     fun dismissExpand() {
         expand = ExpandState.Collapsed
         toolMenuPage = ToolMenuPage.Tools
@@ -226,9 +227,17 @@ fun ChatInput(
         showCompressDialog = false
     }
 
+    fun dismissToolMenu() {
+        toolMenuDismissSignal += 1
+    }
+
     fun expandToggle(type: ExpandState) {
         if (expand == type) {
-            dismissExpand()
+            if (type == ExpandState.Tools) {
+                dismissToolMenu()
+            } else {
+                dismissExpand()
+            }
         } else {
             expand = type
         }
@@ -238,7 +247,11 @@ fun ChatInput(
     val imeVisile = WindowInsets.isImeVisible
     LaunchedEffect(imeVisile, showInjectionSheet, showCompressDialog) {
         if (imeVisile && !showInjectionSheet && !showCompressDialog) {
-            dismissExpand()
+            if (expand == ExpandState.Tools) {
+                dismissToolMenu()
+            } else {
+                dismissExpand()
+            }
         }
     }
 
@@ -329,11 +342,16 @@ fun ChatInput(
         }
 
         BackHandler(enabled = expand != ExpandState.Collapsed) {
-            dismissExpand()
+            if (expand == ExpandState.Tools) {
+                dismissToolMenu()
+            } else {
+                dismissExpand()
+            }
         }
 
         if (expand == ExpandState.Tools) {
             ToolMenuBottomSheet(
+                dismissSignal = toolMenuDismissSignal,
                 onDismiss = { dismissExpand() }
             ) {
                 ToolControlPanel(
@@ -403,70 +421,68 @@ private fun ActionIconButton(
 
 @Composable
 private fun ToolMenuBottomSheet(
+    dismissSignal: Int,
     onDismiss: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    BasicAlertDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false
-        )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    var dismissing by remember { mutableStateOf(false) }
+    var handledDismissSignal by remember { mutableStateOf(dismissSignal) }
+
+    fun dismissSheet() {
+        if (dismissing) return
+        dismissing = true
+        scope.launch {
+            sheetState.hide()
+        }.invokeOnCompletion {
+            dismissing = false
+            if (!sheetState.isVisible) {
+                onDismiss()
+            }
+        }
+    }
+
+    LaunchedEffect(dismissSignal) {
+        if (dismissSignal != handledDismissSignal) {
+            handledDismissSignal = dismissSignal
+            dismissSheet()
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = { dismissSheet() },
+        sheetState = sheetState,
+        sheetGesturesEnabled = true,
+        containerColor = ZionSurface,
+        contentColor = ZionTextPrimary,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        dragHandle = null,
+        scrimColor = Color.Black.copy(alpha = 0.14f),
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.34f))
+                .fillMaxWidth()
+                .heightIn(max = 540.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 6.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onDismiss
-                    )
-            )
-
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(top = 96.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {}
-                    ),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                color = Color.White,
-                tonalElevation = 0.dp,
-                shadowElevation = 12.dp,
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Column(
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 620.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
-                        .navigationBarsPadding(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(40.dp)
-                                .height(4.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(ZionGrayLight)
-                        )
-                    }
-                    content()
-                }
+                        .width(40.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(ZionGrayLight)
+                )
             }
+            content()
+            Spacer(modifier = Modifier.height(6.dp))
         }
     }
 }

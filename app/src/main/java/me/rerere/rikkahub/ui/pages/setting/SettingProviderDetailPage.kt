@@ -11,6 +11,7 @@ import me.rerere.hugeicons.stroke.Share01
 import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.Cancel01
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -44,6 +46,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.FloatingToolbarDefaults.floatingToolbarVerticalNestedScroll
@@ -56,6 +59,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -127,6 +131,12 @@ import me.rerere.rikkahub.ui.pages.setting.components.isUsingDefaultBaseUrl
 import me.rerere.rikkahub.ui.pages.setting.components.resetBaseUrlToDefault
 import me.rerere.rikkahub.ui.theme.extendColors
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
+import me.rerere.rikkahub.ui.theme.ZionBackground
+import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.UiState
 import me.rerere.rikkahub.utils.plus
 import org.koin.androidx.compose.koinViewModel
@@ -190,13 +200,24 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
         }
     ) {
         Scaffold(
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             containerColor = Color.Transparent,
             bottomBar = {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = ZionBackground.copy(alpha = 0.96f),
+                    tonalElevation = 0.dp
+                ) {
                     NavigationBarItem(
                         selected = pager.currentPage == 0,
                         label = { Text(stringResource(id = R.string.setting_provider_page_configuration)) },
                         icon = { Icon(HugeIcons.Tools, null) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = ZionTextPrimary,
+                            selectedTextColor = ZionTextPrimary,
+                            unselectedIconColor = ZionTextSecondary,
+                            unselectedTextColor = ZionTextSecondary,
+                            indicatorColor = ZionSectionItem
+                        ),
                         onClick = {
                             scope.launch {
                                 pager.animateScrollToPage(0)
@@ -207,6 +228,13 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                         selected = pager.currentPage == 1,
                         label = { Text(stringResource(id = R.string.setting_provider_page_models)) },
                         icon = { Icon(HugeIcons.Package01, null) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = ZionTextPrimary,
+                            selectedTextColor = ZionTextPrimary,
+                            unselectedIconColor = ZionTextSecondary,
+                            unselectedTextColor = ZionTextSecondary,
+                            indicatorColor = ZionSectionItem
+                        ),
                         onClick = {
                             scope.launch {
                                 pager.animateScrollToPage(1)
@@ -277,49 +305,57 @@ private fun SettingProviderConfigPage(
             }
         )
 
-        Row(
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            shape = RoundedCornerShape(24.dp),
+            color = ZionGrayLighter
         ) {
-            ProviderConnectionTester(
-                internalProvider = internalProvider,
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ProviderConnectionTester(
+                    internalProvider = internalProvider,
+                )
 
-            Spacer(Modifier.weight(1f))
+                Spacer(Modifier.weight(1f))
 
-            if (!internalProvider.builtIn) {
+                if (!internalProvider.builtIn) {
+                    IconButton(
+                        onClick = {
+                            showDeleteDialog = true
+                        },
+                    ) {
+                        Icon(HugeIcons.Delete01, "Delete")
+                    }
+                }
+
                 IconButton(
                     onClick = {
-                        showDeleteDialog = true
+                        internalProvider = internalProvider.resetBaseUrlToDefault().withAlwaysEnabledDefaults()
                     },
+                    enabled = !internalProvider.isUsingDefaultBaseUrl(),
                 ) {
-                    Icon(HugeIcons.Delete01, "Delete")
+                    Icon(
+                        imageVector = HugeIcons.Refresh03,
+                        contentDescription = stringResource(R.string.setting_model_page_reset_to_default)
+                    )
                 }
-            }
 
-            IconButton(
-                onClick = {
-                    internalProvider = internalProvider.resetBaseUrlToDefault().withAlwaysEnabledDefaults()
-                },
-                enabled = !internalProvider.isUsingDefaultBaseUrl(),
-            ) {
-                Icon(
-                    imageVector = HugeIcons.Refresh03,
-                    contentDescription = stringResource(R.string.setting_model_page_reset_to_default)
-                )
-            }
-
-            Button(
-                onClick = {
-                    onEdit(internalProvider.withAlwaysEnabledDefaults())
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ZionAccentNeutral,
-                    contentColor = Color.White
-                )
-            ) {
-                Text(stringResource(R.string.setting_provider_page_save))
+                Button(
+                    onClick = {
+                        onEdit(internalProvider.withAlwaysEnabledDefaults())
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ZionAccentNeutral,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(stringResource(R.string.setting_provider_page_save))
+                }
             }
         }
     }
@@ -414,12 +450,12 @@ private fun ModelList(
                         Text(
                             text = stringResource(R.string.setting_provider_page_no_models),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = ZionTextSecondary
                         )
                         Text(
                             text = stringResource(R.string.setting_provider_page_add_models_hint),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            color = ZionTextSecondary.copy(alpha = 0.72f)
                         )
                     }
                 }
@@ -1162,6 +1198,7 @@ private fun ModelCard(
                     dialogState.dismiss()
                 },
                 sheetState = sheetState,
+                containerColor = ZionBackground,
                 sheetGesturesEnabled = false,
                 dragHandle = null,
             ) {
@@ -1271,7 +1308,12 @@ private fun ModelCard(
         gesturesEnabled = true,
         modifier = modifier
     ) {
-        OutlinedCard {
+        OutlinedCard(
+            colors = CardDefaults.outlinedCardColors(
+                containerColor = ZionGrayLighter
+            ),
+            border = BorderStroke(1.dp, ZionGrayLight)
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1280,7 +1322,7 @@ private fun ModelCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    color = ZionSectionItem,
                     shape = MaterialTheme.shapes.small,
                 ) {
                     AutoAIIcon(
@@ -1295,6 +1337,7 @@ private fun ModelCard(
                     Text(
                         text = model.displayName,
                         style = MaterialTheme.typography.titleSmall,
+                        color = ZionTextPrimary,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1349,7 +1392,7 @@ private fun BuiltInToolsSettings(
         Text(
             text = stringResource(R.string.setting_page_built_in_tools_desc),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = ZionTextSecondary
         )
 
         val availableTools = listOf(
@@ -1366,7 +1409,11 @@ private fun BuiltInToolsSettings(
         availableTools.forEach { (tool, info) ->
             val (title, description) = info
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = ZionGrayLighter
+                )
             ) {
                 Row(
                     modifier = Modifier
@@ -1381,12 +1428,13 @@ private fun BuiltInToolsSettings(
                     ) {
                         Text(
                             text = title,
-                            style = MaterialTheme.typography.titleSmall
+                            style = MaterialTheme.typography.titleSmall,
+                            color = ZionTextPrimary
                         )
                         Text(
                             text = description,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = ZionTextSecondary
                         )
                     }
                     Switch(
@@ -1425,12 +1473,16 @@ private fun ProviderOverrideSettings(
         Text(
             text = stringResource(R.string.setting_provider_page_provider_override_desc),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = ZionTextSecondary
         )
 
         if (providerOverride != null) {
             OutlinedCard(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.outlinedCardColors(
+                    containerColor = ZionGrayLighter
+                ),
+                border = BorderStroke(1.dp, ZionGrayLight)
             ) {
                 Column(
                     modifier = Modifier
@@ -1449,6 +1501,7 @@ private fun ProviderOverrideSettings(
                         Text(
                             text = "${providerOverride.name} (Override)",
                             style = MaterialTheme.typography.bodyMedium,
+                            color = ZionTextPrimary,
                             modifier = Modifier.weight(1f)
                         )
                         IconButton(
@@ -1495,7 +1548,8 @@ private fun ProviderOverrideSettings(
                     showProviderConfig = false
                     editingProvider = null
                 },
-                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                containerColor = ZionBackground
             ) {
                 var internalProvider by remember(editingProvider) { mutableStateOf(editingProvider!!) }
 

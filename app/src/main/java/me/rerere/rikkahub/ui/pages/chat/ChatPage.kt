@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -65,7 +66,6 @@ import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.service.ChatError
 import me.rerere.rikkahub.ui.components.ai.ChatInput
-import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
 import me.rerere.rikkahub.ui.components.ui.HeaderTranslucentBackdrop
 import me.rerere.rikkahub.ui.components.ui.headerActionButtonShadow
 import me.rerere.rikkahub.ui.components.ui.pressableScale
@@ -448,9 +448,9 @@ private fun TopBar(
 
     Box(modifier = Modifier.fillMaxWidth()) {
         HeaderTranslucentBackdrop(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = ZionSurface,
-            containerAlpha = 0.82f,
+            modifier = Modifier.matchParentSize(),
+            containerColor = ZionBackground,
+            containerAlpha = 0.74f,
         )
 
         Row(
