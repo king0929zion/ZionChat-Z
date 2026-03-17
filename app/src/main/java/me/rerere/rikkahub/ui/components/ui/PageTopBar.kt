@@ -44,7 +44,7 @@ import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 
-val PageTopBarContentTopPadding: Dp = 72.dp
+val PageTopBarContentTopPadding: Dp = 88.dp
 
 fun Modifier.headerActionButtonShadow(shape: Shape = CircleShape): Modifier = this.shadow(
     elevation = 20.dp,

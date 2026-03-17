@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -591,23 +590,9 @@ private fun ExportedChatMessage(
                                                 )
                                             }
                                         } else {
-                                            if (settings.displaySetting.showAssistantBubble) {
-                                                Card(
-                                                    shape = MaterialTheme.shapes.medium,
-                                                    colors = CardDefaults.cardColors(
-                                                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                                                    )
-                                                ) {
-                                                    MarkdownBlock(
-                                                        content = part.text,
-                                                        modifier = Modifier.padding(8.dp)
-                                                    )
-                                                }
-                                            } else {
-                                                MarkdownBlock(
-                                                    content = part.text,
-                                                )
-                                            }
+                                            MarkdownBlock(
+                                                content = part.text,
+                                            )
                                         }
                                     }
                                 }

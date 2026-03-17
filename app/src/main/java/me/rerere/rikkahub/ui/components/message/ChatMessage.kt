@@ -87,8 +87,6 @@ import me.rerere.rikkahub.ui.components.ui.Favicon
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.theme.extendColors
-import me.rerere.rikkahub.ui.theme.ZionDivider
-import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionUserMessageBubble
 import me.rerere.rikkahub.utils.JsonInstant
@@ -256,8 +254,6 @@ private fun MessagePartsBlock(
     val contentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
     val messageTextColor = ZionTextPrimary
     val userBubbleColor = ZionUserMessageBubble
-    val assistantBubbleColor = ZionSurface
-    val assistantBubbleBorder = ZionDivider.copy(alpha = 0.92f)
 
     // 消息输出HapticFeedback
     val hapticFeedback = LocalHapticFeedback.current
@@ -356,11 +352,11 @@ private fun MessagePartsBlock(
                                     )
                                 }
                             } else {
-                                MessageTextBubble(
-                                    modifier = Modifier.animateContentSize(),
-                                    containerColor = assistantBubbleColor,
-                                    contentColor = messageTextColor,
-                                    borderColor = assistantBubbleBorder,
+                                Box(
+                                    modifier = Modifier
+                                        .widthIn(max = 680.dp)
+                                        .animateContentSize()
+                                        .padding(horizontal = 4.dp, vertical = 2.dp)
                                 ) {
                                     MarkdownBlock(
                                         content = renderedText,
