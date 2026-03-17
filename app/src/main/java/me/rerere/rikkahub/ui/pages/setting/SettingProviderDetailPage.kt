@@ -153,6 +153,8 @@ private fun ProviderSetting.withAlwaysEnabledDefaults(): ProviderSetting {
     )
 }
 
+private val ProviderDetailContentTopPadding = PageTopBarContentTopPadding + 12.dp
+
 @Composable
 fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
@@ -256,7 +258,7 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                 state = pager,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = PageTopBarContentTopPadding + 4.dp)
+                    .padding(top = ProviderDetailContentTopPadding)
                     .padding(innerPadding)
                     .consumeWindowInsets(innerPadding)
             ) { page ->
@@ -303,7 +305,7 @@ private fun SettingProviderConfigPage(
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         ProviderConfigure(
