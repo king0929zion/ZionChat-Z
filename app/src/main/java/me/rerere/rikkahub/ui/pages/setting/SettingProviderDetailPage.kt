@@ -12,6 +12,7 @@ import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.Cancel01
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,6 +89,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -129,6 +131,7 @@ import me.rerere.rikkahub.ui.pages.assistant.detail.CustomBodies
 import me.rerere.rikkahub.ui.pages.assistant.detail.CustomHeaders
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConfigure
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConnectionTester
+import me.rerere.rikkahub.ui.pages.setting.components.ProviderField
 import me.rerere.rikkahub.ui.pages.setting.components.isUsingDefaultBaseUrl
 import me.rerere.rikkahub.ui.pages.setting.components.resetBaseUrlToDefault
 import me.rerere.rikkahub.ui.theme.extendColors
@@ -246,14 +249,20 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
                 when (page) {
                     0 -> SettingProviderConfigPage(
                         provider = provider,
-                        onEdit = {
+                        onSave = {
                             onEdit(it)
                             toaster.show(
                                 context.getString(R.string.setting_provider_page_save_success),
                                 type = ToastType.Success
                             )
                         },
-                        onDelete = onDelete
+                        onDelete = onDelete,
+                        onShowModels = {
+                            onEdit(it)
+                            scope.launch {
+                                pager.animateScrollToPage(1)
+                            }
+                        }
                     )
 
                     1 -> SettingProviderModelPage(
@@ -290,7 +299,7 @@ private fun ProviderDetailSummaryCard(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = ZionAppIcons.ModelServices,
+                        painter = painterResource(R.drawable.ic_model_services),
                         contentDescription = null,
                         tint = ZionTextPrimary,
                         modifier = Modifier.size(30.dp)
@@ -369,11 +378,13 @@ private fun ProviderSectionLabel(text: String) {
 @Composable
 private fun SettingProviderConfigPage(
     provider: ProviderSetting,
-    onEdit: (ProviderSetting) -> Unit,
-    onDelete: () -> Unit
+    onSave: (ProviderSetting) -> Unit,
+    onDelete: () -> Unit,
+    onShowModels: (ProviderSetting) -> Unit
 ) {
     var internalProvider by remember(provider) { mutableStateOf(provider.withAlwaysEnabledDefaults()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val groupColor = ZionGrayLighter
 
     Column(
         modifier = Modifier
@@ -383,24 +394,86 @@ private fun SettingProviderConfigPage(
             .padding(top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        ProviderDetailSummaryCard(provider = internalProvider)
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = groupColor
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    modifier = Modifier.size(64.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_model_services),
+                            contentDescription = null,
+                            tint = ZionTextPrimary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
 
-        ProviderSectionLabel(stringResource(R.string.setting_provider_page_basic_settings))
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ProviderField(
+                        title = stringResource(R.string.setting_provider_page_name),
+                        value = internalProvider.name,
+                        onValueChange = {
+                            internalProvider = internalProvider.copyProvider(name = it)
+                                .withAlwaysEnabledDefaults()
+                        },
+                        containerColor = groupColor
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ProviderDetailBadge(
+                            label = stringResource(
+                                R.string.setting_provider_page_model_count,
+                                internalProvider.models.size
+                            )
+                        )
+                        ProviderDetailBadge(
+                            label = stringResource(
+                                if (internalProvider.enabled) {
+                                    R.string.setting_provider_page_enabled
+                                } else {
+                                    R.string.setting_provider_page_disabled
+                                }
+                            ),
+                            emphasized = internalProvider.enabled
+                        )
+                    }
+                }
+            }
+        }
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            color = ZionSectionItem
+            shape = RoundedCornerShape(20.dp),
+            color = groupColor
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ProviderConfigure(
                     provider = internalProvider,
                     topPadding = 0.dp,
+                    showNameField = false,
                     onEdit = {
                         internalProvider = it.withAlwaysEnabledDefaults()
                     }
@@ -408,54 +481,155 @@ private fun SettingProviderConfigPage(
             }
         }
 
-        ProviderSectionLabel(stringResource(R.string.setting_provider_page_advanced_settings))
-
         Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            color = ZionSectionItem
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onShowModels(internalProvider.withAlwaysEnabledDefaults())
+                },
+            shape = RoundedCornerShape(20.dp),
+            color = groupColor
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ProviderConnectionTester(
-                    internalProvider = internalProvider,
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_provider_page_models),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ZionTextSecondary
+                    )
+                    Text(
+                        text = "Configure models",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = ZionTextPrimary
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.setting_provider_page_model_count,
+                            internalProvider.models.size
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ZionTextSecondary
+                    )
+                }
+                Icon(
+                    imageVector = ZionAppIcons.ChevronRight,
+                    contentDescription = null,
+                    tint = ZionTextSecondary
                 )
+            }
+        }
 
-                Spacer(Modifier.weight(1f))
-
-                if (!internalProvider.builtIn) {
-                    IconButton(
-                        onClick = {
-                            showDeleteDialog = true
-                        },
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = groupColor
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    color = Color.White
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(HugeIcons.Delete01, "Delete")
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.setting_provider_page_test_connection),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = ZionTextPrimary
+                            )
+                            Text(
+                                text = internalProvider.name,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = ZionTextSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        ProviderConnectionTester(
+                            internalProvider = internalProvider,
+                        )
                     }
                 }
 
-                IconButton(
-                    onClick = {
-                        internalProvider = internalProvider.resetBaseUrlToDefault().withAlwaysEnabledDefaults()
-                    },
-                    enabled = !internalProvider.isUsingDefaultBaseUrl(),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(
-                        imageVector = HugeIcons.Refresh03,
-                        contentDescription = stringResource(R.string.setting_model_page_reset_to_default)
-                    )
+                    Surface(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color.White
+                    ) {
+                        IconButton(
+                            onClick = {
+                                internalProvider = internalProvider.resetBaseUrlToDefault()
+                                    .withAlwaysEnabledDefaults()
+                            },
+                            enabled = !internalProvider.isUsingDefaultBaseUrl(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = HugeIcons.Refresh03,
+                                contentDescription = stringResource(R.string.setting_model_page_reset_to_default)
+                            )
+                        }
+                    }
+
+                    if (!internalProvider.builtIn) {
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(18.dp),
+                            color = Color.White
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    showDeleteDialog = true
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Icon(HugeIcons.Delete01, "Delete")
+                            }
+                        }
+                    }
                 }
 
                 Button(
                     onClick = {
-                        onEdit(internalProvider.withAlwaysEnabledDefaults())
+                        onSave(internalProvider.withAlwaysEnabledDefaults())
                     },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ZionAccentNeutral,
+                        containerColor = ZionTextPrimary,
                         contentColor = Color.White
                     )
                 ) {
@@ -482,10 +656,10 @@ private fun SettingProviderConfigPage(
             },
             confirmButton = {
                 TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDelete()
-                    }
+                                onClick = {
+                                    showDeleteDialog = false
+                                    onDelete()
+                                }
                 ) {
                     Text(stringResource(R.string.delete))
                 }
@@ -566,7 +740,7 @@ private fun ModelList(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = ZionAppIcons.ModelServices,
+                                    painter = painterResource(R.drawable.ic_model_services),
                                     contentDescription = null,
                                     tint = ZionTextPrimary,
                                     modifier = Modifier.size(28.dp)
@@ -651,7 +825,7 @@ private fun ModelList(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = ZionAppIcons.Model,
+                            painter = painterResource(R.drawable.ic_model),
                             contentDescription = null,
                             tint = ZionTextSecondary,
                             modifier = Modifier.size(28.dp)
@@ -1228,7 +1402,7 @@ private fun ModelPicker(
             }
         ) {
             Icon(
-                imageVector = ZionAppIcons.Model,
+                painter = painterResource(R.drawable.ic_model),
                 contentDescription = stringResource(R.string.setting_provider_page_avaliable_models)
             )
         }
@@ -1534,7 +1708,7 @@ private fun ModelCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = ZionAppIcons.Model,
+                            painter = painterResource(R.drawable.ic_model),
                             contentDescription = null,
                             tint = ZionTextPrimary,
                             modifier = Modifier.size(22.dp)

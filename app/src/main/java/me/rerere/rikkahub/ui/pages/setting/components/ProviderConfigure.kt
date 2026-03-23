@@ -1,14 +1,27 @@
 package me.rerere.rikkahub.ui.pages.setting.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
@@ -20,11 +33,16 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
@@ -35,6 +53,7 @@ import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.DEFAULT_PROVIDERS
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
+import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
 import me.rerere.rikkahub.ui.theme.ZionGrayLighter
@@ -49,6 +68,7 @@ fun ProviderConfigure(
     provider: ProviderSetting,
     modifier: Modifier = Modifier,
     topPadding: Dp = 0.dp,
+    showNameField: Boolean = true,
     onEdit: (provider: ProviderSetting) -> Unit
 ) {
     Column(
@@ -63,9 +83,9 @@ fun ProviderConfigure(
         }
 
         when (provider) {
-            is ProviderSetting.OpenAI -> ProviderConfigureOpenAI(provider, onEdit)
-            is ProviderSetting.Google -> ProviderConfigureGoogle(provider, onEdit)
-            is ProviderSetting.Claude -> ProviderConfigureClaude(provider, onEdit)
+            is ProviderSetting.OpenAI -> ProviderConfigureOpenAI(provider, showNameField, onEdit)
+            is ProviderSetting.Google -> ProviderConfigureGoogle(provider, showNameField, onEdit)
+            is ProviderSetting.Claude -> ProviderConfigureClaude(provider, showNameField, onEdit)
         }
     }
 }
@@ -82,37 +102,79 @@ private fun ProviderTypeSelector(
     provider: ProviderSetting,
     onEdit: (ProviderSetting) -> Unit,
 ) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    val options = remember {
+        listOf(
+            ProviderSetting.OpenAI::class to "OpenAI",
+            ProviderSetting.Claude::class to "Anthropic",
+            ProviderSetting.Google::class to "Google",
+        )
+    }
+    val selectedIndex = options.indexOfFirst { it.first == provider::class }.coerceAtLeast(0)
+    val trackShape = RoundedCornerShape(16.dp)
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(38.dp)
+            .background(Color.White, trackShape)
     ) {
-        ProviderSetting.Types.forEach { type ->
-            val selected = provider::class == type
-            Surface(
-                shape = RoundedCornerShape(22.dp),
-                color = if (selected) ZionAccentNeutral else ZionSectionItem,
-                modifier = Modifier.clickable {
-                    onEdit(provider.convertTo(type).withAlwaysEnabledDefaults())
-                }
-            ) {
-                Text(
-                    text = type.simpleName ?: "",
-                    color = if (selected) Color.White else ZionTextPrimary,
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+        val optionWidth = maxWidth / options.size
+        val indicatorOffset by animateDpAsState(
+            targetValue = optionWidth * selectedIndex,
+            animationSpec = tween(durationMillis = 210, easing = FastOutSlowInEasing),
+            label = "provider_type_indicator_offset"
+        )
+
+        Box(
+            modifier = Modifier
+                .offset(x = indicatorOffset)
+                .fillMaxHeight()
+                .width(optionWidth)
+                .padding(2.dp)
+                .background(Color.White, RoundedCornerShape(14.dp))
+                .border(1.4.dp, Color(0xFF666872), RoundedCornerShape(14.dp))
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+            horizontalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            options.forEach { (type, label) ->
+                val selected = type == provider::class
+                val textColor by animateColorAsState(
+                    targetValue = if (selected) ZionTextPrimary else ZionTextSecondary,
+                    animationSpec = tween(durationMillis = 180),
+                    label = "provider_type_text_color"
                 )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable {
+                            onEdit(provider.convertTo(type).withAlwaysEnabledDefaults())
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        fontSize = 14.sp,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                        fontFamily = SourceSans3,
+                        color = textColor
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ProviderField(
+fun ProviderField(
     title: String,
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    containerColor: Color = ZionGrayLighter,
     singleLine: Boolean = true,
     minLines: Int = 1,
     maxLines: Int = 1,
@@ -126,63 +188,114 @@ private fun ProviderField(
     } else {
         textStyle
     }
+    val hasValue = value.trim().isNotEmpty()
+    val fieldTransition = updateTransition(targetState = hasValue, label = "provider_field_transition")
+    val labelAlpha by fieldTransition.animateFloat(
+        transitionSpec = { tween(durationMillis = 210, easing = FastOutSlowInEasing) },
+        label = "provider_field_label_alpha"
+    ) { filled ->
+        if (filled) 1f else 0f
+    }
+    val labelScale by fieldTransition.animateFloat(
+        transitionSpec = { tween(durationMillis = 210, easing = FastOutSlowInEasing) },
+        label = "provider_field_label_scale"
+    ) { filled ->
+        if (filled) 0.88f else 1f
+    }
+    val labelOffsetY by fieldTransition.animateDp(
+        transitionSpec = { tween(durationMillis = 210, easing = FastOutSlowInEasing) },
+        label = "provider_field_label_offset"
+    ) { filled ->
+        if (filled) (-9).dp else 18.dp
+    }
+    val placeholderAlpha by fieldTransition.animateFloat(
+        transitionSpec = { tween(durationMillis = 180, easing = FastOutSlowInEasing) },
+        label = "provider_field_placeholder_alpha"
+    ) { filled ->
+        if (filled) 0f else 1f
+    }
+    val fieldBorderColor = if (isError) Color(0xFFC62828) else Color(0xFF5F616A)
+    val fieldHintColor = if (isError) Color(0xFFC62828) else Color(0xFF74747D)
+    val shape = RoundedCornerShape(24.dp)
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Text(
-            text = title,
-            color = ZionTextSecondary,
-            style = MaterialTheme.typography.labelMedium
-        )
-        TextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = if (singleLine) 56.dp else 112.dp),
-            singleLine = singleLine,
-            minLines = minLines,
-            maxLines = maxLines,
-            textStyle = resolvedTextStyle.copy(
-                color = ZionTextPrimary,
-                fontSize = 16.sp
-            ),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = keyboardType,
-                imeAction = if (singleLine) ImeAction.Next else ImeAction.Default
-            ),
-            shape = RoundedCornerShape(24.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
-                unfocusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
-                disabledContainerColor = ZionGrayLighter,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                focusedTextColor = ZionTextPrimary,
-                unfocusedTextColor = ZionTextPrimary,
-                cursorColor = ZionAccentNeutral,
-                focusedPlaceholderColor = ZionTextSecondary,
-                unfocusedPlaceholderColor = ZionTextSecondary
-            ),
-            placeholder = {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = if (singleLine) 58.dp else 120.dp)
+                    .border(0.9.dp, fieldBorderColor, shape),
+                color = if (isError) Color(0xFFFFF2F0) else containerColor,
+                shape = shape
+            ) {
+                TextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    placeholder = {
+                        Text(
+                            text = title,
+                            fontSize = 17.sp,
+                            fontFamily = SourceSans3,
+                            color = fieldHintColor,
+                            modifier = Modifier.alpha(placeholderAlpha)
+                        )
+                    },
+                    singleLine = singleLine,
+                    minLines = minLines,
+                    maxLines = maxLines,
+                    textStyle = resolvedTextStyle.copy(
+                        color = ZionTextPrimary,
+                        fontSize = 17.sp,
+                        fontFamily = SourceSans3
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = keyboardType,
+                        imeAction = if (singleLine) ImeAction.Next else ImeAction.Default
+                    ),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
+                        focusedTextColor = ZionTextPrimary,
+                        unfocusedTextColor = ZionTextPrimary,
+                        cursorColor = ZionTextPrimary
+                    )
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(x = 14.dp, y = labelOffsetY)
+                    .alpha(labelAlpha)
+                    .scale(labelScale)
+                    .background(if (isError) Color(0xFFFFF2F0) else containerColor, RoundedCornerShape(10.dp))
+                    .padding(horizontal = 6.dp, vertical = 1.dp)
+            ) {
                 Text(
                     text = title,
-                    color = ZionTextSecondary,
-                    style = MaterialTheme.typography.bodyMedium
+                    fontSize = 12.sp,
+                    fontFamily = SourceSans3,
+                    color = fieldHintColor
                 )
-            },
-            supportingText = supportingText?.let {
-                {
-                    Text(
-                        text = it,
-                        color = if (isError) Color(0xFFC62828) else ZionTextSecondary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
             }
-        )
+        }
+
+        if (!supportingText.isNullOrBlank()) {
+            Text(
+                text = supportingText,
+                color = if (isError) Color(0xFFC62828) else ZionTextSecondary,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
     }
 }
 
@@ -393,6 +506,7 @@ private val OFFICIAL_PROVIDER_HOSTS = setOf(
 @Composable
 private fun ColumnScope.ProviderConfigureOpenAI(
     provider: ProviderSetting.OpenAI,
+    showNameField: Boolean,
     onEdit: (provider: ProviderSetting.OpenAI) -> Unit
 ) {
     val supportsResponseApi = provider.baseUrl.toHttpUrlOrNull()?.host?.lowercase() == OPENAI_OFFICIAL_HOST
@@ -403,13 +517,15 @@ private fun ColumnScope.ProviderConfigureOpenAI(
         }
     }
 
-    ProviderField(
-        title = stringResource(id = R.string.setting_provider_page_name),
-        value = provider.name,
-        onValueChange = {
-            onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
-        }
-    )
+    if (showNameField) {
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_name),
+            value = provider.name,
+            onValueChange = {
+                onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
+            }
+        )
+    }
     ProviderField(
         title = stringResource(id = R.string.setting_provider_page_api_key),
         value = provider.apiKey,
@@ -449,15 +565,18 @@ private fun ColumnScope.ProviderConfigureOpenAI(
 @Composable
 private fun ColumnScope.ProviderConfigureClaude(
     provider: ProviderSetting.Claude,
+    showNameField: Boolean,
     onEdit: (provider: ProviderSetting.Claude) -> Unit
 ) {
-    ProviderField(
-        title = stringResource(id = R.string.setting_provider_page_name),
-        value = provider.name,
-        onValueChange = {
-            onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
-        }
-    )
+    if (showNameField) {
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_name),
+            value = provider.name,
+            onValueChange = {
+                onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
+            }
+        )
+    }
     ProviderField(
         title = stringResource(id = R.string.setting_provider_page_api_key),
         value = provider.apiKey,
@@ -485,15 +604,18 @@ private fun ColumnScope.ProviderConfigureClaude(
 @Composable
 private fun ColumnScope.ProviderConfigureGoogle(
     provider: ProviderSetting.Google,
+    showNameField: Boolean,
     onEdit: (provider: ProviderSetting.Google) -> Unit
 ) {
-    ProviderField(
-        title = stringResource(id = R.string.setting_provider_page_name),
-        value = provider.name,
-        onValueChange = {
-            onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
-        }
-    )
+    if (showNameField) {
+        ProviderField(
+            title = stringResource(id = R.string.setting_provider_page_name),
+            value = provider.name,
+            onValueChange = {
+                onEdit(provider.copy(name = it.trim(), enabled = true, balanceOption = BalanceOption()))
+            }
+        )
+    }
     ProviderToggleCard(
         title = stringResource(id = R.string.setting_provider_page_vertex_ai),
         checked = provider.vertexAI,

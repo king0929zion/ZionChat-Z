@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -159,12 +160,12 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 ) {
                     item(
                         onClick = { navController.navigate(Screen.SettingModels) },
-                        leadingContent = { Icon(ZionAppIcons.Model, null) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_model), null) },
                         headlineContent = { Text(stringResource(R.string.setting_page_default_model)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingProvider) },
-                        leadingContent = { Icon(ZionAppIcons.ModelServices, null) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_model_services), null) },
                         headlineContent = { Text(stringResource(R.string.setting_page_providers)) },
                     )
                     item(
