@@ -201,9 +201,6 @@ fun SettingProviderDetailPage(
         navController.popBackStack()
     }
 
-    val shareSheetState = rememberShareSheetState()
-    ShareSheet(shareSheetState)
-
     SettingsPage(
         title = if (isModelsPage) {
             context.getString(R.string.setting_provider_page_models)
@@ -212,7 +209,26 @@ fun SettingProviderDetailPage(
         },
         onBack = { navController.popBackStack() },
         trailing = if (isModelsPage) {
-            null
+            {
+                Surface(
+                    modifier = Modifier.size(40.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    color = ZionSurface
+                ) {
+                    ProviderConnectionTester(
+                        internalProvider = provider,
+                        modifier = Modifier.fillMaxSize(),
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_model_test),
+                                contentDescription = stringResource(R.string.setting_provider_page_test_connection),
+                                tint = ZionTextPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    )
+                }
+            }
         } else {
             {
                 Surface(
@@ -266,9 +282,6 @@ fun SettingProviderDetailPage(
                                 page = ProviderDetailPageModels
                             )
                         )
-                    },
-                    onShare = {
-                        shareSheetState.show(internalProvider.withAlwaysEnabledDefaults())
                     }
                 )
             }
@@ -299,11 +312,10 @@ private fun ProviderDetailSummaryCard(
                 color = ZionSurface
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_model_services),
-                        contentDescription = null,
-                        tint = ZionTextPrimary,
-                        modifier = Modifier.size(30.dp)
+                    AutoAIIcon(
+                        name = provider.name,
+                        modifier = Modifier.size(34.dp),
+                        color = Color.Transparent
                     )
                 }
             }
@@ -381,8 +393,7 @@ private fun SettingProviderConfigPage(
     provider: ProviderSetting,
     onProviderChange: (ProviderSetting) -> Unit,
     onDelete: () -> Unit,
-    onShowModels: () -> Unit,
-    onShare: () -> Unit
+    onShowModels: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     val groupColor = ProviderDetailGroupColor
@@ -410,14 +421,13 @@ private fun SettingProviderConfigPage(
                 Surface(
                     modifier = Modifier.size(64.dp),
                     shape = RoundedCornerShape(16.dp),
-                    color = groupColor
+                    color = ZionSurface
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_model_services),
-                            contentDescription = null,
-                            tint = ZionTextPrimary,
-                            modifier = Modifier.size(28.dp)
+                        AutoAIIcon(
+                            name = provider.name,
+                            modifier = Modifier.size(34.dp),
+                            color = Color.Transparent
                         )
                     }
                 }
@@ -488,9 +498,17 @@ private fun SettingProviderConfigPage(
                         color = ZionTextSecondary
                     )
                     Text(
-                        text = "Configure models",
+                        text = "Manage models",
                         style = MaterialTheme.typography.titleMedium,
                         color = ZionTextPrimary
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.setting_provider_page_model_count,
+                            provider.models.size
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ZionTextSecondary
                     )
                 }
                 Icon(
@@ -512,41 +530,6 @@ private fun SettingProviderConfigPage(
                     .padding(horizontal = 14.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    color = Color.White
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.setting_provider_page_test_connection),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = ZionTextPrimary
-                            )
-                            Text(
-                                text = provider.name,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = ZionTextSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        ProviderConnectionTester(
-                            internalProvider = provider,
-                        )
-                    }
-                }
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -554,40 +537,31 @@ private fun SettingProviderConfigPage(
                     Surface(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(18.dp),
-                        color = Color.White
+                        color = ZionGrayLighter
                     ) {
-                        IconButton(
-                            onClick = onShare,
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                        ) {
-                            Icon(
-                                imageVector = HugeIcons.Share01,
-                                contentDescription = null
-                            )
-                        }
-                    }
-
-                    Surface(
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color.White
-                    ) {
-                        IconButton(
-                            onClick = {
-                                onProviderChange(
-                                    provider.resetBaseUrlToDefault().withAlwaysEnabledDefaults()
-                                )
-                            },
-                            enabled = !provider.isUsingDefaultBaseUrl(),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
+                                .clickable(enabled = !provider.isUsingDefaultBaseUrl()) {
+                                    onProviderChange(
+                                        provider.resetBaseUrlToDefault().withAlwaysEnabledDefaults()
+                                    )
+                                }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = HugeIcons.Refresh03,
-                                contentDescription = stringResource(R.string.setting_model_page_reset_to_default)
+                                contentDescription = stringResource(R.string.setting_model_page_reset_to_default),
+                                tint = if (provider.isUsingDefaultBaseUrl()) ZionTextSecondary else ZionTextPrimary
+                            )
+                            Text(
+                                text = stringResource(R.string.setting_model_page_reset_to_default),
+                                color = if (provider.isUsingDefaultBaseUrl()) ZionTextSecondary else ZionTextPrimary,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -596,17 +570,24 @@ private fun SettingProviderConfigPage(
                         Surface(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(18.dp),
-                            color = Color.White
+                            color = ZionGrayLighter
                         ) {
-                            IconButton(
-                                onClick = {
-                                    showDeleteDialog = true
-                                },
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
+                                    .clickable {
+                                    showDeleteDialog = true
+                                    }
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(HugeIcons.Delete01, "Delete")
+                                Icon(HugeIcons.Delete01, "Delete", tint = ZionTextPrimary)
+                                Text(
+                                    text = stringResource(R.string.delete),
+                                    color = ZionTextPrimary,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
                             }
                         }
                     }
@@ -676,6 +657,20 @@ private fun ModelList(
     }
     val remoteModels = (remoteModelsState as? UiState.Success<List<Model>>)?.data.orEmpty()
     val remoteModelsError = remoteModelsState as? UiState.Error
+    val remoteStatusText = when (remoteModelsState) {
+        UiState.Loading -> stringResource(R.string.setting_provider_page_loading_available_models)
+        is UiState.Success -> stringResource(
+            R.string.setting_provider_page_available_models_synced,
+            remoteModels.size
+        )
+        is UiState.Error -> remoteModelsError?.error?.message
+            ?: remoteModelsError?.error?.javaClass?.simpleName
+            ?: stringResource(R.string.setting_provider_page_loading_available_models)
+        UiState.Idle -> stringResource(
+            R.string.setting_provider_page_model_count,
+            providerSetting.models.size
+        )
+    }
     val lazyListState = rememberLazyListState()
     val reorderItemOffset = 2
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -688,87 +683,111 @@ private fun ModelList(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         state = lazyListState
     ) {
-        item("modelsHero") {
+        item("modelsProviderStatus") {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(28.dp),
-                color = ZionSectionItem
+                shape = RoundedCornerShape(20.dp),
+                color = ProviderDetailGroupColor
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Surface(
-                            modifier = Modifier.size(60.dp),
-                            shape = RoundedCornerShape(18.dp),
-                            color = ZionSurface
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_model_services),
-                                    contentDescription = null,
-                                    tint = ZionTextPrimary,
-                                    modifier = Modifier.size(28.dp)
+                            Surface(
+                                modifier = Modifier.size(52.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                color = ZionSurface
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    AutoAIIcon(
+                                        name = providerSetting.name,
+                                        modifier = Modifier.size(28.dp),
+                                        color = Color.Transparent
+                                    )
+                                }
+                            }
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.setting_provider_page_models),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = ZionTextPrimary
+                                )
+                                Text(
+                                    text = providerSetting.name,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = ZionTextSecondary
                                 )
                             }
                         }
 
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        Surface(
+                            modifier = Modifier.size(40.dp),
+                            shape = RoundedCornerShape(20.dp),
+                            color = ZionSurface
                         ) {
-                            Text(
-                                text = stringResource(R.string.setting_provider_page_models),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = ZionTextPrimary
-                            )
-                            Text(
-                                text = providerSetting.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = ZionTextSecondary
-                            )
-                            Text(
-                                text = when (remoteModelsState) {
-                                    UiState.Loading -> stringResource(R.string.setting_provider_page_loading_available_models)
-                                    is UiState.Success -> stringResource(
-                                        R.string.setting_provider_page_available_models_synced,
-                                        remoteModels.size
-                                    )
-                                    is UiState.Error -> remoteModelsError?.error?.message
-                                        ?: remoteModelsError?.error?.javaClass?.simpleName
-                                        ?: stringResource(R.string.setting_provider_page_loading_available_models)
-                                    UiState.Idle -> stringResource(R.string.setting_provider_page_model_count, providerSetting.models.size)
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (remoteModelsError != null) {
-                                    MaterialTheme.colorScheme.error
-                                } else {
-                                    ZionTextSecondary
-                                }
-                            )
-                        }
-
-                        IconButton(
-                            onClick = { refreshTick += 1 }
-                        ) {
-                            Icon(
-                                imageVector = HugeIcons.Refresh03,
-                                contentDescription = stringResource(R.string.setting_provider_page_refresh_models)
-                            )
+                            IconButton(
+                                onClick = { refreshTick += 1 },
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Icon(
+                                    imageVector = HugeIcons.Refresh03,
+                                    contentDescription = stringResource(R.string.setting_provider_page_refresh_models),
+                                    tint = ZionTextPrimary
+                                )
+                            }
                         }
                     }
 
+                    Text(
+                        text = remoteStatusText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (remoteModelsError != null) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            ZionTextSecondary
+                        }
+                    )
+                }
+            }
+        }
+
+        item("modelsActions") {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                color = ProviderDetailGroupColor
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Available Models",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ZionTextSecondary
+                    )
                     AddModelButton(
                         models = remoteModels,
                         selectedModels = providerSetting.models,
@@ -884,7 +903,7 @@ private fun ModelSettingsForm(
     Column {
         SecondaryTabRow(
             selectedTabIndex = pagerState.currentPage,
-            containerColor = Color.Transparent,
+            containerColor = ProviderDetailGroupColor,
         ) {
             Tab(
                 selected = pagerState.currentPage == 0,
@@ -929,35 +948,33 @@ private fun ModelSettingsForm(
                             .padding(vertical = 16.dp)
                             .verticalScroll(rememberScrollState())
                     ) {
-                        OutlinedTextField(
+                        ProviderField(
                             value = model.modelId,
                             onValueChange = {
                                 if (!isEdit) {
                                     setModelId(it.trim())
                                 }
                             },
-                            label = { Text(stringResource(R.string.setting_provider_page_model_id)) },
+                            title = stringResource(R.string.setting_provider_page_model_id),
                             modifier = Modifier.fillMaxWidth(),
-                            placeholder = {
-                                if (!isEdit) {
-                                    Text(stringResource(R.string.setting_provider_page_model_id_placeholder))
-                                }
-                            },
-                            enabled = !isEdit
+                            enabled = !isEdit,
+                            containerColor = ProviderDetailGroupColor
                         )
 
-                        OutlinedTextField(
+                        ProviderField(
                             value = model.displayName,
                             onValueChange = {
                                 onModelChange(model.copy(displayName = it.trim()))
                             },
-                            label = { Text(stringResource(if (isEdit) R.string.setting_provider_page_model_name else R.string.setting_provider_page_model_display_name)) },
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = {
-                                if (!isEdit) {
-                                    Text(stringResource(R.string.setting_provider_page_model_display_name_placeholder))
+                            title = stringResource(
+                                if (isEdit) {
+                                    R.string.setting_provider_page_model_name
+                                } else {
+                                    R.string.setting_provider_page_model_display_name
                                 }
-                            }
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            containerColor = ProviderDetailGroupColor
                         )
 
                         ModelTypeSelector(

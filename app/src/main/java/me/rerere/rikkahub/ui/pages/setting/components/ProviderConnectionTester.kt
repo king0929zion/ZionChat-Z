@@ -50,13 +50,20 @@ import org.koin.compose.koinInject
 @Composable
 fun ProviderConnectionTester(
     internalProvider: ProviderSetting,
+    modifier: Modifier = Modifier,
+    content: @Composable (() -> Unit) = {
+        Icon(HugeIcons.Connect, null)
+    }
 ) {
     var showTestDialog by remember { mutableStateOf(false) }
     val providerManager = koinInject<ProviderManager>()
     val scope = rememberCoroutineScope()
 
-    IconButton(onClick = { showTestDialog = true }) {
-        Icon(HugeIcons.Connect, null)
+    IconButton(
+        onClick = { showTestDialog = true },
+        modifier = modifier
+    ) {
+        content()
     }
 
     if (showTestDialog) {

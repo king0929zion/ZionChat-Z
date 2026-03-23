@@ -54,15 +54,14 @@ import org.koin.compose.koinInject
 @Composable
 fun TextAvatar(
     text: String,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(32.dp),
     loading: Boolean = false,
     color: Color = MaterialTheme.colorScheme.secondaryContainer
 ) {
     Box(
         modifier = modifier
             .clip(shape = rememberAvatarShape(loading))
-            .background(color)
-            .size(32.dp),
+            .background(color),
         contentAlignment = Alignment.Center
     ) {
         Text(

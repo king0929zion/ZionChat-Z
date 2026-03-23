@@ -117,7 +117,7 @@ private fun ProviderTypeSelector(
         modifier = Modifier
             .fillMaxWidth()
             .height(38.dp)
-            .background(Color.White, trackShape)
+            .background(ZionGrayLighter, trackShape)
     ) {
         val optionWidth = maxWidth / options.size
         val indicatorOffset by animateDpAsState(
@@ -176,6 +176,7 @@ fun ProviderField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     containerColor: Color = ZionGrayLighter,
+    enabled: Boolean = true,
     singleLine: Boolean = true,
     minLines: Int = 1,
     maxLines: Int = 1,
@@ -234,6 +235,7 @@ fun ProviderField(
                 TextField(
                     value = value,
                     onValueChange = onValueChange,
+                    enabled = enabled,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 6.dp, vertical = 2.dp),
@@ -267,6 +269,7 @@ fun ProviderField(
                         disabledIndicatorColor = Color.Transparent,
                         focusedTextColor = ZionTextPrimary,
                         unfocusedTextColor = ZionTextPrimary,
+                        disabledTextColor = ZionTextPrimary,
                         cursorColor = ZionTextPrimary
                     )
                 )

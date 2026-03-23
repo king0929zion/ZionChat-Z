@@ -331,11 +331,18 @@ private fun ProviderServiceRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        AutoAIIcon(
-            name = iconName,
-            modifier = Modifier.size(28.dp),
-            color = Color.Transparent
-        )
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(ZionSurface, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            AutoAIIcon(
+                name = iconName,
+                modifier = Modifier.size(24.dp),
+                color = Color.Transparent
+            )
+        }
 
         Text(
             text = title,

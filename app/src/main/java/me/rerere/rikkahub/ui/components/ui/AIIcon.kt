@@ -1,6 +1,7 @@
 package me.rerere.rikkahub.ui.components.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.LocalContentColor
@@ -26,7 +27,7 @@ import me.rerere.rikkahub.utils.toCssHex
 private fun AIIcon(
     path: String,
     name: String,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     loading: Boolean = false,
     color: Color = MaterialTheme.colorScheme.secondaryContainer,
 ) {
@@ -45,14 +46,16 @@ private fun AIIcon(
             .build()
     }
     Surface(
-        modifier = modifier.size(24.dp),
+        modifier = modifier,
         shape = rememberAvatarShape(loading),
         color = color,
     ) {
         AsyncImage(
             model = model,
             contentDescription = name,
-            modifier = Modifier.padding(4.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp)
         )
     }
 }
@@ -60,7 +63,7 @@ private fun AIIcon(
 @Composable
 fun AutoAIIcon(
     name: String,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(24.dp),
     loading: Boolean = false,
     color: Color = MaterialTheme.colorScheme.secondaryContainer,
 ) {
