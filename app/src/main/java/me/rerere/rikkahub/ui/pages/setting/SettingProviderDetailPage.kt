@@ -525,6 +525,7 @@ private fun ModelList(
         )
     }
     val remoteModels = (remoteModelsState as? UiState.Success<List<Model>>)?.data.orEmpty()
+    val remoteModelsError = remoteModelsState as? UiState.Error
     val lazyListState = rememberLazyListState()
     val reorderItemOffset = 2
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -594,12 +595,13 @@ private fun ModelList(
                                         R.string.setting_provider_page_available_models_synced,
                                         remoteModels.size
                                     )
-                                    is UiState.Error -> remoteModelsState.error.message
-                                        ?: remoteModelsState.error.javaClass.simpleName
+                                    is UiState.Error -> remoteModelsError?.error?.message
+                                        ?: remoteModelsError?.error?.javaClass?.simpleName
+                                        ?: stringResource(R.string.setting_provider_page_loading_available_models)
                                     UiState.Idle -> stringResource(R.string.setting_provider_page_model_count, providerSetting.models.size)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (remoteModelsState is UiState.Error) {
+                                color = if (remoteModelsError != null) {
                                     MaterialTheme.colorScheme.error
                                 } else {
                                     ZionTextSecondary

@@ -1,3 +1,8 @@
+## v0.0.22
+
+- 修复 `v0.0.21` 自动构建中的收尾编译问题：移除 `ChatService` 对已删除 web 模块异常类的残留引用，并修正模型服务页错误态文案的 Kotlin smart cast 问题。
+- 保留本轮 `Model Services` 命名与图标对齐、供应商编辑页 Zion 化、以及 `web server/web-ui` 完整删除的所有改动。
+
 ## v0.0.21
 
 - `Providers` 全面切换为 `Model Services` 语义，设置入口图标与命名同步对齐 ZionChat，默认模型与助手入口图标也切换为 Zion 的 `Model` 与 `Bots`。
