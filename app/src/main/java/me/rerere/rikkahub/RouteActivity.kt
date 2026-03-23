@@ -310,7 +310,10 @@ class RouteActivity : ComponentActivity() {
 
                             entry<Screen.SettingProviderDetail> { key ->
                                 val id = Uuid.parse(key.providerId)
-                                SettingProviderDetailPage(id = id)
+                                SettingProviderDetailPage(
+                                    id = id,
+                                    page = key.page
+                                )
                             }
 
                             entry<Screen.SettingModels> {
@@ -474,7 +477,10 @@ sealed interface Screen : NavKey {
     data object SettingProvider : Screen
 
     @Serializable
-    data class SettingProviderDetail(val providerId: String) : Screen
+    data class SettingProviderDetail(
+        val providerId: String,
+        val page: String = "config"
+    ) : Screen
 
     @Serializable
     data object SettingModels : Screen

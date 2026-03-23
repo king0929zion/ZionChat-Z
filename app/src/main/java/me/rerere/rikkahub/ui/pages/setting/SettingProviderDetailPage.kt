@@ -111,6 +111,7 @@ import me.rerere.ai.provider.TextGenerationParams
 import me.rerere.ai.registry.ModelRegistry
 import me.rerere.ai.ui.UIMessage
 import me.rerere.rikkahub.R
+import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.ui.components.ai.ModelAbilityTag
 import me.rerere.rikkahub.ui.components.ai.ModelModalityTag
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
@@ -158,17 +159,26 @@ private fun ProviderSetting.withAlwaysEnabledDefaults(): ProviderSetting {
     )
 }
 
-private val ProviderDetailTabsTopPadding = PageTopBarContentTopPadding + 4.dp
+private const val ProviderDetailPageConfig = "config"
+private const val ProviderDetailPageModels = "models"
+private val ProviderDetailContentTopPadding = PageTopBarContentTopPadding + 12.dp
+private val ProviderDetailGroupColor = Color(0xFFF1F1F1)
 
 @Composable
-fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
+fun SettingProviderDetailPage(
+    id: Uuid,
+    page: String = ProviderDetailPageConfig,
+    vm: SettingVM = koinViewModel()
+) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
     val provider = settings.providers.find { it.id == id } ?: return
-    val pager = rememberPagerState { 2 }
-    val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
     val context = LocalContext.current
+    var internalProvider by remember(provider) {
+        mutableStateOf(provider.withAlwaysEnabledDefaults())
+    }
+    val isModelsPage = page == ProviderDetailPageModels
 
     val onEdit = { newProvider: ProviderSetting ->
         val normalizedProvider = newProvider.withAlwaysEnabledDefaults()
@@ -195,81 +205,72 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
     ShareSheet(shareSheetState)
 
     SettingsPage(
-        title = provider.name,
+        title = if (isModelsPage) {
+            context.getString(R.string.setting_provider_page_models)
+        } else {
+            provider.name
+        },
         onBack = { navController.popBackStack() },
-        trailing = {
-            IconButton(
-                onClick = {
-                    shareSheetState.show(provider)
-                }
-            ) {
-                Icon(HugeIcons.Share01, null)
-            }
-        }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = ProviderDetailTabsTopPadding)
-                .padding(horizontal = 16.dp)
-        ) {
-            SecondaryTabRow(
-                selectedTabIndex = pager.currentPage,
-                containerColor = Color.Transparent,
-                divider = {},
-            ) {
-                listOf(
-                    R.string.setting_provider_page_configuration,
-                    R.string.setting_provider_page_models
-                ).forEachIndexed { index, titleRes ->
-                    val selected = pager.currentPage == index
-                    Tab(
-                        selected = selected,
+        trailing = if (isModelsPage) {
+            null
+        } else {
+            {
+                Surface(
+                    modifier = Modifier.size(40.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    color = ZionSurface
+                ) {
+                    IconButton(
                         onClick = {
-                            scope.launch {
-                                pager.animateScrollToPage(index)
-                            }
-                        },
-                        text = {
-                            Text(
-                                text = stringResource(titleRes),
-                                color = if (selected) ZionTextPrimary else ZionTextSecondary
-                            )
-                        }
-                    )
-                }
-            }
-
-            HorizontalPager(
-                state = pager,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) { page ->
-                when (page) {
-                    0 -> SettingProviderConfigPage(
-                        provider = provider,
-                        onSave = {
-                            onEdit(it)
+                            onEdit(internalProvider.withAlwaysEnabledDefaults())
                             toaster.show(
                                 context.getString(R.string.setting_provider_page_save_success),
                                 type = ToastType.Success
                             )
                         },
-                        onDelete = onDelete,
-                        onShowModels = {
-                            onEdit(it)
-                            scope.launch {
-                                pager.animateScrollToPage(1)
-                            }
-                        }
-                    )
-
-                    1 -> SettingProviderModelPage(
-                        provider = provider,
-                        onEdit = onEdit
-                    )
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = ZionAppIcons.Check,
+                            contentDescription = stringResource(R.string.setting_provider_page_save),
+                            tint = ZionTextPrimary
+                        )
+                    }
                 }
+            }
+        }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = ProviderDetailContentTopPadding)
+                .padding(horizontal = 16.dp)
+        ) {
+            if (isModelsPage) {
+                SettingProviderModelPage(
+                    provider = provider,
+                    onEdit = onEdit
+                )
+            } else {
+                SettingProviderConfigPage(
+                    provider = internalProvider,
+                    onProviderChange = {
+                        internalProvider = it.withAlwaysEnabledDefaults()
+                    },
+                    onDelete = onDelete,
+                    onShowModels = {
+                        onEdit(internalProvider.withAlwaysEnabledDefaults())
+                        navController.navigate(
+                            Screen.SettingProviderDetail(
+                                providerId = provider.id.toString(),
+                                page = ProviderDetailPageModels
+                            )
+                        )
+                    },
+                    onShare = {
+                        shareSheetState.show(internalProvider.withAlwaysEnabledDefaults())
+                    }
+                )
             }
         }
     }
@@ -378,20 +379,20 @@ private fun ProviderSectionLabel(text: String) {
 @Composable
 private fun SettingProviderConfigPage(
     provider: ProviderSetting,
-    onSave: (ProviderSetting) -> Unit,
+    onProviderChange: (ProviderSetting) -> Unit,
     onDelete: () -> Unit,
-    onShowModels: (ProviderSetting) -> Unit
+    onShowModels: () -> Unit,
+    onShare: () -> Unit
 ) {
-    var internalProvider by remember(provider) { mutableStateOf(provider.withAlwaysEnabledDefaults()) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val groupColor = ZionGrayLighter
+    val groupColor = ProviderDetailGroupColor
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(top = 12.dp, bottom = 24.dp),
+            .padding(top = 6.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Surface(
@@ -409,7 +410,7 @@ private fun SettingProviderConfigPage(
                 Surface(
                     modifier = Modifier.size(64.dp),
                     shape = RoundedCornerShape(16.dp),
-                    color = Color.White
+                    color = groupColor
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -423,38 +424,18 @@ private fun SettingProviderConfigPage(
 
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.Center
                 ) {
                     ProviderField(
                         title = stringResource(R.string.setting_provider_page_name),
-                        value = internalProvider.name,
+                        value = provider.name,
                         onValueChange = {
-                            internalProvider = internalProvider.copyProvider(name = it)
-                                .withAlwaysEnabledDefaults()
+                            onProviderChange(
+                                provider.copyProvider(name = it).withAlwaysEnabledDefaults()
+                            )
                         },
                         containerColor = groupColor
                     )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ProviderDetailBadge(
-                            label = stringResource(
-                                R.string.setting_provider_page_model_count,
-                                internalProvider.models.size
-                            )
-                        )
-                        ProviderDetailBadge(
-                            label = stringResource(
-                                if (internalProvider.enabled) {
-                                    R.string.setting_provider_page_enabled
-                                } else {
-                                    R.string.setting_provider_page_disabled
-                                }
-                            ),
-                            emphasized = internalProvider.enabled
-                        )
-                    }
                 }
             }
         }
@@ -471,11 +452,11 @@ private fun SettingProviderConfigPage(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ProviderConfigure(
-                    provider = internalProvider,
+                    provider = provider,
                     topPadding = 0.dp,
                     showNameField = false,
                     onEdit = {
-                        internalProvider = it.withAlwaysEnabledDefaults()
+                        onProviderChange(it.withAlwaysEnabledDefaults())
                     }
                 )
             }
@@ -485,7 +466,7 @@ private fun SettingProviderConfigPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    onShowModels(internalProvider.withAlwaysEnabledDefaults())
+                    onShowModels()
                 },
             shape = RoundedCornerShape(20.dp),
             color = groupColor
@@ -510,14 +491,6 @@ private fun SettingProviderConfigPage(
                         text = "Configure models",
                         style = MaterialTheme.typography.titleMedium,
                         color = ZionTextPrimary
-                    )
-                    Text(
-                        text = stringResource(
-                            R.string.setting_provider_page_model_count,
-                            internalProvider.models.size
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ZionTextSecondary
                     )
                 }
                 Icon(
@@ -561,7 +534,7 @@ private fun SettingProviderConfigPage(
                                 color = ZionTextPrimary
                             )
                             Text(
-                                text = internalProvider.name,
+                                text = provider.name,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = ZionTextSecondary,
                                 maxLines = 1,
@@ -569,7 +542,7 @@ private fun SettingProviderConfigPage(
                             )
                         }
                         ProviderConnectionTester(
-                            internalProvider = internalProvider,
+                            internalProvider = provider,
                         )
                     }
                 }
@@ -584,11 +557,30 @@ private fun SettingProviderConfigPage(
                         color = Color.White
                     ) {
                         IconButton(
+                            onClick = onShare,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = HugeIcons.Share01,
+                                contentDescription = null
+                            )
+                        }
+                    }
+
+                    Surface(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color.White
+                    ) {
+                        IconButton(
                             onClick = {
-                                internalProvider = internalProvider.resetBaseUrlToDefault()
-                                    .withAlwaysEnabledDefaults()
+                                onProviderChange(
+                                    provider.resetBaseUrlToDefault().withAlwaysEnabledDefaults()
+                                )
                             },
-                            enabled = !internalProvider.isUsingDefaultBaseUrl(),
+                            enabled = !provider.isUsingDefaultBaseUrl(),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp)
@@ -600,7 +592,7 @@ private fun SettingProviderConfigPage(
                         }
                     }
 
-                    if (!internalProvider.builtIn) {
+                    if (!provider.builtIn) {
                         Surface(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(18.dp),
@@ -618,22 +610,6 @@ private fun SettingProviderConfigPage(
                             }
                         }
                     }
-                }
-
-                Button(
-                    onClick = {
-                        onSave(internalProvider.withAlwaysEnabledDefaults())
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ZionTextPrimary,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text(stringResource(R.string.setting_provider_page_save))
                 }
             }
         }
