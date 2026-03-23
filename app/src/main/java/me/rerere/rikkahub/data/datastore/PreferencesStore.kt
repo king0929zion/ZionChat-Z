@@ -116,13 +116,6 @@ class SettingsStore(
         val TTS_PROVIDERS = stringPreferencesKey("tts_providers")
         val SELECTED_TTS_PROVIDER = stringPreferencesKey("selected_tts_provider")
 
-        // Web Server
-        val WEB_SERVER_ENABLED = booleanPreferencesKey("web_server_enabled")
-        val WEB_SERVER_PORT = intPreferencesKey("web_server_port")
-        val WEB_SERVER_JWT_ENABLED = booleanPreferencesKey("web_server_jwt_enabled")
-        val WEB_SERVER_ACCESS_PASSWORD = stringPreferencesKey("web_server_access_password")
-        val WEB_SERVER_LOCALHOST_ONLY = booleanPreferencesKey("web_server_localhost_only")
-
         // 提示词注入
         val MODE_INJECTIONS = stringPreferencesKey("mode_injections")
         val LOREBOOKS = stringPreferencesKey("lorebooks")
@@ -206,11 +199,6 @@ class SettingsStore(
                 lorebooks = preferences[LOREBOOKS]?.let {
                     JsonInstant.decodeFromString(it)
                 } ?: emptyList(),
-                webServerEnabled = preferences[WEB_SERVER_ENABLED] == true,
-                webServerPort = preferences[WEB_SERVER_PORT] ?: 8080,
-                webServerJwtEnabled = preferences[WEB_SERVER_JWT_ENABLED] == true,
-                webServerAccessPassword = preferences[WEB_SERVER_ACCESS_PASSWORD] ?: "",
-                webServerLocalhostOnly = preferences[WEB_SERVER_LOCALHOST_ONLY] == true,
                 backupReminderConfig = preferences[BACKUP_REMINDER_CONFIG]?.let {
                     JsonInstant.decodeFromString(it)
                 } ?: BackupReminderConfig(),
@@ -274,11 +262,6 @@ class SettingsStore(
             }
             preferences[MODE_INJECTIONS] = JsonInstant.encodeToString(sanitizedSettings.modeInjections)
             preferences[LOREBOOKS] = JsonInstant.encodeToString(sanitizedSettings.lorebooks)
-            preferences[WEB_SERVER_ENABLED] = sanitizedSettings.webServerEnabled
-            preferences[WEB_SERVER_PORT] = sanitizedSettings.webServerPort
-            preferences[WEB_SERVER_JWT_ENABLED] = sanitizedSettings.webServerJwtEnabled
-            preferences[WEB_SERVER_ACCESS_PASSWORD] = sanitizedSettings.webServerAccessPassword
-            preferences[WEB_SERVER_LOCALHOST_ONLY] = sanitizedSettings.webServerLocalhostOnly
             preferences[BACKUP_REMINDER_CONFIG] = JsonInstant.encodeToString(sanitizedSettings.backupReminderConfig)
             preferences[LAUNCH_COUNT] = sanitizedSettings.launchCount
             preferences[SPONSOR_ALERT_DISMISSED_AT] = sanitizedSettings.sponsorAlertDismissedAt
@@ -503,11 +486,6 @@ data class Settings(
     val selectedTTSProviderId: Uuid = DEFAULT_SYSTEM_TTS_ID,
     val modeInjections: List<PromptInjection.ModeInjection> = DEFAULT_MODE_INJECTIONS,
     val lorebooks: List<Lorebook> = emptyList(),
-    val webServerEnabled: Boolean = false,
-    val webServerPort: Int = 8080,
-    val webServerJwtEnabled: Boolean = false,
-    val webServerAccessPassword: String = "",
-    val webServerLocalhostOnly: Boolean = false,
     val backupReminderConfig: BackupReminderConfig = BackupReminderConfig(),
     val launchCount: Int = 0,
     val sponsorAlertDismissedAt: Int = 0,

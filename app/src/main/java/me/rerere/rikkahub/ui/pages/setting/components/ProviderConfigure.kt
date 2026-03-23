@@ -37,6 +37,7 @@ import me.rerere.rikkahub.data.datastore.DEFAULT_PROVIDERS
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
 import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
@@ -153,9 +154,9 @@ private fun ProviderField(
             ),
             shape = RoundedCornerShape(24.dp),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionSectionItem,
-                unfocusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionSectionItem,
-                disabledContainerColor = ZionSectionItem,
+                focusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
+                unfocusedContainerColor = if (isError) Color(0xFFFFF2F0) else ZionGrayLighter,
+                disabledContainerColor = ZionGrayLighter,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
@@ -195,7 +196,7 @@ private fun ProviderToggleCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = ZionSectionItem
+        color = ZionGrayLighter
     ) {
         Row(
             modifier = Modifier

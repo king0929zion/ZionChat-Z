@@ -464,7 +464,7 @@
   <string name="setting_page_data_backup">数据备份</string>
   <string name="setting_page_data_backup_desc">备份和恢复应用数据</string>
   <string name="setting_page_data_settings">数据设置</string>
-  <string name="setting_page_default_model">默认模型和提示词</string>
+  <string name="setting_page_default_model">默认模型</string>
   <string name="setting_page_default_model_desc">设置各个功能的默认模型</string>
   <string name="setting_page_display_setting">显示设置</string>
   <string name="setting_page_display_setting_desc">管理显示设置</string>
@@ -479,8 +479,8 @@
   <string name="setting_page_mcp_desc">配置MCP服务器</string>
   <string name="setting_page_model_and_services">模型与服务</string>
   <string name="setting_page_no_share_app">找不到分享应用</string>
-  <string name="setting_page_providers">提供商</string>
-  <string name="setting_page_providers_desc">配置AI提供商</string>
+  <string name="setting_page_providers">模型服务</string>
+  <string name="setting_page_providers_desc">配置模型服务与提供商接入</string>
   <string name="setting_page_search_add_provider">添加提供商</string>
   <string name="setting_page_search_common_options">通用选项</string>
   <string name="setting_page_search_delete_provider">删除提供商</string>
@@ -539,6 +539,9 @@
   <string name="setting_provider_page_model_name">模型名称</string>
   <string name="setting_provider_page_model_type">模型类型</string>
   <string name="setting_provider_page_models">模型</string>
+  <string name="setting_provider_page_refresh_models">刷新可用模型</string>
+  <string name="setting_provider_page_loading_available_models">正在加载可用模型...</string>
+  <string name="setting_provider_page_available_models_synced">已同步 %1$d 个可用模型</string>
   <string name="setting_provider_page_name">名称</string>
   <string name="setting_provider_page_no_models">暂无模型</string>
   <string name="setting_provider_page_no_permission">没有权限</string>
@@ -564,7 +567,7 @@
   <string name="setting_provider_page_test_connection">测试连接</string>
   <string name="setting_provider_page_test_success">测试成功</string>
   <string name="setting_provider_page_text">文本</string>
-  <string name="setting_provider_page_title">提供商</string>
+  <string name="setting_provider_page_title">模型服务</string>
   <string name="setting_provider_page_tool">工具</string>
   <string name="setting_provider_page_vertex_ai">Vertex AI</string>
   <string name="setting_tts_page_add">添加</string>
@@ -803,20 +806,6 @@
   <string name="setting_files_page_no_files">无文件</string>
   <string name="setting_files_page_folder_upload">上传</string>
   <string name="setting_files_page_delete_content_description">删除</string>
-  <string name="setting_page_web_server">Web服务器</string>
-  <string name="setting_page_web_server_desc">允许你通过网页访问 RikkaHub</string>
-  <string name="setting_page_web_server_port">端口</string>
-  <string name="setting_page_web_server_port_desc">Web服务器监听端口（1024-65535）</string>
-  <string name="setting_page_web_server_enable">启用嵌入式网络服务器</string>
-  <string name="setting_page_web_server_lan_address">局域网地址</string>
-  <string name="setting_page_web_server_mdns_address">mDNS地址</string>
-  <string name="setting_page_web_server_error">错误</string>
-  <string name="setting_page_web_server_start">启动</string>
-  <string name="setting_page_web_server_stop">停止</string>
-  <string name="setting_page_web_server_jwt_enable">启用身份验证</string>
-  <string name="setting_page_web_server_jwt_enable_desc">访问网页界面时需要密码验证</string>
-  <string name="setting_page_web_server_password">访问密码</string>
-  <string name="setting_page_web_server_password_desc">网页界面访问所需的密码</string>
   <string name="setting_display_page_enable_latex_rendering_title">启用 LaTeX 渲染</string>
   <string name="setting_display_page_enable_latex_rendering_desc">使用 LaTeX 语法渲染数学表达式和公式</string>
   <string name="favorite_page_title">收藏</string>
@@ -852,12 +841,7 @@
   <string name="search_page_rebuilding">正在重建索引 (%1$d / %2$d)…</string>
   <string name="assistant_page_time_reminder">时间提醒</string>
   <string name="assistant_page_time_reminder_desc">在间隔较大的消息前自动插入时间提醒，帮助 AI 理解对话间隔</string>
-  <string name="setting_page_web_server_local_address">本机地址</string>
   <string name="copied">已复制</string>
-  <string name="setting_page_web_server_address_note">地址说明</string>
-  <string name="setting_page_web_server_address_note_desc">局域网地址：使用设备 WiFi IP，同一网络中的其他设备可访问。移动数据网络下不可用。
-本地地址：使用 localhost，仅限本设备访问。
-mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过名称访问，无需知道 IP。</string>
   <string name="stats_page_title">统计</string>
   <string name="stats_page_heatmap_title">聊天热力图</string>
   <string name="stats_page_heatmap_less">少</string>
@@ -877,10 +861,6 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="setting_page_sponsor_alert_confirm">捐赠</string>
   <string name="setting_page_sponsor_alert_dismiss">暂不</string>
   <string name="db_migrating">正在迁移数据库…</string>
-  <string name="notification_channel_web_server">Web服务器</string>
-  <string name="notification_web_server_starting">正在启动...</string>
-  <string name="notification_web_server_running">Web服务器运行中</string>
-  <string name="notification_web_server_stop">停止</string>
   <string name="assistant_page_local_tools_tts_title">文字转语音</string>
   <string name="assistant_page_local_tools_tts_desc">让AI使用设备TTS引擎为您朗读文本</string>
   <string name="setting_display_page_show_thinking_content_title">显示思考内容</string>
@@ -902,8 +882,6 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="setting_mcp_page_import_confirm">导入</string>
   <string name="setting_display_page_enable_blur_effect_title">启用模糊效果</string>
   <string name="setting_display_page_enable_blur_effect_desc">在聊天输入栏启用模糊效果</string>
-  <string name="setting_page_web_server_localhost_only">仅本地主机</string>
-  <string name="setting_page_web_server_localhost_only_desc">仅监听 localhost (127.0.0.1)，禁用 LAN 和 mDNS 访问</string>
   <string name="assistant_page_local_tools_ask_user_title">询问用户</string>
   <string name="assistant_page_local_tools_ask_user_desc">允许 AI 向你提问以获得更多信息</string>
   <string name="chat_message_tool_ask_questions">询问 %d 个问题</string>

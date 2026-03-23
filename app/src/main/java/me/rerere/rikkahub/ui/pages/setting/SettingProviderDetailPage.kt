@@ -124,6 +124,7 @@ import me.rerere.rikkahub.ui.components.ui.rememberShareSheetState
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.hooks.useEditState
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.pages.assistant.detail.CustomBodies
 import me.rerere.rikkahub.ui.pages.assistant.detail.CustomHeaders
 import me.rerere.rikkahub.ui.pages.setting.components.ProviderConfigure
@@ -288,10 +289,11 @@ private fun ProviderDetailSummaryCard(
                 color = ZionSurface
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    AutoAIIcon(
-                        name = provider.name,
-                        modifier = Modifier.size(32.dp),
-                        color = Color.Transparent
+                    Icon(
+                        imageVector = ZionAppIcons.ModelServices,
+                        contentDescription = null,
+                        tint = ZionTextPrimary,
+                        modifier = Modifier.size(30.dp)
                     )
                 }
             }
@@ -509,109 +511,195 @@ private fun ModelList(
     onUpdateProvider: (ProviderSetting) -> Unit
 ) {
     val providerManager = koinInject<ProviderManager>()
-    val modelList by produceState(emptyList(), providerSetting) {
-        runCatching {
-            println("loading models...")
-            value = providerManager.getProviderByType(providerSetting)
+    var refreshTick by remember(providerSetting) { mutableStateOf(0) }
+    val remoteModelsState by produceState<UiState<List<Model>>>(UiState.Loading, providerSetting, refreshTick) {
+        value = UiState.Loading
+        value = runCatching {
+            providerManager.getProviderByType(providerSetting)
                 .listModels(providerSetting)
                 .sortedBy { it.modelId }
                 .toList()
-        }.onFailure {
-            it.printStackTrace()
+        }.fold(
+            onSuccess = { UiState.Success(it) },
+            onFailure = { UiState.Error(it) }
+        )
+    }
+    val remoteModels = (remoteModelsState as? UiState.Success<List<Model>>)?.data.orEmpty()
+    val lazyListState = rememberLazyListState()
+    val reorderItemOffset = 2
+    val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        val fromIndex = from.index - reorderItemOffset
+        val toIndex = to.index - reorderItemOffset
+        if (fromIndex >= 0 && toIndex >= 0) {
+            onUpdateProvider(providerSetting.moveMove(fromIndex, toIndex))
         }
     }
-    var expanded by rememberSaveable { mutableStateOf(true) }
-    val lazyListState = rememberLazyListState()
-    val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        onUpdateProvider(providerSetting.moveMove(from.index, to.index))
-    }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .floatingToolbarVerticalNestedScroll(
-                    expanded = expanded,
-                    onExpand = { expanded = true },
-                    onCollapse = { expanded = false },
-                ),
-            contentPadding = PaddingValues(16.dp) + PaddingValues(bottom = 128.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            state = lazyListState
-        ) {
-            // 模型列表
-            if (providerSetting.models.isEmpty()) {
-                item {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        state = lazyListState
+    ) {
+        item("modelsHero") {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                color = ZionSectionItem
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(60.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            color = ZionSurface
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = ZionAppIcons.ModelServices,
+                                    contentDescription = null,
+                                    tint = ZionTextPrimary,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.setting_provider_page_models),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = ZionTextPrimary
+                            )
+                            Text(
+                                text = providerSetting.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = ZionTextSecondary
+                            )
+                            Text(
+                                text = when (remoteModelsState) {
+                                    UiState.Loading -> stringResource(R.string.setting_provider_page_loading_available_models)
+                                    is UiState.Success -> stringResource(
+                                        R.string.setting_provider_page_available_models_synced,
+                                        remoteModels.size
+                                    )
+                                    is UiState.Error -> remoteModelsState.error.message
+                                        ?: remoteModelsState.error.javaClass.simpleName
+                                    UiState.Idle -> stringResource(R.string.setting_provider_page_model_count, providerSetting.models.size)
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (remoteModelsState is UiState.Error) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    ZionTextSecondary
+                                }
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { refreshTick += 1 }
+                        ) {
+                            Icon(
+                                imageVector = HugeIcons.Refresh03,
+                                contentDescription = stringResource(R.string.setting_provider_page_refresh_models)
+                            )
+                        }
+                    }
+
+                    AddModelButton(
+                        models = remoteModels,
+                        selectedModels = providerSetting.models,
+                        onAddModel = {
+                            onUpdateProvider(providerSetting.addModel(it))
+                        },
+                        onRemoveModel = {
+                            onUpdateProvider(providerSetting.delModel(it))
+                        },
+                        expanded = true,
+                        parentProvider = providerSetting,
+                        onUpdateProvider = onUpdateProvider
+                    )
+                }
+            }
+        }
+
+        if (providerSetting.models.isEmpty()) {
+            item("emptyModels") {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    color = ZionSectionItem
+                ) {
                     Column(
                         modifier = Modifier
-                            .fillParentMaxHeight(0.8f)
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 28.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        Icon(
+                            imageVector = ZionAppIcons.Model,
+                            contentDescription = null,
+                            tint = ZionTextSecondary,
+                            modifier = Modifier.size(28.dp)
+                        )
                         Text(
                             text = stringResource(R.string.setting_provider_page_no_models),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = ZionTextSecondary
+                            style = MaterialTheme.typography.titleSmall,
+                            color = ZionTextPrimary
                         )
                         Text(
                             text = stringResource(R.string.setting_provider_page_add_models_hint),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = ZionTextSecondary.copy(alpha = 0.72f)
-                        )
-                    }
-                }
-            } else {
-                items(providerSetting.models, key = { it.id }) { item ->
-                    ReorderableItem(
-                        state = reorderableLazyListState,
-                        key = item.id
-                    ) { isDragging ->
-                        ModelCard(
-                            model = item,
-                            onDelete = {
-                                onUpdateProvider(providerSetting.delModel(item))
-                            },
-                            onEdit = { editedModel ->
-                                onUpdateProvider(providerSetting.editModel(editedModel))
-                            },
-                            parentProvider = providerSetting,
-                            modifier = Modifier
-                                .longPressDraggableHandle()
-                                .graphicsLayer {
-                                    if (isDragging) {
-                                        scaleX = 1.05f
-                                        scaleY = 1.05f
-                                    } else {
-                                        scaleX = 1f
-                                        scaleY = 1f
-                                    }
-                                },
+                            color = ZionTextSecondary
                         )
                     }
                 }
             }
-        }
-        HorizontalFloatingToolbar(
-            expanded = expanded,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = -ScreenOffset),
-        ) {
-            AddModelButton(
-                models = modelList,
-                selectedModels = providerSetting.models,
-                onAddModel = {
-                    onUpdateProvider(providerSetting.addModel(it))
-                },
-                onRemoveModel = {
-                    onUpdateProvider(providerSetting.delModel(it))
-                },
-                expanded = expanded,
-                parentProvider = providerSetting,
-                onUpdateProvider = onUpdateProvider
-            )
+        } else {
+            item("modelSectionLabel") {
+                ProviderSectionLabel(stringResource(R.string.setting_provider_page_models))
+            }
+
+            items(providerSetting.models, key = { it.id }) { item ->
+                ReorderableItem(
+                    state = reorderableLazyListState,
+                    key = item.id
+                ) { isDragging ->
+                    ModelCard(
+                        model = item,
+                        onDelete = {
+                            onUpdateProvider(providerSetting.delModel(item))
+                        },
+                        onEdit = { editedModel ->
+                            onUpdateProvider(providerSetting.editModel(editedModel))
+                        },
+                        parentProvider = providerSetting,
+                        modifier = Modifier
+                            .longPressDraggableHandle()
+                            .graphicsLayer {
+                                if (isDragging) {
+                                    scaleX = 1.02f
+                                    scaleY = 1.02f
+                                } else {
+                                    scaleX = 1f
+                                    scaleY = 1f
+                                }
+                            },
+                    )
+                }
+            }
         }
     }
 }
@@ -811,6 +899,7 @@ private fun AddModelButton(
     val scope = rememberCoroutineScope()
 
     Row(
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -859,9 +948,15 @@ private fun AddModelButton(
         )
 
         Button(
+            modifier = Modifier.weight(1f),
             onClick = {
                 dialogState.open(Model())
-            }
+            },
+            shape = RoundedCornerShape(18.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ZionAccentNeutral,
+                contentColor = Color.White
+            )
         ) {
             Row(
                 modifier = Modifier,
@@ -972,6 +1067,7 @@ private fun ModelPicker(
         ModalBottomSheet(
             onDismissRequest = { showModal = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = ZionBackground
         ) {
             var filterText by remember { mutableStateOf("") }
             val filterKeywords = filterText.split(" ").filter { it.isNotBlank() }
@@ -1129,7 +1225,10 @@ private fun ModelPicker(
                 showModal = true
             }
         ) {
-            Icon(HugeIcons.Package01, null)
+            Icon(
+                imageVector = ZionAppIcons.Model,
+                contentDescription = stringResource(R.string.setting_provider_page_avaliable_models)
+            )
         }
     }
 }
@@ -1425,13 +1524,20 @@ private fun ModelCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Surface(
-                    color = ZionSectionItem,
-                    shape = MaterialTheme.shapes.small,
+                    color = ZionSurface,
+                    shape = RoundedCornerShape(14.dp),
                 ) {
-                    AutoAIIcon(
-                        name = model.modelId,
-                        modifier = Modifier.size(36.dp),
-                    )
+                    Box(
+                        modifier = Modifier.size(44.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = ZionAppIcons.Model,
+                            contentDescription = null,
+                            tint = ZionTextPrimary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
                 Column(
                     modifier = Modifier.weight(1f),
@@ -1443,6 +1549,13 @@ private fun ModelCard(
                         color = ZionTextPrimary,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = model.modelId,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ZionTextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),

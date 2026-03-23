@@ -141,7 +141,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     )
                     item(
                         onClick = { navController.navigate(Screen.Assistant) },
-                        leadingContent = { Icon(ZionAppIcons.Assistant, null) },
+                        leadingContent = { Icon(ZionAppIcons.Bot, null) },
                         headlineContent = { Text(stringResource(R.string.setting_page_assistant)) },
                     )
                     item(
@@ -159,12 +159,12 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 ) {
                     item(
                         onClick = { navController.navigate(Screen.SettingModels) },
-                        leadingContent = { Icon(ZionAppIcons.ChatGPTLogo, null) },
+                        leadingContent = { Icon(ZionAppIcons.Model, null) },
                         headlineContent = { Text(stringResource(R.string.setting_page_default_model)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingProvider) },
-                        leadingContent = { Icon(ZionAppIcons.Tool, null) },
+                        leadingContent = { Icon(ZionAppIcons.ModelServices, null) },
                         headlineContent = { Text(stringResource(R.string.setting_page_providers)) },
                     )
                     item(
@@ -181,11 +181,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                         onClick = { navController.navigate(Screen.SettingMcp) },
                         leadingContent = { Icon(ZionAppIcons.MCPTools, null) },
                         headlineContent = { Text(stringResource(R.string.setting_page_mcp)) },
-                    )
-                    item(
-                        onClick = { navController.navigate(Screen.SettingWeb) },
-                        leadingContent = { Icon(ZionAppIcons.Globe, null) },
-                        headlineContent = { Text(stringResource(R.string.setting_page_web_server)) },
                     )
                 }
             }

@@ -41,8 +41,6 @@
 - **highlight**: Code syntax highlighting implementation
 - **search**: Search functionality SDK (Exa, Tavily, Zhipu)
 - **tts**: Text-to-speech implementation for different providers
-- **web**: Embedded web server module that provides Ktor server startup function and hosts static frontend build files (
-  built from web-ui/ React project)
 
 ## Concepts
 

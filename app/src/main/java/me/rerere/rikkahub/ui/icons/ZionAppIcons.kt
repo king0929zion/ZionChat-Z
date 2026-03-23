@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
@@ -579,8 +580,8 @@ object ZionAppIcons {
         }
     }.build()
 
-    val Assistant = ImageVector.Builder(
-        name = "assistant",
+    val Bot = ImageVector.Builder(
+        name = "bot",
         defaultWidth = 24.dp,
         defaultHeight = 24.dp,
         viewportWidth = 24f,
@@ -593,24 +594,105 @@ object ZionAppIcons {
             strokeLineCap = StrokeCap.Round,
             strokeLineJoin = StrokeJoin.Round
         ) {
-            moveTo(8f, 5f)
-            lineTo(16f, 5f)
-            arcTo(4f, 4f, 0f, false, true, 20f, 9f)
-            lineTo(20f, 13f)
-            arcTo(4f, 4f, 0f, false, true, 16f, 17f)
-            lineTo(13.5f, 17f)
-            lineTo(10.5f, 20f)
-            lineTo(10.5f, 17f)
-            lineTo(8f, 17f)
-            arcTo(4f, 4f, 0f, false, true, 4f, 13f)
-            lineTo(4f, 9f)
-            arcTo(4f, 4f, 0f, false, true, 8f, 5f)
-            moveTo(9.5f, 10f)
-            lineTo(9.5f, 10f)
-            moveTo(14.5f, 10f)
-            lineTo(14.5f, 10f)
-            moveTo(9f, 13.5f)
-            curveTo(10f, 14.5f, 14f, 14.5f, 15f, 13.5f)
+            moveTo(12f, 8f)
+            verticalLineTo(4f)
+            horizontalLineTo(8f)
+        }
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(6f, 8f)
+            horizontalLineTo(18f)
+            arcTo(2f, 2f, 0f, false, true, 20f, 10f)
+            verticalLineTo(18f)
+            arcTo(2f, 2f, 0f, false, true, 18f, 20f)
+            horizontalLineTo(6f)
+            arcTo(2f, 2f, 0f, false, true, 4f, 18f)
+            verticalLineTo(10f)
+            arcTo(2f, 2f, 0f, false, true, 6f, 8f)
+            close()
+        }
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(2f, 14f)
+            horizontalLineTo(4f)
+        }
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(20f, 14f)
+            horizontalLineTo(22f)
+        }
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(15f, 13f)
+            verticalLineTo(15f)
+        }
+        path(
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
+        ) {
+            moveTo(9f, 13f)
+            verticalLineTo(15f)
+        }
+    }.build()
+
+    val Assistant = Bot
+
+    val Model = ImageVector.Builder(
+        name = "model",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 960f,
+        viewportHeight = 960f
+    ).apply {
+        path(
+            fill = SolidColor(Color(0xFF000000)),
+            stroke = null,
+            pathFillType = PathFillType.NonZero
+        ) {
+            addPathNodes(
+                "M491,621q70,0 119,-45t49,-109q0,-57 -36.5,-96.5T534,331q-47,0 -79.5,30T422,435q0,19 7.5,37t21.5,33l57,-57q-3,-2 -4.5,-5t-1.5,-7q0,-11 9,-17.5t23,-6.5q20,0 33,16.5t13,39.5q0,31 -25.5,52.5T492,542q-47,0 -79.5,-38T380,411q0,-29 11,-55.5t31,-46.5l-57,-57q-32,31 -49,72t-17,86q0,88 56,149.5T491,621ZM240,880v-172q-57,-52 -88.5,-121.5T120,440q0,-150 105,-255t255,-105q125,0 221.5,73.5T827,345l52,205q5,19 -7,34.5T840,600h-80v120q0,33 -23.5,56.5T680,800h-80v80h-80v-160h160v-200h108l-38,-155q-23,-91 -98,-148t-172,-57q-116,0 -198,81t-82,197q0,60 24.5,114t69.5,96l26,24v208h-80ZM494,520Z"
+            )
+        }
+    }.build()
+
+    val ModelServices = ImageVector.Builder(
+        name = "model_services",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 960f,
+        viewportHeight = 960f
+    ).apply {
+        path(
+            fill = SolidColor(Color(0xFF1F1F1F)),
+            stroke = null,
+            pathFillType = PathFillType.NonZero
+        ) {
+            addPathNodes(
+                "M260,800q-91,0 -155.5,-63T40,583q0,-78 47,-139t123,-78q25,-92 100,-149t170,-57q117,0 198.5,81.5T760,440q69,8 114.5,59.5T920,620q0,75 -52.5,127.5T740,800L260,800ZM260,720h480q42,0 71,-29t29,-71q0,-42 -29,-71t-71,-29h-60v-80q0,-83 -58.5,-141.5T480,240q-83,0 -141.5,58.5T280,440h-20q-58,0 -99,41t-41,99q0,58 41,99t99,41ZM480,480Z"
+            )
         }
     }.build()
 
