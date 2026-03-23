@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.rerere.ai.provider.BalanceOption
@@ -46,11 +47,12 @@ import kotlin.reflect.KClass
 fun ProviderConfigure(
     provider: ProviderSetting,
     modifier: Modifier = Modifier,
+    topPadding: Dp = 0.dp,
     onEdit: (provider: ProviderSetting) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier.padding(top = 8.dp)
+        modifier = modifier.padding(top = topPadding)
     ) {
         if (!provider.builtIn) {
             ProviderTypeSelector(

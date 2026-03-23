@@ -136,6 +136,7 @@ import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
 import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.UiState
@@ -153,7 +154,7 @@ private fun ProviderSetting.withAlwaysEnabledDefaults(): ProviderSetting {
     )
 }
 
-private val ProviderDetailContentTopPadding = PageTopBarContentTopPadding + 12.dp
+private val ProviderDetailTabsTopPadding = PageTopBarContentTopPadding + 4.dp
 
 @Composable
 fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
@@ -202,93 +203,165 @@ fun SettingProviderDetailPage(id: Uuid, vm: SettingVM = koinViewModel()) {
             }
         }
     ) {
-        Scaffold(
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            containerColor = Color.Transparent,
-            bottomBar = {
-                Box {
-                    FooterTranslucentBackdrop(
-                        modifier = Modifier.fillMaxSize(),
-                        containerColor = ZionBackground,
-                        containerAlpha = 0.9f
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = ProviderDetailTabsTopPadding)
+                .padding(horizontal = 16.dp)
+        ) {
+            SecondaryTabRow(
+                selectedTabIndex = pager.currentPage,
+                containerColor = Color.Transparent,
+                divider = {},
+            ) {
+                listOf(
+                    R.string.setting_provider_page_configuration,
+                    R.string.setting_provider_page_models
+                ).forEachIndexed { index, titleRes ->
+                    val selected = pager.currentPage == index
+                    Tab(
+                        selected = selected,
+                        onClick = {
+                            scope.launch {
+                                pager.animateScrollToPage(index)
+                            }
+                        },
+                        text = {
+                            Text(
+                                text = stringResource(titleRes),
+                                color = if (selected) ZionTextPrimary else ZionTextSecondary
+                            )
+                        }
                     )
-                    NavigationBar(
-                        containerColor = Color.Transparent,
-                        tonalElevation = 0.dp
-                    ) {
-                        NavigationBarItem(
-                            selected = pager.currentPage == 0,
-                            label = { Text(stringResource(id = R.string.setting_provider_page_configuration)) },
-                            icon = { Icon(HugeIcons.Tools, null) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = ZionTextPrimary,
-                                selectedTextColor = ZionTextPrimary,
-                                unselectedIconColor = ZionTextSecondary,
-                                unselectedTextColor = ZionTextSecondary,
-                                indicatorColor = ZionSectionItem
-                            ),
-                            onClick = {
-                                scope.launch {
-                                    pager.animateScrollToPage(0)
-                                }
-                            }
-                        )
-                        NavigationBarItem(
-                            selected = pager.currentPage == 1,
-                            label = { Text(stringResource(id = R.string.setting_provider_page_models)) },
-                            icon = { Icon(HugeIcons.Package01, null) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = ZionTextPrimary,
-                                selectedTextColor = ZionTextPrimary,
-                                unselectedIconColor = ZionTextSecondary,
-                                unselectedTextColor = ZionTextSecondary,
-                                indicatorColor = ZionSectionItem
-                            ),
-                            onClick = {
-                                scope.launch {
-                                    pager.animateScrollToPage(1)
-                                }
-                            }
-                        )
-                    }
                 }
             }
-        ) { innerPadding ->
+
             HorizontalPager(
                 state = pager,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = ProviderDetailContentTopPadding)
-                    .padding(innerPadding)
-                    .consumeWindowInsets(innerPadding)
+                    .fillMaxWidth()
+                    .weight(1f)
             ) { page ->
                 when (page) {
-                    0 -> {
-                        SettingProviderConfigPage(
-                            provider = provider,
-                            onEdit = {
-                                onEdit(it)
-                                toaster.show(
-                                    context.getString(R.string.setting_provider_page_save_success),
-                                    type = ToastType.Success
-                                )
-                            },
-                            onDelete = {
-                                onDelete()
-                            }
-                        )
-                    }
+                    0 -> SettingProviderConfigPage(
+                        provider = provider,
+                        onEdit = {
+                            onEdit(it)
+                            toaster.show(
+                                context.getString(R.string.setting_provider_page_save_success),
+                                type = ToastType.Success
+                            )
+                        },
+                        onDelete = onDelete
+                    )
 
-                    1 -> {
-                        SettingProviderModelPage(
-                            provider = provider,
-                            onEdit = onEdit
-                        )
-                    }
+                    1 -> SettingProviderModelPage(
+                        provider = provider,
+                        onEdit = onEdit
+                    )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun ProviderDetailSummaryCard(
+    provider: ProviderSetting,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = ZionSectionItem
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(64.dp),
+                shape = RoundedCornerShape(18.dp),
+                color = ZionSurface
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    AutoAIIcon(
+                        name = provider.name,
+                        modifier = Modifier.size(32.dp),
+                        color = Color.Transparent
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = provider.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = ZionTextPrimary
+                )
+                Text(
+                    text = stringResource(R.string.setting_provider_page_model_count, provider.models.size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ZionTextSecondary
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ProviderDetailBadge(label = "Token")
+                    ProviderDetailBadge(
+                        label = stringResource(
+                            if (provider.enabled) {
+                                R.string.setting_provider_page_enabled
+                            } else {
+                                R.string.setting_provider_page_disabled
+                            }
+                        ),
+                        emphasized = provider.enabled
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProviderDetailBadge(
+    label: String,
+    emphasized: Boolean = false,
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = if (emphasized) ZionAccentNeutral else ZionGrayLighter,
+        border = if (emphasized) {
+            null
+        } else {
+            BorderStroke(1.dp, ZionGrayLight)
+        }
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (emphasized) Color.White else ZionTextPrimary,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+        )
+    }
+}
+
+@Composable
+private fun ProviderSectionLabel(text: String) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        color = ZionTextSecondary,
+        modifier = Modifier.padding(start = 8.dp)
+    )
 }
 
 @Composable
@@ -305,19 +378,39 @@ private fun SettingProviderConfigPage(
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+            .padding(top = 12.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        ProviderConfigure(
-            provider = internalProvider,
-            onEdit = {
-                internalProvider = it.withAlwaysEnabledDefaults()
-            }
-        )
+        ProviderDetailSummaryCard(provider = internalProvider)
+
+        ProviderSectionLabel(stringResource(R.string.setting_provider_page_basic_settings))
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
+            color = ZionSectionItem
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                ProviderConfigure(
+                    provider = internalProvider,
+                    topPadding = 0.dp,
+                    onEdit = {
+                        internalProvider = it.withAlwaysEnabledDefaults()
+                    }
+                )
+            }
+        }
+
+        ProviderSectionLabel(stringResource(R.string.setting_provider_page_advanced_settings))
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
             color = ZionSectionItem
         ) {
             Row(
