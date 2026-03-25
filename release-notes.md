@@ -1,3 +1,8 @@
+## v0.0.29
+
+- 修复 `v0.0.28` 自动构建里的 `MCP` 图标编译问题：放弃不兼容的 `ImageVector pathData` 写法，改为 ZionChat 原型对应的 drawable/painter 方案，确保设置页和聊天入口都能正常显示。
+- 保留并继续发布上一轮预测返回距离收紧调整，让返回手势保持更克制的位移和更自然的层叠感。
+
 ## v0.0.28
 
 - 修复 `MCP` 图标在设置页与聊天相关入口里不显示的问题，图标定义改成真正可渲染的 ZionChat `ModelContextProtocol` pathData。

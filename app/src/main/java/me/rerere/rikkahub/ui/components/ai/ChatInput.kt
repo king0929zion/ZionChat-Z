@@ -85,6 +85,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -740,7 +741,7 @@ private fun ToolMenuMainPage(
                 ToolMenuListItem(
                     icon = {
                         Icon(
-                            imageVector = ZionAppIcons.MCPTools,
+                            painter = painterResource(R.drawable.ic_mcp),
                             contentDescription = null,
                             tint = ZionTextPrimary,
                             modifier = Modifier.size(18.dp)
@@ -1174,7 +1175,7 @@ private fun ToolMenuMcpPage(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = ZionAppIcons.MCPTools,
+                            painter = painterResource(R.drawable.ic_mcp),
                             contentDescription = null,
                             tint = if (selected) Color.White else ZionTextPrimary,
                             modifier = Modifier.size(18.dp)

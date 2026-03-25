@@ -163,7 +163,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingMcp) },
-                        leadingContent = { Icon(ZionAppIcons.MCPTools, null) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_mcp), null) },
                         headlineContent = { Text(stringResource(R.string.setting_page_mcp)) },
                     )
                 }
