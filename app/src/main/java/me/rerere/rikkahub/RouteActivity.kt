@@ -243,16 +243,16 @@ class RouteActivity : ComponentActivity() {
                         },
                         predictivePopTransitionSpec = {
                             slideInHorizontally(
-                                animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
-                                initialOffsetX = { -it / 10 }
+                                animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                                initialOffsetX = { -it / 14 }
                             ) + scaleIn(
-                                animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
-                                initialScale = 0.98f
-                            ) + fadeIn(animationSpec = tween(durationMillis = 220)) togetherWith
+                                animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                                initialScale = 0.99f
+                            ) + fadeIn(animationSpec = tween(durationMillis = 180)) togetherWith
                                 slideOutHorizontally(
-                                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
-                                    targetOffsetX = { it / 3 }
-                                ) + fadeOut(animationSpec = tween(durationMillis = 180))
+                                    animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+                                    targetOffsetX = { it / 4 }
+                                ) + fadeOut(animationSpec = tween(durationMillis = 150))
                         },
                         entryProvider = entryProvider {
                             entry<Screen.Chat>(

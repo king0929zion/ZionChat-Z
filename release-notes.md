@@ -1,3 +1,8 @@
+## v0.0.28
+
+- 修复 `MCP` 图标在设置页与聊天相关入口里不显示的问题，图标定义改成真正可渲染的 ZionChat `ModelContextProtocol` pathData。
+- 单独收紧预测返回动画的位移距离和缩放幅度，让返回手势更像 ZionChat 那种“只拉一段”的层叠回退，而不是整页大幅滑走。
+
 ## v0.0.27
 
 - 设置首页把 `Color Mode` 收口成 ZionChat 风格的 `Appearance` 入口，实际颜色模式切换下沉到 `Appearance` 页内部。
