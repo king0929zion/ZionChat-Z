@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -17,8 +18,10 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Slider as MaterialSlider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Switch as MaterialSwitch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -26,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,10 +38,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.rerere.rikkahub.R
+import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.DisplaySetting
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
 import me.rerere.rikkahub.ui.components.ui.CardGroup
+import me.rerere.rikkahub.ui.components.ui.Select
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionManager
@@ -45,9 +51,16 @@ import me.rerere.rikkahub.ui.components.ui.permission.PermissionNotification
 import me.rerere.rikkahub.ui.components.ui.permission.rememberPermissionState
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.hooks.rememberAmoledDarkMode
+import me.rerere.rikkahub.ui.hooks.rememberColorMode
 import me.rerere.rikkahub.ui.hooks.rememberSharedPreferenceBoolean
 import me.rerere.rikkahub.ui.pages.setting.components.PresetThemeButtonGroup
+import me.rerere.rikkahub.ui.theme.ColorMode
 import me.rerere.rikkahub.ui.theme.CustomColors
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
+import me.rerere.rikkahub.ui.theme.ZionDivider
+import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
+import me.rerere.rikkahub.ui.theme.ZionSectionItemPressed
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.plus
 import org.koin.androidx.compose.koinViewModel
@@ -58,6 +71,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     var displaySetting by remember(settings) { mutableStateOf(settings.displaySetting) }
     var amoledDarkMode by rememberAmoledDarkMode()
+    var colorMode by rememberColorMode()
 
     fun updateDisplaySetting(setting: DisplaySetting) {
         displaySetting = setting
@@ -107,6 +121,35 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                     bottomEnd = 4.dp
                                 )
                             ),
+                        headlineContent = { Text(stringResource(R.string.setting_page_color_mode)) },
+                        trailingContent = {
+                            Select(
+                                options = ColorMode.entries,
+                                selectedOption = colorMode,
+                                onOptionSelected = {
+                                    colorMode = it
+                                    navController.navigate(Screen.SettingDisplay) {
+                                        popUpTo(Screen.SettingDisplay) {
+                                            inclusive = true
+                                        }
+                                    }
+                                },
+                                optionToString = {
+                                    when (it) {
+                                        ColorMode.SYSTEM -> stringResource(R.string.setting_page_color_mode_system)
+                                        ColorMode.LIGHT -> stringResource(R.string.setting_page_color_mode_light)
+                                        ColorMode.DARK -> stringResource(R.string.setting_page_color_mode_dark)
+                                    }
+                                },
+                                modifier = Modifier.width(132.dp)
+                            )
+                        },
+                        colors = CustomColors.listItemColors,
+                    )
+                    ListItem(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(4.dp)),
                         headlineContent = { Text(stringResource(R.string.setting_page_dynamic_color)) },
                         supportingContent = { Text(stringResource(R.string.setting_page_dynamic_color_desc)) },
                         trailingContent = {
@@ -122,7 +165,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(MaterialTheme.colorScheme.surfaceBright)
+                                .background(ZionSectionItem)
                         ) {
                             PresetThemeButtonGroup(
                                 themeId = settings.themeId,
@@ -304,7 +347,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             .padding(horizontal = 8.dp)
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(20.dp))
-                            .background(MaterialTheme.colorScheme.surfaceBright)
+                            .background(ZionSectionItem)
                     ) {
                         ListItem(
                             headlineContent = { Text(stringResource(R.string.setting_display_page_font_size_title)) },
@@ -488,7 +531,7 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                                 .padding(horizontal = 8.dp)
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(20.dp))
-                                .background(MaterialTheme.colorScheme.surfaceBright)
+                                .background(ZionSectionItem)
                         ) {
                             ListItem(
                                 headlineContent = { Text(stringResource(R.string.setting_display_page_paste_long_text_threshold_title)) },
@@ -552,4 +595,47 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
             }
         }
     }
+}
+
+@Composable
+private fun Switch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    MaterialSwitch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = ZionAccentNeutral,
+            checkedTrackColor = ZionSectionItemPressed,
+            checkedBorderColor = Color.Transparent,
+            uncheckedThumbColor = ZionTextSecondary,
+            uncheckedTrackColor = ZionGrayLight,
+            uncheckedBorderColor = ZionDivider,
+        )
+    )
+}
+
+@Composable
+private fun Slider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    modifier: Modifier = Modifier,
+) {
+    MaterialSlider(
+        value = value,
+        onValueChange = onValueChange,
+        valueRange = valueRange,
+        steps = steps,
+        modifier = modifier,
+        colors = SliderDefaults.colors(
+            thumbColor = ZionAccentNeutral,
+            activeTrackColor = ZionAccentNeutral,
+            inactiveTrackColor = ZionGrayLight,
+            activeTickColor = Color.Transparent,
+            inactiveTickColor = Color.Transparent,
+        )
+    )
 }

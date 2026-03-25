@@ -7,6 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -209,19 +211,48 @@ class RouteActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         onBack = { backStack.removeLastOrNull() },
                         transitionSpec = {
-                            if (backStack.size == 1) fadeIn() togetherWith fadeOut()
-                            else {
-                                slideInHorizontally { it } togetherWith
-                                    slideOutHorizontally { -it / 2 } + scaleOut(targetScale = 0.7f) + fadeOut()
+                            if (backStack.size == 1) {
+                                fadeIn(animationSpec = tween(durationMillis = 220)) togetherWith
+                                    fadeOut(animationSpec = tween(durationMillis = 180))
+                            } else {
+                                slideInHorizontally(
+                                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                                    initialOffsetX = { it / 3 }
+                                ) + fadeIn(animationSpec = tween(durationMillis = 220, delayMillis = 40)) togetherWith
+                                    slideOutHorizontally(
+                                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                                        targetOffsetX = { -it / 10 }
+                                    ) + scaleOut(
+                                        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                                        targetScale = 0.98f
+                                    ) + fadeOut(animationSpec = tween(durationMillis = 180))
                             }
                         },
                         popTransitionSpec = {
-                            slideInHorizontally { -it / 2 } + scaleIn(initialScale = 0.7f) + fadeIn() togetherWith
-                                slideOutHorizontally { it }
+                            slideInHorizontally(
+                                animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                                initialOffsetX = { -it / 10 }
+                            ) + scaleIn(
+                                animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                                initialScale = 0.98f
+                            ) + fadeIn(animationSpec = tween(durationMillis = 220)) togetherWith
+                                slideOutHorizontally(
+                                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                                    targetOffsetX = { it / 3 }
+                                ) + fadeOut(animationSpec = tween(durationMillis = 180))
                         },
                         predictivePopTransitionSpec = {
-                            slideInHorizontally { -it / 2 } + scaleIn(initialScale = 0.7f) + fadeIn() togetherWith
-                                slideOutHorizontally { it }
+                            slideInHorizontally(
+                                animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                                initialOffsetX = { -it / 10 }
+                            ) + scaleIn(
+                                animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                                initialScale = 0.98f
+                            ) + fadeIn(animationSpec = tween(durationMillis = 220)) togetherWith
+                                slideOutHorizontally(
+                                    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+                                    targetOffsetX = { it / 3 }
+                                ) + fadeOut(animationSpec = tween(durationMillis = 180))
                         },
                         entryProvider = entryProvider {
                             entry<Screen.Chat>(

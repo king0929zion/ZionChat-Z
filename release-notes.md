@@ -1,3 +1,9 @@
+## v0.0.27
+
+- 设置首页把 `Color Mode` 收口成 ZionChat 风格的 `Appearance` 入口，实际颜色模式切换下沉到 `Appearance` 页内部。
+- `Appearance` 页补回更接近 ZionChat 的结构，并把开关、滑杆和灰底面板统一成纯灰体系，去掉原先偏蓝的 Material 质感。
+- 全局 `MCP` 图标切换为你指定的 ZionChat `ModelContextProtocol` 图标，同时把页面切换和预测返回动画收口到更接近 ZionChat 的层叠滑动节奏。
+
 ## v0.0.26
 
 - 供应商配置页继续按 ZionChat 收口：输入区和类型切换统一回灰底体系，配置页移除分享与测试入口，只保留模型跳转和必要操作。

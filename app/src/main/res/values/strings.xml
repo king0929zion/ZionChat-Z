@@ -408,7 +408,7 @@
   <string name="setting_display_page_show_user_avatar_title">Show User Avatar</string>
   <string name="setting_display_page_skip_crop_image_desc">Skip crop interface after importing images or taking photos</string>
   <string name="setting_display_page_skip_crop_image_title">Skip Image Editing</string>
-  <string name="setting_display_page_title">Display Settings</string>
+  <string name="setting_display_page_title">Appearance</string>
   <string name="setting_mcp_page_add_header">Add Header</string>
   <string name="setting_mcp_page_add_one_to_get_started">Add one to get started</string>
   <string name="setting_mcp_page_basic_settings">Basic Settings</string>
@@ -479,8 +479,8 @@
   <string name="setting_page_data_settings">Data Settings</string>
   <string name="setting_page_default_model">Default Model</string>
   <string name="setting_page_default_model_desc">Set default models for each feature</string>
-  <string name="setting_page_display_setting">Display Settings</string>
-  <string name="setting_page_display_setting_desc">Manage display settings</string>
+  <string name="setting_page_display_setting">Appearance</string>
+  <string name="setting_page_display_setting_desc">Manage appearance and display behavior</string>
   <string name="setting_page_documentation">Documentation</string>
   <string name="setting_page_documentation_desc">View app usage instructions and help documentation</string>
   <string name="setting_page_donate">Donate</string>
@@ -505,7 +505,7 @@
   <string name="setting_page_share">Share</string>
   <string name="setting_page_share_desc">Share this app with friends</string>
   <string name="setting_page_share_text">RikkaHub - Open Source Android AI Assistant\n\nWebsite: https://rikka-ai.com/</string>
-  <string name="setting_page_theme_setting">Theme Settings</string>
+  <string name="setting_page_theme_setting">Appearance</string>
   <string name="setting_page_tts_service">Text-to-Speech Service</string>
   <string name="setting_page_tts_service_desc">Configure text-to-speech service providers</string>
   <string name="setting_provider_page_abilities">Abilities</string>

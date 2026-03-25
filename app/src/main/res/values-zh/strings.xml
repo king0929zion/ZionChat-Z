@@ -396,7 +396,7 @@
   <string name="setting_display_page_show_user_avatar_title">显示用户头像</string>
   <string name="setting_display_page_skip_crop_image_desc">导入图片或拍照后跳过裁剪界面</string>
   <string name="setting_display_page_skip_crop_image_title">跳过图片编辑</string>
-  <string name="setting_display_page_title">显示设置</string>
+  <string name="setting_display_page_title">外观</string>
   <string name="setting_mcp_page_add_header">添加请求头</string>
   <string name="setting_mcp_page_add_one_to_get_started">添加一个即可开始使用</string>
   <string name="setting_mcp_page_basic_settings">基础设置</string>
@@ -466,8 +466,8 @@
   <string name="setting_page_data_settings">数据设置</string>
   <string name="setting_page_default_model">默认模型</string>
   <string name="setting_page_default_model_desc">设置各个功能的默认模型</string>
-  <string name="setting_page_display_setting">显示设置</string>
-  <string name="setting_page_display_setting_desc">管理显示设置</string>
+  <string name="setting_page_display_setting">外观</string>
+  <string name="setting_page_display_setting_desc">管理外观与显示行为</string>
   <string name="setting_page_documentation">使用文档</string>
   <string name="setting_page_documentation_desc">查看应用使用说明和帮助文档</string>
   <string name="setting_page_donate">赞助</string>
@@ -492,7 +492,7 @@
   <string name="setting_page_share">分享</string>
   <string name="setting_page_share_desc">分享本APP给朋友</string>
   <string name="setting_page_share_text">RikkaHub - 开源安卓AI助手\n\n官网: https://rikka-ai.com/</string>
-  <string name="setting_page_theme_setting">主题设置</string>
+  <string name="setting_page_theme_setting">外观</string>
   <string name="setting_page_tts_service">语音服务</string>
   <string name="setting_page_tts_service_desc">配置语音合成服务提供商</string>
   <string name="setting_provider_page_abilities">能力</string>
