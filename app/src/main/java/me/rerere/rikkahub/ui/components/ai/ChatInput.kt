@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -52,6 +53,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -644,7 +647,7 @@ private fun ToolMenuMainPage(
     val hasInjectionOptions = settings.modeInjections.isNotEmpty() || settings.lorebooks.isNotEmpty()
     val activeInjectionCount = assistant.modeInjectionIds.size + assistant.lorebookIds.size
 
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -684,7 +687,7 @@ private fun ToolMenuMainPage(
             }
         }
 
-        HorizontalDivider(color = ZionGrayLight)
+        HorizontalDivider(color = ZionGrayLight.copy(alpha = 0.6f))
 
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             ToolMenuListItem(
@@ -693,7 +696,7 @@ private fun ToolMenuMainPage(
                         imageVector = ZionAppIcons.ChatGPTLogo,
                         contentDescription = null,
                         tint = ZionTextPrimary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 },
                 title = stringResource(R.string.setting_model_page_chat_model),
@@ -707,7 +710,7 @@ private fun ToolMenuMainPage(
                         imageVector = ZionAppIcons.Globe,
                         contentDescription = null,
                         tint = ZionTextPrimary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 },
                 title = stringResource(R.string.use_web_search),
@@ -728,7 +731,7 @@ private fun ToolMenuMainPage(
                             imageVector = ZionAppIcons.Think,
                             contentDescription = null,
                             tint = ZionTextPrimary,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     },
                     title = stringResource(R.string.setting_provider_page_reasoning),
@@ -744,7 +747,7 @@ private fun ToolMenuMainPage(
                             painter = painterResource(R.drawable.ic_mcp),
                             contentDescription = null,
                             tint = ZionTextPrimary,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     },
                     title = stringResource(R.string.mcp_picker_title),
@@ -759,7 +762,7 @@ private fun ToolMenuMainPage(
                         imageVector = ZionAppIcons.Image,
                         contentDescription = null,
                         tint = ZionTextPrimary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 },
                 title = stringResource(R.string.code_block_preview),
@@ -776,7 +779,7 @@ private fun ToolMenuMainPage(
                             imageVector = ZionAppIcons.Tool,
                             contentDescription = null,
                             tint = ZionTextPrimary,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     },
                     title = stringResource(R.string.chat_page_prompt_injections),
@@ -795,7 +798,7 @@ private fun ToolMenuMainPage(
                         imageVector = ZionAppIcons.History,
                         contentDescription = null,
                         tint = ZionTextPrimary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 },
                 title = stringResource(R.string.chat_page_compress_context),
@@ -855,7 +858,7 @@ private fun ToolMenuModelPage(
         }
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         enabledProviders.forEach { provider ->
             val availableModels = provider.models.filter { it.type == ModelType.CHAT }
             if (availableModels.isEmpty()) return@forEach
@@ -869,64 +872,107 @@ private fun ToolMenuModelPage(
                 modifier = Modifier.padding(start = 8.dp)
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                availableModels.forEach { candidate ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                availableModels.forEachIndexed { index, candidate ->
                     val selected = selectedModel?.id == candidate.id
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(22.dp),
-                        color = if (selected) ZionTextPrimary else ZionGrayLighter,
-                        onClick = { onSelectModel(candidate) }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectModel(candidate) }
+                            .padding(horizontal = 16.dp, vertical = 15.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .background(
-                                        if (selected) Color.White.copy(alpha = 0.12f) else Color.White,
-                                        RoundedCornerShape(10.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = ZionAppIcons.ChatGPTLogo,
-                                    contentDescription = null,
-                                    tint = if (selected) Color.White else ZionTextPrimary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = candidate.displayName,
-                                    fontSize = 16.sp,
-                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                                    fontFamily = SourceSans3,
-                                    color = if (selected) Color.White else ZionTextPrimary
-                                )
-                                Text(
-                                    text = provider.name,
-                                    fontSize = 13.sp,
-                                    fontFamily = SourceSans3,
-                                    color = if (selected) Color.White.copy(alpha = 0.72f) else ZionTextSecondary
-                                )
-                            }
-
+                        AutoAIIcon(
+                            name = candidate.modelId,
+                            modifier = Modifier.size(20.dp),
+                            color = Color.Transparent
+                        )
+                        Text(
+                            text = candidate.displayName,
+                            fontSize = 16.sp,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                            fontFamily = SourceSans3,
+                            color = ZionTextPrimary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (selected) {
                             Icon(
-                                imageVector = if (selected) ZionAppIcons.Check else ZionAppIcons.ChevronRight,
+                                imageVector = ZionAppIcons.Check,
                                 contentDescription = null,
-                                tint = if (selected) Color.White else ZionTextSecondary,
-                                modifier = Modifier.size(16.dp)
+                                tint = ZionTextPrimary,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
+                    if (index != availableModels.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = ZionGrayLight.copy(alpha = 0.55f)
+                        )
+                    }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ToolMenuChoiceCard(
+    selected: Boolean,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = Color.White,
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (selected) ZionGrayLight else Color.Transparent
+        ),
+        shadowElevation = if (selected) 2.dp else 0.dp,
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            icon()
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                    fontFamily = SourceSans3,
+                    color = ZionTextPrimary
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 13.sp,
+                    lineHeight = 17.sp,
+                    fontFamily = SourceSans3,
+                    color = ZionTextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (selected) {
+                Icon(
+                    imageVector = ZionAppIcons.Check,
+                    contentDescription = null,
+                    tint = ZionTextPrimary,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
@@ -944,102 +990,64 @@ private fun ToolMenuSearchPage(
     val showBuiltInInfo = model != null && ModelRegistry.GEMINI_SERIES.match(model.modelId)
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        ToolMenuListItem(
+        ToolMenuChoiceCard(
+            selected = enableSearch,
+            title = stringResource(R.string.use_web_search),
+            subtitle = stringResource(
+                if (enableSearch) R.string.setting_provider_page_enabled else R.string.setting_provider_page_disabled
+            ),
+            onClick = { onToggleSearch(!enableSearch) },
             icon = {
                 Icon(
                     imageVector = ZionAppIcons.Globe,
                     contentDescription = null,
                     tint = ZionTextPrimary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(22.dp)
                 )
-            },
-            title = stringResource(R.string.use_web_search),
-            subtitle = stringResource(
-                if (enableSearch) R.string.setting_provider_page_enabled else R.string.setting_provider_page_disabled
-            ),
-            onClick = { onToggleSearch(!enableSearch) }
+            }
         )
 
         if (showBuiltInInfo) {
-            ToolMenuListItem(
+            ToolMenuChoiceCard(
+                selected = hasBuiltInSearch,
+                title = stringResource(R.string.built_in_search_title),
+                subtitle = stringResource(R.string.built_in_search_description),
+                onClick = {},
                 icon = {
                     Icon(
                         imageVector = ZionAppIcons.Info,
                         contentDescription = null,
                         tint = ZionTextPrimary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(22.dp)
                     )
-                },
-                title = stringResource(R.string.built_in_search_title),
-                subtitle = stringResource(R.string.built_in_search_description),
-                onClick = {}
+                }
             )
         }
 
         if (!hasBuiltInSearch) {
             settings.searchServices.forEachIndexed { index, service ->
                 val selected = settings.searchServiceSelected == index
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    color = if (selected) ZionTextPrimary else ZionGrayLighter,
+                ToolMenuChoiceCard(
+                    selected = selected,
+                    title = SearchServiceOptions.TYPES[service::class] ?: "Search",
+                    subtitle = stringResource(
+                        if (enableSearch && selected) R.string.setting_provider_page_enabled else R.string.setting_provider_page_disabled
+                    ),
                     onClick = {
                         onUpdateSearchService(index)
                         if (!enableSearch) {
                             onToggleSearch(true)
                         }
-                    }
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .background(
-                                    if (selected) Color.White.copy(alpha = 0.12f) else Color.White,
-                                    RoundedCornerShape(10.dp)
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = ZionAppIcons.Search,
-                                contentDescription = null,
-                                tint = if (selected) Color.White else ZionTextPrimary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = SearchServiceOptions.TYPES[service::class] ?: "Search",
-                                fontSize = 16.sp,
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                                fontFamily = SourceSans3,
-                                color = if (selected) Color.White else ZionTextPrimary
-                            )
-                            Text(
-                                text = stringResource(
-                                    if (enableSearch && selected) R.string.setting_provider_page_enabled else R.string.setting_provider_page_disabled
-                                ),
-                                fontSize = 13.sp,
-                                fontFamily = SourceSans3,
-                                color = if (selected) Color.White.copy(alpha = 0.72f) else ZionTextSecondary
-                            )
-                        }
-
+                    },
+                    icon = {
                         Icon(
-                            imageVector = if (selected) ZionAppIcons.Check else ZionAppIcons.ChevronRight,
+                            imageVector = ZionAppIcons.Search,
                             contentDescription = null,
-                            tint = if (selected) Color.White else ZionTextSecondary,
-                            modifier = Modifier.size(16.dp)
+                            tint = ZionTextPrimary,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
-                }
+                )
             }
         }
     }
@@ -1059,13 +1067,19 @@ private fun ToolMenuReasoningPage(
         ReasoningLevel.HIGH to stringResource(R.string.reasoning_heavy_desc),
     )
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         options.forEach { (level, description) ->
             val selected = currentLevel == level
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = if (selected) ZionTextPrimary else ZionGrayLighter,
+            ToolMenuChoiceCard(
+                selected = selected,
+                title = when (level) {
+                    ReasoningLevel.OFF -> stringResource(R.string.reasoning_off)
+                    ReasoningLevel.AUTO -> stringResource(R.string.reasoning_auto)
+                    ReasoningLevel.LOW -> stringResource(R.string.reasoning_light)
+                    ReasoningLevel.MEDIUM -> stringResource(R.string.reasoning_medium)
+                    ReasoningLevel.HIGH -> stringResource(R.string.reasoning_heavy)
+                },
+                subtitle = description,
                 onClick = {
                     val tokens = when (level) {
                         ReasoningLevel.OFF -> 0
@@ -1075,63 +1089,16 @@ private fun ToolMenuReasoningPage(
                         ReasoningLevel.HIGH -> 32_000
                     }
                     onUpdateAssistant(assistant.copy(thinkingBudget = tokens))
-                }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .background(
-                                if (selected) Color.White.copy(alpha = 0.12f) else Color.White,
-                                RoundedCornerShape(10.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = ZionAppIcons.Think,
-                            contentDescription = null,
-                            tint = if (selected) Color.White else ZionTextPrimary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = when (level) {
-                                ReasoningLevel.OFF -> stringResource(R.string.reasoning_off)
-                                ReasoningLevel.AUTO -> stringResource(R.string.reasoning_auto)
-                                ReasoningLevel.LOW -> stringResource(R.string.reasoning_light)
-                                ReasoningLevel.MEDIUM -> stringResource(R.string.reasoning_medium)
-                                ReasoningLevel.HIGH -> stringResource(R.string.reasoning_heavy)
-                            },
-                            fontSize = 16.sp,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                            fontFamily = SourceSans3,
-                            color = if (selected) Color.White else ZionTextPrimary
-                        )
-                        Text(
-                            text = description,
-                            fontSize = 13.sp,
-                            lineHeight = 17.sp,
-                            fontFamily = SourceSans3,
-                            color = if (selected) Color.White.copy(alpha = 0.72f) else ZionTextSecondary
-                        )
-                    }
-
+                },
+                icon = {
                     Icon(
-                        imageVector = if (selected) ZionAppIcons.Check else ZionAppIcons.ChevronRight,
+                        imageVector = ZionAppIcons.Think,
                         contentDescription = null,
-                        tint = if (selected) Color.White else ZionTextSecondary,
-                        modifier = Modifier.size(16.dp)
+                        tint = ZionTextPrimary,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
-            }
+            )
         }
     }
 }
@@ -1143,78 +1110,40 @@ private fun ToolMenuMcpPage(
     mcpManager: McpManager,
     onUpdateAssistant: (Assistant) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         settings.mcpServers.filter { it.commonOptions.enable }.forEach { server ->
             val status by mcpManager.getStatus(server).collectAsState(initial = McpStatus.Idle)
             val selected = assistant.mcpServers.contains(server.id)
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = if (selected) ZionTextPrimary else ZionGrayLighter,
+            ToolMenuChoiceCard(
+                selected = selected,
+                title = server.commonOptions.name,
+                subtitle = when (val s = status) {
+                    McpStatus.Idle -> "Idle"
+                    McpStatus.Connecting -> "Connecting"
+                    McpStatus.Connected -> "Connected"
+                    is McpStatus.Reconnecting -> "Reconnecting (${s.attempt}/${s.maxAttempts})"
+                    is McpStatus.Error -> s.message
+                },
                 onClick = {
-                    val nextServers = assistant.mcpServers.toMutableSet().apply {
-                        if (selected) remove(server.id) else add(server.id)
-                    }
-                    onUpdateAssistant(assistant.copy(mcpServers = nextServers.toSet()))
-                }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .background(
-                                if (selected) Color.White.copy(alpha = 0.12f) else Color.White,
-                                RoundedCornerShape(10.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_mcp),
-                            contentDescription = null,
-                            tint = if (selected) Color.White else ZionTextPrimary,
-                            modifier = Modifier.size(18.dp)
+                    onUpdateAssistant(
+                        assistant.copy(
+                            mcpServers = if (selected) {
+                                assistant.mcpServers - server.id
+                            } else {
+                                assistant.mcpServers + server.id
+                            }
                         )
-                    }
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = server.commonOptions.name,
-                            fontSize = 16.sp,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                            fontFamily = SourceSans3,
-                            color = if (selected) Color.White else ZionTextPrimary
-                        )
-                        Text(
-                            text = when (val s = status) {
-                                McpStatus.Idle -> "Idle"
-                                McpStatus.Connecting -> "Connecting"
-                                McpStatus.Connected -> "Connected"
-                                is McpStatus.Reconnecting -> "Reconnecting (${s.attempt}/${s.maxAttempts})"
-                                is McpStatus.Error -> s.message
-                            },
-                            fontSize = 13.sp,
-                            lineHeight = 17.sp,
-                            fontFamily = SourceSans3,
-                            color = if (selected) Color.White.copy(alpha = 0.72f) else ZionTextSecondary,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
+                    )
+                },
+                icon = {
                     Icon(
-                        imageVector = if (selected) ZionAppIcons.Check else ZionAppIcons.ChevronRight,
+                        painter = painterResource(R.drawable.ic_mcp),
                         contentDescription = null,
-                        tint = if (selected) Color.White else ZionTextSecondary,
-                        modifier = Modifier.size(16.dp)
+                        tint = ZionTextPrimary,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
-            }
+            )
         }
     }
 }
@@ -1229,20 +1158,13 @@ private fun ToolMenuListItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .pressableScale(pressedScale = 0.98f, onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 8.dp),
+            .padding(horizontal = 4.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .background(ZionGrayLighter, RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            icon()
-        }
+        icon()
 
         Column(
             modifier = Modifier.weight(1f),
@@ -2088,10 +2010,17 @@ private fun ImagePickButton(
     BigIconTextButton(
         modifier = modifier,
         icon = {
-        Icon(ZionAppIcons.Image, null)
-    }, text = {
-        Text(stringResource(R.string.photo))
-    }) {
+            Icon(
+                imageVector = ZionAppIcons.Image,
+                contentDescription = null,
+                tint = ZionTextPrimary,
+                modifier = Modifier.size(28.dp)
+            )
+        },
+        text = {
+            Text(stringResource(R.string.photo))
+        }
+    ) {
         imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 }
@@ -2146,7 +2075,12 @@ fun TakePicButton(
         permissionState = cameraPermissionState
     ) {
         BigIconTextButton(modifier = modifier, icon = {
-            Icon(ZionAppIcons.Camera, null)
+            Icon(
+                imageVector = ZionAppIcons.Camera,
+                contentDescription = null,
+                tint = ZionTextPrimary,
+                modifier = Modifier.size(28.dp)
+            )
         }, text = {
             Text(stringResource(R.string.take_picture))
         }) {
@@ -2181,7 +2115,12 @@ fun VideoPickButton(
     }
 
     BigIconTextButton(modifier = modifier, icon = {
-        Icon(HugeIcons.Video01, null)
+        Icon(
+            imageVector = HugeIcons.Video01,
+            contentDescription = null,
+            tint = ZionTextPrimary,
+            modifier = Modifier.size(28.dp)
+        )
     }, text = {
         Text(stringResource(R.string.video))
     }) {
@@ -2205,7 +2144,12 @@ fun AudioPickButton(
     }
 
     BigIconTextButton(modifier = modifier, icon = {
-        Icon(HugeIcons.MusicNote03, null)
+        Icon(
+            imageVector = HugeIcons.MusicNote03,
+            contentDescription = null,
+            tint = ZionTextPrimary,
+            modifier = Modifier.size(28.dp)
+        )
     }, text = {
         Text(stringResource(R.string.audio))
     }) {
@@ -2293,7 +2237,12 @@ fun FilePickButton(
         }
     }
     BigIconTextButton(modifier = modifier, icon = {
-        Icon(ZionAppIcons.Files, null)
+        Icon(
+            imageVector = ZionAppIcons.Files,
+            contentDescription = null,
+            tint = ZionTextPrimary,
+            modifier = Modifier.size(28.dp)
+        )
     }, text = {
         Text(stringResource(R.string.upload_file))
     }) {
@@ -2313,7 +2262,7 @@ private fun BigIconTextButton(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(ZionGrayLighter, RoundedCornerShape(14.dp))
+            .background(ZionSectionItem, RoundedCornerShape(14.dp))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -2322,12 +2271,12 @@ private fun BigIconTextButton(
             .semantics {
                 role = Role.Button
             }
-            .padding(horizontal = 14.dp, vertical = 11.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Box(
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(42.dp),
             contentAlignment = Alignment.Center
         ) {
             icon()

@@ -58,6 +58,8 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.DEFAULT_ASSISTANTS_IDS
 import me.rerere.rikkahub.data.datastore.Settings
+import me.rerere.rikkahub.data.datastore.getBotAssistants
+import me.rerere.rikkahub.data.datastore.getPersonalizationAssistant
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.AssistantMemory
 import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
@@ -96,9 +98,13 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
     // 操作菜单状态
     var actionSheetAssistant by remember { mutableStateOf<Assistant?>(null) }
 
-    // 根据搜索关键词和选中的标签过滤助手
-    val filteredAssistants = remember(settings.assistants, selectedTagIds, searchQuery) {
-        settings.assistants.filter { assistant ->
+    val botAssistants = remember(settings.assistants) {
+        settings.getBotAssistants()
+    }
+
+    // 根据搜索关键词和选中的标签过滤 Bots
+    val filteredAssistants = remember(botAssistants, selectedTagIds, searchQuery) {
+        botAssistants.filter { assistant ->
             val matchesSearch = searchQuery.isBlank() ||
                 assistant.name.contains(searchQuery, ignoreCase = true)
             val matchesTags = selectedTagIds.isEmpty() ||
@@ -135,10 +141,14 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
             val isFiltering = selectedTagIds.isNotEmpty() || searchQuery.isNotBlank()
             val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
                 if (!isFiltering) {
-                    val newAssistants = settings.assistants.toMutableList().apply {
+                    val reorderedBots = botAssistants.toMutableList().apply {
                         add(to.index, removeAt(from.index))
                     }
-                    vm.updateSettings(settings.copy(assistants = newAssistants))
+                    vm.updateSettings(
+                        settings.copy(
+                            assistants = listOf(settings.getPersonalizationAssistant()) + reorderedBots
+                        )
+                    )
                 }
             }
             val haptic = LocalHapticFeedback.current

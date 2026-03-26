@@ -504,7 +504,7 @@ data class DisplaySetting(
     val showUserAvatar: Boolean = true,
     val showAssistantBubble: Boolean = false,
     val showModelIcon: Boolean = true,
-    val showModelName: Boolean = true,
+    val showModelName: Boolean = false,
     val showDateBelowName: Boolean = false,
     val showTokenUsage: Boolean = true,
     val showThinkingContent: Boolean = true,
@@ -576,8 +576,18 @@ fun Settings.getCurrentChatModel(): Model? {
     return findModelById(this.getCurrentAssistant().chatModelId ?: this.chatModelId)
 }
 
+fun Assistant.isPersonalization(): Boolean = this.id == DEFAULT_ASSISTANT_ID
+
+fun Settings.getPersonalizationAssistant(): Assistant {
+    return this.assistants.find { it.id == DEFAULT_ASSISTANT_ID } ?: this.assistants.first()
+}
+
+fun Settings.getBotAssistants(): List<Assistant> {
+    return this.assistants.filterNot { it.id == DEFAULT_ASSISTANT_ID }
+}
+
 fun Settings.getCurrentAssistant(): Assistant {
-    return this.assistants.find { it.id == assistantId } ?: this.assistants.first()
+    return this.assistants.find { it.id == assistantId } ?: getPersonalizationAssistant()
 }
 
 fun Settings.getAssistantById(id: Uuid): Assistant? {

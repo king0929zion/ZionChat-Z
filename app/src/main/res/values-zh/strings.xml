@@ -51,10 +51,10 @@
   <string name="assistant_page_context_message_size">上下文消息数量</string>
   <string name="assistant_page_context_message_unlimited">无限制的上下文消息</string>
   <string name="assistant_page_creative">创造</string>
-  <string name="assistant_page_current_assistant">当前助手</string>
+  <string name="assistant_page_current_assistant">当前 Bot</string>
   <string name="assistant_page_custom_bodies">自定义 Body</string>
   <string name="assistant_page_custom_headers">自定义 Headers</string>
-  <string name="assistant_page_default_assistant">默认助手</string>
+  <string name="assistant_page_default_assistant">未命名 Bot</string>
   <string name="assistant_page_delete">删除</string>
   <string name="assistant_page_delete_body">删除 Body</string>
   <string name="assistant_page_delete_dialog_text">确定要删除这个助手吗？此操作无法撤销。</string>
@@ -77,7 +77,7 @@
   <string name="assistant_page_memory_desc">启用记忆后，模型在与你对话时尝试主动记录你的信息，并在后续其他对话中使用，此功能需要模型支持工具调用才能正常工作</string>
   <string name="assistant_page_message_template">聊天内容模板</string>
   <string name="assistant_page_message_template_desc">控制聊天消息在发送给LLM之前的内容格式，通常不需要修改</string>
-  <string name="assistant_page_name">助手名称</string>
+  <string name="assistant_page_name">Bot 名称</string>
   <string name="assistant_page_preset_messages">预设聊天消息</string>
   <string name="assistant_page_preset_messages_desc">设置对话初始消息</string>
   <string name="assistant_page_quick_message_content">内容</string>
@@ -96,7 +96,7 @@
   <string name="assistant_page_remove">移除</string>
   <string name="assistant_page_remove_background">移除背景</string>
   <string name="assistant_page_save">保存</string>
-  <string name="assistant_page_search_placeholder">搜索助手</string>
+  <string name="assistant_page_search_placeholder">搜索 Bots</string>
   <string name="assistant_page_select_background">选择背景图片</string>
   <string name="assistant_page_select_from_gallery">从相册选择</string>
   <string name="assistant_page_stream_output">流式输出</string>
@@ -119,7 +119,7 @@
   <string name="assistant_page_template_variable_time">时间</string>
   <string name="assistant_page_template_variables_label">变量:</string>
   <string name="assistant_page_thinking_budget">思考预算</string>
-  <string name="assistant_page_title">助手设置</string>
+  <string name="assistant_page_title">Bots</string>
   <string name="assistant_page_top_p">Top P</string>
   <string name="assistant_page_top_p_value">Top P: %s</string>
   <string name="assistant_page_top_p_warning">请不要修改此值, 除非你知道自己在做什么</string>
@@ -444,8 +444,8 @@
   <string name="setting_model_page_translate_prompt_vars">变量: 原始文本: {source_text}, 目标语言: {target_lang}</string>
   <string name="setting_page_about">关于</string>
   <string name="setting_page_about_desc">关于本APP</string>
-  <string name="setting_page_assistant">助手</string>
-  <string name="setting_page_assistant_desc">设置个性化助手 (智能体)</string>
+  <string name="setting_page_assistant">个性化</string>
+  <string name="setting_page_assistant_desc">设置主 AI 的行为与记忆</string>
   <string name="setting_page_built_in_tools">内置工具</string>
   <string name="setting_page_built_in_tools_desc">选择模型支持的内置工具, 这些工具直接由API内置，无需APP提供，当前这个功能仅支持Gemini官方API。</string>
   <string name="setting_page_built_in_tools_search">搜索</string>
@@ -892,4 +892,18 @@
   <string name="update_card_new_version_found">发现新版本 %s</string>
   <string name="update_card_close">关闭</string>
   <string name="update_card_downloading">正在下载，请在状态栏查看进度</string>
+  <string name="setting_page_personalization">个性化</string>
+  <string name="personalization_nickname">昵称</string>
+  <string name="personalization_nickname_placeholder">你希望 ChatGPT 怎么称呼你？</string>
+  <string name="personalization_custom_instructions">自定义指令</string>
+  <string name="personalization_instructions_placeholder">告诉 ChatGPT 任何你希望它长期记住的偏好、习惯或回答方式。</string>
+  <string name="personalization_memory">记忆</string>
+  <string name="personalization_memories">记忆</string>
+  <string name="personalization_memories_count">%d</string>
+  <string name="chat_drawer_main_chat">ChatGPT</string>
+  <string name="chat_drawer_bots">Bots</string>
+  <string name="setting_page_bots_desc">管理独立 Bots 及其对话</string>
+  <string name="personalization_memories_summary">%1$d 条记忆</string>
+  <string name="personalization_memory_clear_all">全部清除</string>
+  <string name="personalization_memory_empty">还没有记忆</string>
 </resources>

@@ -111,6 +111,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     item(
                         onClick = { navController.navigate(Screen.SettingDisplay) },
                         leadingContent = { Icon(ZionAppIcons.Sun, null) },
+                        supportingContent = { Text(stringResource(R.string.setting_page_display_setting_desc)) },
                         trailingContent = {
                             Text(
                                 text = when (colorMode) {
@@ -124,9 +125,16 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                         headlineContent = { Text(stringResource(R.string.setting_display_page_title)) },
                     )
                     item(
+                        onClick = { navController.navigate(Screen.Personalization) },
+                        leadingContent = { Icon(ZionAppIcons.ChatGPTLogo, null) },
+                        supportingContent = { Text(stringResource(R.string.setting_page_assistant_desc)) },
+                        headlineContent = { Text(stringResource(R.string.setting_page_personalization)) },
+                    )
+                    item(
                         onClick = { navController.navigate(Screen.Assistant) },
                         leadingContent = { Icon(ZionAppIcons.Bot, null) },
-                        headlineContent = { Text(stringResource(R.string.setting_page_assistant)) },
+                        supportingContent = { Text(stringResource(R.string.setting_page_bots_desc)) },
+                        headlineContent = { Text(stringResource(R.string.assistant_page_title)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.Prompts) },

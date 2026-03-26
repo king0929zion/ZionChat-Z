@@ -3,15 +3,15 @@ package me.rerere.rikkahub.ui.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-val ZionBackground = Color(0xFFFCFCFC)
-val ZionChatBackground = Color(0xFFF5F5F5)
+val ZionBackground = Color(0xFFFFFFFF)
+val ZionChatBackground = Color(0xFFF8F8F8)
 val ZionSurface = Color(0xFFFFFFFF)
 val ZionTextPrimary = Color(0xFF1C1C1E)
 val ZionTextSecondary = Color(0xFF8E8E93)
 val ZionGrayLight = Color(0xFFE5E5EA)
-val ZionGrayLighter = Color(0xFFF2F2F7)
+val ZionGrayLighter = Color(0xFFF5F5F5)
 val ZionSectionItem = Color(0xFFF1F1F1)
-val ZionSectionItemPressed = Color(0xFFE5E5E5)
+val ZionSectionItemPressed = Color(0xFFE8E8E8)
 val ZionDivider = Color(0xFFE4E4E4)
 val ZionAccentNeutral = Color(0xFF111214)
 val ZionAccentNeutralSoft = Color(0xFFF0F0F0)

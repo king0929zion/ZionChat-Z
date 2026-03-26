@@ -75,6 +75,8 @@ import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantMcpPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantMemoryPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantPromptPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantRequestPage
+import me.rerere.rikkahub.ui.pages.personalization.PersonalizationMemoryPage
+import me.rerere.rikkahub.ui.pages.personalization.PersonalizationPage
 import me.rerere.rikkahub.ui.pages.backup.BackupPage
 import me.rerere.rikkahub.ui.pages.chat.ChatPage
 import me.rerere.rikkahub.ui.pages.debug.DebugPage
@@ -279,6 +281,14 @@ class RouteActivity : ComponentActivity() {
                                 AssistantPage()
                             }
 
+                            entry<Screen.Personalization> {
+                                PersonalizationPage()
+                            }
+
+                            entry<Screen.PersonalizationMemory> {
+                                PersonalizationMemoryPage()
+                            }
+
                             entry<Screen.AssistantDetail> { key ->
                                 AssistantDetailPage(key.id)
                             }
@@ -461,6 +471,12 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Assistant : Screen
+
+    @Serializable
+    data object Personalization : Screen
+
+    @Serializable
+    data object PersonalizationMemory : Screen
 
     @Serializable
     data class AssistantDetail(val id: String) : Screen

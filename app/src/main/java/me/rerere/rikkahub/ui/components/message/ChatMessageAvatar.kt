@@ -66,16 +66,8 @@ fun ChatMessageMeta(
         }
 
         MessageRole.ASSISTANT -> {
-            val showName = settings.displaySetting.showModelName
             val showDate = settings.displaySetting.showDateBelowName
-            val displayName = when {
-                assistant?.useAssistantAvatar == true -> assistant.name.ifEmpty {
-                    stringResource(R.string.assistant_page_default_assistant)
-                }
-                model != null -> model.displayName
-                else -> null
-            }
-            if ((!showName || displayName.isNullOrBlank()) && !showDate) {
+            if (!showDate) {
                 return
             }
             Column(
@@ -85,22 +77,12 @@ fun ChatMessageMeta(
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                if (showName && !displayName.isNullOrBlank()) {
-                    Text(
-                        text = displayName,
-                        style = MaterialTheme.typography.titleSmallEmphasized,
-                        maxLines = 1,
-                        color = LocalContentColor.current.copy(alpha = 0.88f),
-                    )
-                }
-                if (showDate) {
-                    Text(
-                        text = message.createdAt.toJavaLocalDateTime().toLocalString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = LocalContentColor.current.copy(alpha = 0.62f),
-                        maxLines = 1,
-                    )
-                }
+                Text(
+                    text = message.createdAt.toJavaLocalDateTime().toLocalString(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColor.current.copy(alpha = 0.62f),
+                    maxLines = 1,
+                )
             }
         }
 

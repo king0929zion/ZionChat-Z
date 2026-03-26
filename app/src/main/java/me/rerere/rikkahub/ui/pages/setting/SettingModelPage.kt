@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -196,7 +198,7 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
                 )
 
                 if (index != sections.lastIndex) {
-                    Box(modifier = Modifier.height(14.dp))
+                    Box(modifier = Modifier.height(12.dp))
                 }
             }
 
@@ -251,7 +253,7 @@ private fun DefaultModelSection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 8.dp, bottom = 6.dp),
+            .padding(start = 8.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -299,7 +301,7 @@ private fun DefaultModelSection(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = SourceSans3,
-                color = if (selectedName.isNullOrBlank()) ZionTextSecondary else ZionTextPrimary,
+                color = if (selectedName.isNullOrBlank()) Color(0xFFC7C7CC) else ZionTextPrimary,
                 modifier = Modifier.weight(1f)
             )
             Icon(
@@ -327,11 +329,14 @@ private fun DefaultModelSelectorSheet(
             provider.enabled && provider.models.any { model -> model.type == type }
         }
     }
+    val selectedModel = remember(providers, selectedModelId) {
+        providers.findModelById(selectedModelId)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = ZionSectionItem
+        containerColor = ZionSectionItem,
     ) {
         Column(
             modifier = Modifier
@@ -356,32 +361,53 @@ private fun DefaultModelSelectorSheet(
 
             Text(
                 text = title,
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = SourceSans3,
                 color = ZionTextPrimary,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
-
-            if (!required) {
-                TextButton(
-                    onClick = { onSelect(null) },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text(
-                        text = stringResource(R.string.history_page_clear),
-                        color = ZionTextPrimary,
-                        fontFamily = SourceSans3
-                    )
-                }
-            }
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                if (!required) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelect(null) }
+                                .padding(horizontal = 16.dp, vertical = 15.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.not_set),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                fontFamily = SourceSans3,
+                                color = if (selectedModel == null) ZionTextPrimary else ZionTextSecondary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (selectedModel == null) {
+                                Icon(
+                                    imageVector = ZionAppIcons.Check,
+                                    contentDescription = null,
+                                    tint = ZionTextPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
                 enabledProviders.forEach { provider ->
                     val availableModels = provider.models.fastFilter { it.type == type }
                     if (availableModels.isEmpty()) return@forEach
@@ -392,65 +418,51 @@ private fun DefaultModelSelectorSheet(
                         fontWeight = FontWeight.Medium,
                         fontFamily = SourceSans3,
                         color = ZionTextSecondary,
-                        modifier = Modifier.padding(start = 8.dp, bottom = 2.dp)
+                        modifier = Modifier.padding(start = 8.dp)
                     )
 
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        availableModels.forEach { model ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        availableModels.forEachIndexed { index, model ->
                             val selected = model.id == selectedModelId
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(22.dp),
-                                color = if (selected) ZionAccentNeutral else ZionGrayLight.copy(alpha = 0.35f),
-                                border = BorderStroke(
-                                    width = 1.dp,
-                                    color = if (selected) ZionAccentNeutral else ZionAccentNeutralBorder
-                                ),
-                                onClick = { onSelect(model) }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelect(model) }
+                                    .padding(horizontal = 16.dp, vertical = 15.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    AutoAIIcon(
-                                        name = model.modelId,
-                                        modifier = Modifier.size(22.dp),
-                                        color = Color.Transparent
+                                AutoAIIcon(
+                                    name = model.modelId,
+                                    modifier = Modifier.size(20.dp),
+                                    color = Color.Transparent
+                                )
+                                Text(
+                                    text = model.displayName,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    fontFamily = SourceSans3,
+                                    color = ZionTextPrimary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (selected) {
+                                    Icon(
+                                        imageVector = ZionAppIcons.Check,
+                                        contentDescription = null,
+                                        tint = ZionTextPrimary,
+                                        modifier = Modifier.size(18.dp)
                                     )
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = model.displayName,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            fontFamily = SourceSans3,
-                                            color = if (selected) Color.White else ZionTextPrimary
-                                        )
-                                        Text(
-                                            text = provider.name,
-                                            fontSize = 13.sp,
-                                            fontFamily = SourceSans3,
-                                            color = if (selected) Color.White.copy(alpha = 0.75f) else ZionTextSecondary
-                                        )
-                                    }
-                                    if (selected) {
-                                        Icon(
-                                            imageVector = ZionAppIcons.Check,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = ZionAppIcons.ChevronRight,
-                                            contentDescription = null,
-                                            tint = ZionTextSecondary,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
                                 }
+                            }
+                            if (index != availableModels.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = ZionGrayLight.copy(alpha = 0.55f)
+                                )
                             }
                         }
                     }

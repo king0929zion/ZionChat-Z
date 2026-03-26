@@ -1,18 +1,18 @@
 package me.rerere.rikkahub.ui.pages.chat
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -35,21 +35,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.Settings
+import me.rerere.rikkahub.data.datastore.getBotAssistants
 import me.rerere.rikkahub.data.datastore.getCurrentAssistant
+import me.rerere.rikkahub.data.datastore.getPersonalizationAssistant
+import me.rerere.rikkahub.data.datastore.isPersonalization
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Avatar
 import me.rerere.rikkahub.data.model.Conversation
@@ -58,7 +59,6 @@ import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.Navigator
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
-import me.rerere.rikkahub.ui.theme.ZionAccentBlue
 import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
@@ -77,6 +77,8 @@ fun ChatDrawerContent(
     val conversationListState = rememberLazyListState()
     val conversationJobs by vm.conversationJobs.collectAsStateWithLifecycle(initialValue = emptyMap())
     val currentAssistant = settings.getCurrentAssistant()
+    val personalizationAssistant = settings.getPersonalizationAssistant()
+    val botAssistants = settings.getBotAssistants()
 
     var showMoveToAssistantSheet by remember { mutableStateOf(false) }
     var conversationToMove by remember { mutableStateOf<Conversation?>(null) }
@@ -99,12 +101,22 @@ fun ChatDrawerContent(
             )
 
             Column(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 SidebarMenuEntry(
                     icon = ZionAppIcons.NewChat,
-                    label = "New chat",
+                    label = stringResource(R.string.chat_page_new_chat),
                     onClick = { navigateToChatPage(navController) }
+                )
+                SidebarMenuEntry(
+                    icon = ZionAppIcons.ChatGPTLogo,
+                    label = stringResource(R.string.chat_drawer_main_chat),
+                    active = currentAssistant.isPersonalization(),
+                    onClick = {
+                        vm.updateSettings(settings.copy(assistantId = personalizationAssistant.id))
+                        navigateToChatPage(navController)
+                    }
                 )
                 SidebarMenuEntry(
                     icon = ZionAppIcons.Image,
@@ -113,9 +125,31 @@ fun ChatDrawerContent(
                 )
                 SidebarMenuEntry(
                     icon = ZionAppIcons.Stats,
-                    label = "Statistics",
+                    label = stringResource(R.string.stats_page_title),
                     onClick = { navController.navigate(Screen.Stats) }
                 )
+            }
+
+            if (botAssistants.isNotEmpty()) {
+                SidebarSectionTitle(
+                    title = stringResource(R.string.chat_drawer_bots),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                Column(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    botAssistants.forEach { assistant ->
+                        AssistantItem(
+                            assistant = assistant,
+                            isCurrentAssistant = assistant.id == currentAssistant.id,
+                            onClick = {
+                                vm.updateSettings(settings.copy(assistantId = assistant.id))
+                                navigateToChatPage(navController)
+                            }
+                        )
+                    }
+                }
             }
 
             ConversationList(
@@ -126,7 +160,7 @@ fun ChatDrawerContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 onClick = {
                     navigateToChatPage(navController, it.id)
                 },
@@ -154,8 +188,12 @@ fun ChatDrawerContent(
                     stringResource(R.string.user_default_name)
                 },
                 avatar = settings.displaySetting.userAvatar,
-                assistantName = currentAssistant.name.ifBlank {
-                    stringResource(R.string.assistant_page_default_assistant)
+                assistantName = if (currentAssistant.isPersonalization()) {
+                    stringResource(R.string.chat_drawer_main_chat)
+                } else {
+                    currentAssistant.name.ifBlank {
+                        stringResource(R.string.assistant_page_default_assistant)
+                    }
                 },
                 onClick = { navController.navigate(Screen.Setting) }
             )
@@ -186,7 +224,7 @@ fun ChatDrawerContent(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(settings.assistants) { assistant ->
+                    items(listOf(personalizationAssistant) + botAssistants) { assistant ->
                         AssistantItem(
                             assistant = assistant,
                             isCurrentAssistant = assistant.id == conversationToMove?.assistantId,
@@ -210,19 +248,18 @@ private fun SidebarSearchHeader(
     onSearchClick: () -> Unit,
     onNewChatClick: () -> Unit,
 ) {
-    Row(
+    androidx.compose.foundation.layout.Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
+        androidx.compose.foundation.layout.Row(
             modifier = Modifier
                 .weight(1f)
                 .heightIn(min = 40.dp)
                 .background(ZionGrayLighter, RoundedCornerShape(20.dp))
-                .clip(RoundedCornerShape(20.dp))
                 .pressableScale(
                     pressedScale = 0.98f,
                     onClick = onSearchClick
@@ -248,7 +285,7 @@ private fun SidebarSearchHeader(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(CircleShape)
+                .background(ZionGrayLighter, CircleShape)
                 .pressableScale(
                     pressedScale = 0.95f,
                     onClick = onNewChatClick
@@ -266,15 +303,34 @@ private fun SidebarSearchHeader(
 }
 
 @Composable
+private fun SidebarSectionTitle(
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = title.uppercase(),
+        modifier = modifier,
+        fontFamily = SourceSans3,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Medium,
+        color = ZionTextSecondary
+    )
+}
+
+@Composable
 private fun SidebarMenuEntry(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
+    active: Boolean = false,
 ) {
-    Row(
+    androidx.compose.foundation.layout.Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .background(
+                color = if (active) ZionSectionItem else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
             .pressableScale(
                 pressedScale = 0.98f,
                 onClick = onClick
@@ -315,7 +371,6 @@ private fun SidebarProfileCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp)
-            .clip(RoundedCornerShape(12.dp))
             .background(ZionSectionItem, RoundedCornerShape(12.dp))
             .pressableScale(
                 pressedScale = 0.98f,
@@ -323,14 +378,14 @@ private fun SidebarProfileCard(
             )
             .padding(12.dp)
     ) {
-        Row(
+        androidx.compose.foundation.layout.Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             UIAvatar(
                 name = nickname,
                 value = avatar,
-                onUpdate = {},
+                onUpdate = null,
                 modifier = Modifier.size(36.dp),
             )
 
@@ -371,20 +426,22 @@ private fun SidebarProfileCard(
 private fun AssistantItem(
     assistant: Assistant,
     isCurrentAssistant: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
+    val label = if (assistant.isPersonalization()) {
+        stringResource(R.string.chat_drawer_main_chat)
+    } else {
+        assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) }
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = if (isCurrentAssistant) {
-            ZionSurface
-        } else {
-            ZionSectionItem
-        },
+        color = if (isCurrentAssistant) ZionSurface else ZionSectionItem,
         tonalElevation = 0.dp,
-        shadowElevation = if (isCurrentAssistant) 10.dp else 0.dp,
+        shadowElevation = if (isCurrentAssistant) 8.dp else 0.dp,
     ) {
-        Row(
+        androidx.compose.foundation.layout.Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .pressableScale(
@@ -396,16 +453,14 @@ private fun AssistantItem(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             UIAvatar(
-                name = assistant.name,
+                name = label,
                 value = assistant.avatar,
-                onUpdate = {},
+                onUpdate = null,
                 modifier = Modifier.size(40.dp),
             )
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
+                    text = label,
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = SourceSans3,
                     fontWeight = FontWeight.SemiBold,
@@ -418,7 +473,7 @@ private fun AssistantItem(
                         text = stringResource(R.string.assistant_page_current_assistant),
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = SourceSans3,
-                        color = ZionAccentBlue
+                        color = ZionTextSecondary
                     )
                 }
             }

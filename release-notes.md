@@ -1,3 +1,9 @@
+## v0.0.30
+
+- 新增 ZionChat 风格的 `Personalization / Memories` 页面，并把主 AI 配置与 Bots 结构拆开。
+- 侧边栏改成 `ChatGPT + Bots` 分区，主对话默认走 personalization 的设定、模型与记忆。
+- 默认模型选择器、聊天工具选择器和上传快捷入口继续按 ZionChat 的白卡与纯灰样式重构，并移除回复上方模型名。
+
 ## v0.0.29
 
 - 修复 `v0.0.28` 自动构建里的 `MCP` 图标编译问题：放弃不兼容的 `ImageVector pathData` 写法，改为 ZionChat 原型对应的 drawable/painter 方案，确保设置页和聊天入口都能正常显示。
