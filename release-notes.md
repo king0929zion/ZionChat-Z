@@ -1,3 +1,8 @@
+## v0.0.31
+
+- 修复 `Personalization / Memories / 模型选择器` 相关 Compose 编译问题：移除错误的 `weight` 导入、补齐 `AutoAIIcon` 引用，并把记忆项滑动操作切回仓库稳定的 `SwipeToDismissBox` 实现。
+- 保留上一轮主 AI 个性化、Bots 侧边栏分流、ZionChat 风格模型选择器与聊天工具选择器的全部改动，恢复 GitHub 自动签名构建链路。
+
 ## v0.0.30
 
 - 新增 ZionChat 风格的 `Personalization / Memories` 页面，并把主 AI 配置与 Bots 结构拆开。

@@ -2,35 +2,31 @@ package me.rerere.rikkahub.ui.pages.personalization
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FractionalThreshold
-import androidx.compose.material.rememberSwipeableState
-import androidx.compose.material.swipeable
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,10 +41,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import me.rerere.hugeicons.HugeIcons
@@ -71,7 +65,6 @@ import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import kotlin.math.roundToInt
 
 @Composable
 fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
@@ -89,7 +82,6 @@ fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
     val memories by memoriesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
-    var openedMemoryId by remember { mutableStateOf<Int?>(null) }
     var editingMemory by remember { mutableStateOf<AssistantMemory?>(null) }
     var editorText by remember { mutableStateOf("") }
 
@@ -203,7 +195,6 @@ fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
                         onClick = {
                             scope.launch {
                                 memoryRepository.deleteMemoriesOfAssistant(memoryOwnerId)
-                                openedMemoryId = null
                             }
                         }
                     ) {
@@ -239,16 +230,9 @@ fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
                     memories.forEach { memory ->
                         SwipeableMemoryItem(
                             content = memory.content,
-                            isOpened = openedMemoryId == memory.id,
-                            onOpenChanged = { opened ->
-                                openedMemoryId = if (opened) memory.id else null
-                            },
                             onDelete = {
                                 scope.launch {
                                     memoryRepository.deleteMemory(memory.id)
-                                    if (openedMemoryId == memory.id) {
-                                        openedMemoryId = null
-                                    }
                                 }
                             },
                             onEdit = {
@@ -372,91 +356,57 @@ private fun PersonalizationSwitchRow(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun SwipeableMemoryItem(
     content: String,
-    isOpened: Boolean,
-    onOpenChanged: (Boolean) -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit,
 ) {
-    val itemScope = androidx.compose.runtime.rememberCoroutineScope()
-    val actionWidth = 72.dp
-    val actionWidthPx = with(LocalDensity.current) { actionWidth.toPx() }
-    val swipeableState = rememberSwipeableState(
-        initialValue = if (isOpened) 1 else 0,
-        confirmStateChange = { targetValue ->
-            onOpenChanged(targetValue != 0)
-            true
-        }
-    )
-    val anchors = remember(actionWidthPx) { mapOf(0f to 0, -actionWidthPx to 1) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val dismissState = rememberSwipeToDismissBoxState()
 
-    LaunchedEffect(isOpened) {
-        val target = if (isOpened) 1 else 0
-        if (swipeableState.currentValue != target) {
-            swipeableState.animateTo(target)
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(26.dp))
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(end = 8.dp)
-                .size(72.dp)
-                .align(Alignment.CenterEnd),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            Row(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFFFF3B30))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {
-                            onOpenChanged(false)
-                            onDelete()
-                            itemScope.launch { swipeableState.animateTo(0) }
-                        }
-                    ),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = HugeIcons.Delete01,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
+                IconButton(
+                    onClick = {
+                        scope.launch { dismissState.reset() }
+                    }
+                ) {
+                    Icon(HugeIcons.Cancel01, null)
+                }
+                FilledIconButton(
+                    onClick = {
+                        scope.launch {
+                            onDelete()
+                            dismissState.reset()
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = HugeIcons.Delete01,
+                        contentDescription = stringResource(R.string.chat_page_delete)
+                    )
+                }
             }
-        }
-
+        },
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        modifier = Modifier.clip(RoundedCornerShape(26.dp))
+    ) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
-                .swipeable(
-                    state = swipeableState,
-                    anchors = anchors,
-                    thresholds = { _, _ -> FractionalThreshold(0.3f) },
-                    orientation = Orientation.Horizontal
-                )
                 .pressableScale(
                     pressedScale = 0.985f,
-                    onClick = {
-                        if (swipeableState.currentValue != 0) {
-                            itemScope.launch { swipeableState.animateTo(0) }
-                        } else {
-                            onEdit()
-                        }
-                    }
+                    onClick = onEdit
                 ),
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(containerColor = ZionSectionItem)
