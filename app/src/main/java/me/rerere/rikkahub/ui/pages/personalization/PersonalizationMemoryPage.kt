@@ -73,12 +73,8 @@ fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
     val memoryRepository: MemoryRepository = koinInject()
     val settings by vm.settings.collectAsStateWithLifecycle()
     val personalization = settings.getPersonalizationAssistant()
-    val memoriesFlow = remember(personalization.id, personalization.useGlobalMemory) {
-        if (personalization.useGlobalMemory) {
-            memoryRepository.getGlobalMemoriesFlow()
-        } else {
-            memoryRepository.getMemoriesOfAssistantFlow(personalization.id.toString())
-        }
+    val memoriesFlow = remember(personalization.id) {
+        memoryRepository.getMemoriesOfAssistantFlow(personalization.id.toString())
     }
     val memories by memoriesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -100,12 +96,8 @@ fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
         )
     }
 
-    val memoryOwnerId = remember(personalization.id, personalization.useGlobalMemory) {
-        if (personalization.useGlobalMemory) {
-            MemoryRepository.GLOBAL_MEMORY_ID
-        } else {
-            personalization.id.toString()
-        }
+    val memoryOwnerId = remember(personalization.id) {
+        personalization.id.toString()
     }
 
     SettingsPage(
@@ -137,23 +129,9 @@ fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
                 shape = RoundedCornerShape(26.dp),
                 colors = CardDefaults.cardColors(containerColor = ZionSectionItem)
             ) {
-                PersonalizationSwitchRow(
+                PersonalizationInfoRow(
                     title = stringResource(R.string.assistant_page_memory),
                     subtitle = stringResource(R.string.assistant_page_memory_desc),
-                    checked = personalization.enableMemory,
-                    onCheckedChange = {
-                        updatePersonalization { assistant -> assistant.copy(enableMemory = it) }
-                    }
-                )
-                HorizontalDivider(color = Color.White.copy(alpha = 0.74f))
-                PersonalizationSwitchRow(
-                    title = stringResource(R.string.assistant_page_global_memory),
-                    subtitle = stringResource(R.string.assistant_page_global_memory_desc),
-                    checked = personalization.useGlobalMemory,
-                    enabled = personalization.enableMemory,
-                    onCheckedChange = {
-                        updatePersonalization { assistant -> assistant.copy(useGlobalMemory = it) }
-                    }
                 )
                 HorizontalDivider(color = Color.White.copy(alpha = 0.74f))
                 PersonalizationSwitchRow(
@@ -162,15 +140,6 @@ fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
                     checked = personalization.enableRecentChatsReference,
                     onCheckedChange = {
                         updatePersonalization { assistant -> assistant.copy(enableRecentChatsReference = it) }
-                    }
-                )
-                HorizontalDivider(color = Color.White.copy(alpha = 0.74f))
-                PersonalizationSwitchRow(
-                    title = stringResource(R.string.assistant_page_time_reminder),
-                    subtitle = stringResource(R.string.assistant_page_time_reminder_desc),
-                    checked = personalization.enableTimeReminder,
-                    onCheckedChange = {
-                        updatePersonalization { assistant -> assistant.copy(enableTimeReminder = it) }
                     }
                 )
             }
@@ -313,6 +282,39 @@ private fun PersonalizationSectionTitle(title: String) {
         color = ZionTextSecondary,
         modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
     )
+}
+
+@Composable
+private fun PersonalizationInfoRow(
+    title: String,
+    subtitle: String,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = SourceSans3,
+                color = ZionTextPrimary
+            )
+            Text(
+                text = subtitle,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                fontFamily = SourceSans3,
+                color = ZionTextSecondary
+            )
+        }
+    }
 }
 
 @Composable

@@ -84,25 +84,19 @@ class GenerationHandler(
 
             val toolsInternal = buildList {
                 Log.i(TAG, "generateInternal: build tools($assistant)")
-                if (assistant?.enableMemory == true) {
-                    val memoryAssistantId = if (assistant.useGlobalMemory) {
-                        MemoryRepository.GLOBAL_MEMORY_ID
-                    } else {
-                        assistant.id.toString()
+                val memoryAssistantId = assistant.id.toString()
+                buildMemoryTools(
+                    json = json,
+                    onCreation = { content ->
+                        memoryRepo.addMemory(memoryAssistantId, content)
+                    },
+                    onUpdate = { id, content ->
+                        memoryRepo.updateContent(id, content)
+                    },
+                    onDelete = { id ->
+                        memoryRepo.deleteMemory(id)
                     }
-                    buildMemoryTools(
-                        json = json,
-                        onCreation = { content ->
-                            memoryRepo.addMemory(memoryAssistantId, content)
-                        },
-                        onUpdate = { id, content ->
-                            memoryRepo.updateContent(id, content)
-                        },
-                        onDelete = { id ->
-                            memoryRepo.deleteMemory(id)
-                        }
-                    ).let(this::addAll)
-                }
+                ).let(this::addAll)
                 addAll(tools)
             }
 
@@ -341,10 +335,8 @@ class GenerationHandler(
                 }
 
                 // 记忆
-                if (assistant.enableMemory) {
-                    appendLine()
-                    append(buildMemoryPrompt(memories = memories))
-                }
+                appendLine()
+                append(buildMemoryPrompt(memories = memories))
                 if (assistant.enableRecentChatsReference) {
                     appendLine()
                     append(buildRecentChatsPrompt(assistant, conversationRepo))

@@ -435,10 +435,8 @@ private fun AssistantItem(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (assistant.enableMemory) {
-                        Tag(type = TagType.SUCCESS) {
-                            Text(stringResource(R.string.assistant_page_memory_count, memories.size))
-                        }
+                    Tag(type = TagType.SUCCESS) {
+                        Text(stringResource(R.string.assistant_page_memory_count, memories.size))
                     }
 
                     if (assistant.tags.isNotEmpty()) {

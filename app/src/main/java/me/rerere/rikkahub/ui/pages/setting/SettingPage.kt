@@ -33,7 +33,6 @@ import me.rerere.hugeicons.stroke.AiMagic
 import me.rerere.hugeicons.stroke.Alert01
 import me.rerere.hugeicons.stroke.Book03
 import me.rerere.hugeicons.stroke.Bookshelf01
-import me.rerere.hugeicons.stroke.Brain02
 import me.rerere.hugeicons.stroke.Clapping01
 import me.rerere.hugeicons.stroke.Database02
 import me.rerere.hugeicons.stroke.Developer
@@ -127,13 +126,11 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     item(
                         onClick = { navController.navigate(Screen.Personalization) },
                         leadingContent = { Icon(ZionAppIcons.ChatGPTLogo, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_assistant_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_personalization)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.Assistant) },
                         leadingContent = { Icon(ZionAppIcons.Bot, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_bots_desc)) },
                         headlineContent = { Text(stringResource(R.string.assistant_page_title)) },
                     )
                     item(

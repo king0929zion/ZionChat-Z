@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.datastore.getAssistantById
 import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.AssistantMemory
@@ -43,18 +44,14 @@ class AssistantDetailVM(
     val assistant: StateFlow<Assistant> = settingsStore
         .settingsFlow
         .map { settings ->
-            settings.assistants.find { it.id == assistantId } ?: Assistant()
+            settings.getAssistantById(assistantId) ?: Assistant()
         }.stateIn(
             scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = Assistant()
         )
 
     val memories = assistant
         .flatMapLatest { currentAssistant ->
-            if (currentAssistant.useGlobalMemory) {
-                memoryRepository.getGlobalMemoriesFlow()
-            } else {
-                memoryRepository.getMemoriesOfAssistantFlow(assistantId.toString())
-            }
+            memoryRepository.getMemoriesOfAssistantFlow(currentAssistant.id.toString())
         }
         .stateIn(
             scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList()
@@ -154,13 +151,8 @@ class AssistantDetailVM(
 
     fun addMemory(memory: AssistantMemory) {
         viewModelScope.launch {
-            val memoryAssistantId = if (assistant.value.useGlobalMemory) {
-                MemoryRepository.GLOBAL_MEMORY_ID
-            } else {
-                assistantId.toString()
-            }
             memoryRepository.addMemory(
-                assistantId = memoryAssistantId,
+                assistantId = assistant.value.id.toString(),
                 content = memory.content
             )
         }

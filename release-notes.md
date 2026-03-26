@@ -1,3 +1,9 @@
+## v0.0.33
+
+- 去掉设置页 `Personalization` 与 `Bots` 入口的介绍文案，保留更接近 ZionChat 的纯标题入口。
+- `Personalization / Memories / Bots Memory` 全面切到助手私有记忆：移除全局记忆与时间提醒实现，记忆默认常开，只保留最近聊天引用开关。
+- 个性化与记忆入口图标继续收口到 Zion 风格图标，并同步把记忆说明文案改成“默认开启”的实际行为。
+
 ## v0.0.32
 
 - 修复 `v0.0.31` 自动构建里的最后一个 personalization 记忆页编译错误：补回 `HugeIcons.Cancel01` 所需的扩展导入，恢复记忆项滑动操作区的关闭按钮。

@@ -2,7 +2,6 @@ package me.rerere.rikkahub.ui.pages.assistant.detail
 
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.BookOpen01
-import me.rerere.hugeicons.stroke.Brain02
 import me.rerere.hugeicons.stroke.ArrowRight01
 import me.rerere.hugeicons.stroke.Code
 import me.rerere.hugeicons.stroke.Message02
@@ -41,6 +40,7 @@ import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.hooks.heroAnimation
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.utils.plus
 import org.koin.androidx.compose.koinViewModel
@@ -107,7 +107,7 @@ fun AssistantDetailPage(id: String) {
                     )
                     item(
                         onClick = { navController.navigate(Screen.AssistantMemory(id)) },
-                        leadingContent = { Icon(HugeIcons.Brain02, null) },
+                        leadingContent = { Icon(ZionAppIcons.Think, null) },
                         supportingContent = { Text(stringResource(R.string.assistant_detail_memory_desc)) },
                         headlineContent = { Text(stringResource(R.string.assistant_page_tab_memory)) },
                         trailingContent = { Icon(HugeIcons.ArrowRight01, null) },

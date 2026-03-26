@@ -578,20 +578,32 @@ fun Settings.getCurrentChatModel(): Model? {
 
 fun Assistant.isPersonalization(): Boolean = this.id == DEFAULT_ASSISTANT_ID
 
+private fun Assistant.normalizeMemoryBehavior(): Assistant {
+    return copy(
+        enableMemory = true,
+        useGlobalMemory = false,
+        enableTimeReminder = false,
+    )
+}
+
 fun Settings.getPersonalizationAssistant(): Assistant {
-    return this.assistants.find { it.id == DEFAULT_ASSISTANT_ID } ?: this.assistants.first()
+    return (this.assistants.find { it.id == DEFAULT_ASSISTANT_ID } ?: this.assistants.first())
+        .normalizeMemoryBehavior()
 }
 
 fun Settings.getBotAssistants(): List<Assistant> {
-    return this.assistants.filterNot { it.id == DEFAULT_ASSISTANT_ID }
+    return this.assistants
+        .filterNot { it.id == DEFAULT_ASSISTANT_ID }
+        .map { it.normalizeMemoryBehavior() }
 }
 
 fun Settings.getCurrentAssistant(): Assistant {
-    return this.assistants.find { it.id == assistantId } ?: getPersonalizationAssistant()
+    return (this.assistants.find { it.id == assistantId } ?: getPersonalizationAssistant())
+        .normalizeMemoryBehavior()
 }
 
 fun Settings.getAssistantById(id: Uuid): Assistant? {
-    return this.assistants.find { it.id == id }
+    return this.assistants.find { it.id == id }?.normalizeMemoryBehavior()
 }
 
 fun Settings.getSelectedTTSProvider(): TTSProviderSetting? {

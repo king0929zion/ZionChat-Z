@@ -163,39 +163,6 @@ private fun AssistantMemoryContent(
                     Text(
                         text = stringResource(R.string.assistant_page_memory_desc),
                     )
-                },
-                trailingContent = {
-                    Switch(
-                        checked = assistant.enableMemory,
-                        onCheckedChange = {
-                            onUpdateAssistant(
-                                assistant.copy(
-                                    enableMemory = it
-                                )
-                            )
-                        }
-                    )
-                }
-            )
-            item(
-                headlineContent = { Text(stringResource(R.string.assistant_page_global_memory)) },
-                supportingContent = {
-                    Text(
-                        text = stringResource(R.string.assistant_page_global_memory_desc),
-                    )
-                },
-                trailingContent = {
-                    Switch(
-                        checked = assistant.useGlobalMemory,
-                        onCheckedChange = {
-                            onUpdateAssistant(
-                                assistant.copy(
-                                    useGlobalMemory = it
-                                )
-                            )
-                        },
-                        enabled = assistant.enableMemory
-                    )
                 }
             )
             item(
@@ -212,26 +179,6 @@ private fun AssistantMemoryContent(
                             onUpdateAssistant(
                                 assistant.copy(
                                     enableRecentChatsReference = it
-                                )
-                            )
-                        }
-                    )
-                }
-            )
-            item(
-                headlineContent = { Text(stringResource(R.string.assistant_page_time_reminder)) },
-                supportingContent = {
-                    Text(
-                        text = stringResource(R.string.assistant_page_time_reminder_desc),
-                    )
-                },
-                trailingContent = {
-                    Switch(
-                        checked = assistant.enableTimeReminder,
-                        onCheckedChange = {
-                            onUpdateAssistant(
-                                assistant.copy(
-                                    enableTimeReminder = it
                                 )
                             )
                         }

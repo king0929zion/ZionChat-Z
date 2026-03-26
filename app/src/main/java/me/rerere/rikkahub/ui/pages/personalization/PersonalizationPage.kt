@@ -38,8 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.Brain02
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.getPersonalizationAssistant
@@ -47,6 +45,7 @@ import me.rerere.rikkahub.data.repository.MemoryRepository
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.pages.setting.SettingVM
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
@@ -61,12 +60,8 @@ fun PersonalizationPage(vm: SettingVM = koinViewModel()) {
     val memoryRepository: MemoryRepository = koinInject()
     val settings by vm.settings.collectAsStateWithLifecycle()
     val personalization = settings.getPersonalizationAssistant()
-    val memoriesFlow = remember(personalization.id, personalization.useGlobalMemory) {
-        if (personalization.useGlobalMemory) {
-            memoryRepository.getGlobalMemoriesFlow()
-        } else {
-            memoryRepository.getMemoriesOfAssistantFlow(personalization.id.toString())
-        }
+    val memoriesFlow = remember(personalization.id) {
+        memoryRepository.getMemoriesOfAssistantFlow(personalization.id.toString())
     }
     val memories by memoriesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -220,7 +215,7 @@ fun PersonalizationPage(vm: SettingVM = koinViewModel()) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = HugeIcons.Brain02,
+                        imageVector = ZionAppIcons.Think,
                         contentDescription = null,
                         tint = ZionTextPrimary
                     )

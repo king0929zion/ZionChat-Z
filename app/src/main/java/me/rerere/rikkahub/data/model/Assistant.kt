@@ -22,8 +22,8 @@ data class Assistant(
     val topP: Float? = null,
     val contextMessageSize: Int = 0,
     val streamOutput: Boolean = true,
-    val enableMemory: Boolean = false,
-    val useGlobalMemory: Boolean = false, // 使用全局共享记忆而非助手隔离记忆
+    val enableMemory: Boolean = true,
+    val useGlobalMemory: Boolean = false, // 兼容旧数据，运行时不再启用全局共享记忆
     val enableRecentChatsReference: Boolean = false,
     val messageTemplate: String = "{{ message }}",
     val presetMessages: List<UIMessage> = emptyList(),
@@ -39,7 +39,7 @@ data class Assistant(
     val backgroundOpacity: Float = 1.0f,
     val modeInjectionIds: Set<Uuid> = emptySet(),      // 关联的模式注入 ID
     val lorebookIds: Set<Uuid> = emptySet(),            // 关联的 Lorebook ID
-    val enableTimeReminder: Boolean = false,            // 时间间隔提醒注入
+    val enableTimeReminder: Boolean = false,            // 兼容旧数据，运行时不再启用时间提醒
 )
 
 @Serializable

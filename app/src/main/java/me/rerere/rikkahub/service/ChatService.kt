@@ -61,7 +61,6 @@ import me.rerere.rikkahub.data.ai.transformers.PromptInjectionTransformer
 import me.rerere.rikkahub.data.ai.transformers.RegexOutputTransformer
 import me.rerere.rikkahub.data.ai.transformers.TemplateTransformer
 import me.rerere.rikkahub.data.ai.transformers.ThinkTagTransformer
-import me.rerere.rikkahub.data.ai.transformers.TimeReminderTransformer
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.datastore.findModelById
 import me.rerere.rikkahub.data.datastore.findProvider
@@ -94,7 +93,6 @@ data class ChatError(
 
 private val inputTransformers by lazy {
     listOf(
-        TimeReminderTransformer,
         PromptInjectionTransformer,
         PlaceholderTransformer,
         DocumentAsPromptTransformer,
@@ -474,11 +472,9 @@ class ChatService(
                     }
                 },
                 assistant = settings.getCurrentAssistant(),
-                memories = if (settings.getCurrentAssistant().useGlobalMemory) {
-                    memoryRepository.getGlobalMemories()
-                } else {
-                    memoryRepository.getMemoriesOfAssistant(settings.assistantId.toString())
-                },
+                memories = memoryRepository.getMemoriesOfAssistant(
+                    settings.getCurrentAssistant().id.toString()
+                ),
                 inputTransformers = buildList {
                     addAll(inputTransformers)
                     add(templateTransformer)
