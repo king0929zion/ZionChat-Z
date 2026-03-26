@@ -1,3 +1,8 @@
+## v0.0.32
+
+- 修复 `v0.0.31` 自动构建里的最后一个 personalization 记忆页编译错误：补回 `HugeIcons.Cancel01` 所需的扩展导入，恢复记忆项滑动操作区的关闭按钮。
+- 保留上一轮 `Personalization / Bots / ZionChat` 选择器重构与主聊天对齐逻辑，继续沿用远端签名构建发布。
+
 ## v0.0.31
 
 - 修复 `Personalization / Memories / 模型选择器` 相关 Compose 编译问题：移除错误的 `weight` 导入、补齐 `AutoAIIcon` 引用，并把记忆项滑动操作切回仓库稳定的 `SwipeToDismissBox` 实现。
