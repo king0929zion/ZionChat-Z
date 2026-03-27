@@ -286,7 +286,7 @@ private fun DefaultModelSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(containerColor = ZionSectionItem)
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
             modifier = Modifier
@@ -335,6 +335,7 @@ private fun DefaultModelSelectorSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        dragHandle = null,
         containerColor = ZionSectionItem,
     ) {
         Column(
@@ -483,6 +484,7 @@ private fun ModelPromptSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        dragHandle = null,
         containerColor = ZionSectionItem
     ) {
         Column(

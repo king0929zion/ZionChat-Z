@@ -72,7 +72,6 @@ import me.rerere.ai.provider.ModelType
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.ArrowRight01
-import me.rerere.hugeicons.stroke.Brain02
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.DragDropHorizontal
 import me.rerere.hugeicons.stroke.Favourite
@@ -125,14 +124,14 @@ fun ModelSelector(
             Surface(
                 modifier = modifier
                     .clip(RoundedCornerShape(18.dp))
-                    .background(ZionSectionItem, RoundedCornerShape(18.dp))
+                    .background(Color.White, RoundedCornerShape(18.dp))
                     .combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = LocalIndication.current,
                         onClick = { popup = true }
                     ),
                 shape = RoundedCornerShape(18.dp),
-                color = ZionSectionItem,
+                color = Color.White,
                 border = BorderStroke(1.dp, ZionAccentNeutralBorder)
             ) {
                 Row(
@@ -144,16 +143,10 @@ fun ModelSelector(
                         modifier = Modifier.size(24.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        model?.modelId?.let {
-                            AutoAIIcon(
-                                it,
-                                Modifier.size(24.dp),
-                                color = Color.Transparent
-                            )
-                        } ?: Icon(
-                            imageVector = ZionAppIcons.ChatGPTLogo,
+                        Icon(
+                            painter = painterResource(R.drawable.ic_model),
                             contentDescription = null,
-                            tint = ZionTextPrimary,
+                            tint = ZionTextSecondary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -178,7 +171,7 @@ fun ModelSelector(
                 Surface(
                     modifier = Modifier.size(34.dp),
                     shape = CircleShape,
-                    color = ZionSectionItem,
+                    color = Color.White,
                     border = BorderStroke(1.dp, ZionAccentNeutralBorder),
                     onClick = { onSelect(Model()) }
                 ) {
@@ -197,19 +190,12 @@ fun ModelSelector(
                 popup = true
             },
         ) {
-            if (model != null) {
-                AutoAIIcon(
-                    modifier = Modifier.size(36.dp),
-                    name = model.modelId,
-                    color = Color.Transparent
-                )
-            } else {
-                Icon(
-                    imageVector = HugeIcons.Brain02,
-                    contentDescription = stringResource(R.string.setting_model_page_chat_model),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            Icon(
+                painter = painterResource(R.drawable.ic_model),
+                contentDescription = stringResource(R.string.setting_model_page_chat_model),
+                tint = ZionTextSecondary,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 

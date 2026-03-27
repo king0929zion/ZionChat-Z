@@ -20,11 +20,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
@@ -56,6 +54,7 @@ import me.rerere.rikkahub.data.repository.MemoryRepository
 import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
+import me.rerere.rikkahub.ui.components.ui.Switch as ZionSwitch
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
@@ -123,20 +122,13 @@ fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            PersonalizationSectionTitle(title = stringResource(R.string.personalization_memory))
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(26.dp),
                 colors = CardDefaults.cardColors(containerColor = ZionSectionItem)
             ) {
-                PersonalizationInfoRow(
-                    title = stringResource(R.string.assistant_page_memory),
-                    subtitle = stringResource(R.string.assistant_page_memory_desc),
-                )
-                HorizontalDivider(color = Color.White.copy(alpha = 0.74f))
                 PersonalizationSwitchRow(
                     title = stringResource(R.string.assistant_page_recent_chats),
-                    subtitle = stringResource(R.string.assistant_page_recent_chats_desc),
                     checked = personalization.enableRecentChatsReference,
                     onCheckedChange = {
                         updatePersonalization { assistant -> assistant.copy(enableRecentChatsReference = it) }
@@ -285,42 +277,8 @@ private fun PersonalizationSectionTitle(title: String) {
 }
 
 @Composable
-private fun PersonalizationInfoRow(
-    title: String,
-    subtitle: String,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                fontFamily = SourceSans3,
-                color = ZionTextPrimary
-            )
-            Text(
-                text = subtitle,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                fontFamily = SourceSans3,
-                color = ZionTextSecondary
-            )
-        }
-    }
-}
-
-@Composable
 private fun PersonalizationSwitchRow(
     title: String,
-    subtitle: String,
     checked: Boolean,
     enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit,
@@ -332,29 +290,22 @@ private fun PersonalizationSwitchRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                fontFamily = SourceSans3,
-                color = if (enabled) ZionTextPrimary else ZionTextSecondary
-            )
-            Text(
-                text = subtitle,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                fontFamily = SourceSans3,
-                color = ZionTextSecondary
-            )
-        }
-        Switch(
+        Text(
+            text = title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            fontFamily = SourceSans3,
+            color = if (enabled) ZionTextPrimary else ZionTextSecondary,
+            modifier = Modifier.weight(1f)
+        )
+        ZionSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            enabled = enabled
+            enabled = enabled,
+            trackColor = Color(0xFF1C1C1E),
+            trackColorUnchecked = Color(0xFFD9D9DE),
+            thumbColor = Color.White,
+            thumbColorUnchecked = Color.White
         )
     }
 }
