@@ -109,9 +109,10 @@ fun ChatDrawerContent(
                     onClick = { navigateToChatPage(navController) }
                 )
                 SidebarMenuEntry(
-                    icon = ZionAppIcons.ChatGPTLogo,
+                    icon = ZionAppIcons.Personalization,
                     label = stringResource(R.string.chat_drawer_main_chat),
                     active = currentAssistant.isPersonalization(),
+                    iconTint = Color.Unspecified,
                     onClick = {
                         vm.updateSettings(settings.copy(assistantId = personalizationAssistant.id))
                         navigateToChatPage(navController)
@@ -322,6 +323,7 @@ private fun SidebarMenuEntry(
     label: String,
     onClick: () -> Unit,
     active: Boolean = false,
+    iconTint: Color = ZionTextPrimary,
 ) {
     androidx.compose.foundation.layout.Row(
         modifier = Modifier
@@ -345,7 +347,7 @@ private fun SidebarMenuEntry(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = ZionTextPrimary,
+                tint = iconTint,
                 modifier = Modifier.size(24.dp)
             )
         }

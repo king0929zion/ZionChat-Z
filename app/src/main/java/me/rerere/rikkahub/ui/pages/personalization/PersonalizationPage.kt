@@ -215,9 +215,9 @@ fun PersonalizationPage(vm: SettingVM = koinViewModel()) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = ZionAppIcons.Think,
+                        imageVector = ZionAppIcons.Memory,
                         contentDescription = null,
-                        tint = ZionTextPrimary
+                        tint = Color.Unspecified
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(

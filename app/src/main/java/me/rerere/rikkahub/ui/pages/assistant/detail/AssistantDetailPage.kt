@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -107,7 +108,7 @@ fun AssistantDetailPage(id: String) {
                     )
                     item(
                         onClick = { navController.navigate(Screen.AssistantMemory(id)) },
-                        leadingContent = { Icon(ZionAppIcons.Think, null) },
+                        leadingContent = { Icon(ZionAppIcons.Memory, null, tint = Color.Unspecified) },
                         supportingContent = { Text(stringResource(R.string.assistant_detail_memory_desc)) },
                         headlineContent = { Text(stringResource(R.string.assistant_page_tab_memory)) },
                         trailingContent = { Icon(HugeIcons.ArrowRight01, null) },

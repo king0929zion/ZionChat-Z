@@ -818,6 +818,110 @@ object ZionAppIcons {
         }
     }.build()
 
+    val Memory = ImageVector.Builder(
+        name = "memory",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color(0xFF374151)),
+            stroke = null,
+            pathFillType = PathFillType.NonZero
+        ) {
+            moveTo(17.253f, 11.852f)
+            curveTo(18.34f, 10.966f, 19.944f, 11.03f, 20.957f, 12.043f)
+            curveTo(21.97f, 13.056f, 22.034f, 14.66f, 21.147f, 15.747f)
+            lineTo(20.957f, 15.957f)
+            lineTo(16.387f, 20.527f)
+            curveTo(15.871f, 21.043f, 15.226f, 21.406f, 14.521f, 21.581f)
+            lineTo(14.217f, 21.645f)
+            lineTo(12.166f, 21.986f)
+            curveTo(11.848f, 22.039f, 11.523f, 21.935f, 11.295f, 21.707f)
+            curveTo(11.067f, 21.479f, 10.963f, 21.154f, 11.016f, 20.836f)
+            lineTo(11.356f, 18.786f)
+            lineTo(11.419f, 18.48f)
+            curveTo(11.593f, 17.775f, 11.957f, 17.129f, 12.474f, 16.612f)
+            lineTo(17.043f, 12.043f)
+            lineTo(17.253f, 11.852f)
+            close()
+            moveTo(19.543f, 13.457f)
+            curveTo(19.262f, 13.176f, 18.817f, 13.158f, 18.516f, 13.404f)
+            lineTo(18.457f, 13.457f)
+            lineTo(13.888f, 18.026f)
+            curveTo(13.63f, 18.284f, 13.448f, 18.608f, 13.36f, 18.96f)
+            lineTo(13.329f, 19.113f)
+            lineTo(13.217f, 19.783f)
+            lineTo(13.888f, 19.672f)
+            lineTo(14.04f, 19.641f)
+            curveTo(14.392f, 19.553f, 14.715f, 19.371f, 14.973f, 19.113f)
+            lineTo(19.543f, 14.543f)
+            lineTo(19.596f, 14.484f)
+            curveTo(19.841f, 14.183f, 19.824f, 13.738f, 19.543f, 13.457f)
+            close()
+            moveTo(18f, 8.5f)
+            verticalLineTo(4.8f)
+            curveTo(18f, 4.634f, 17.866f, 4.5f, 17.7f, 4.5f)
+            lineTo(11f, 4.5f)
+            verticalLineTo(14f)
+            curveTo(11f, 14.552f, 10.552f, 15f, 10f, 15f)
+            curveTo(9.448f, 15f, 9f, 14.552f, 9f, 14f)
+            verticalLineTo(4.5f)
+            lineTo(8f, 4.5f)
+            curveTo(6.895f, 4.5f, 6f, 5.395f, 6f, 6.5f)
+            verticalLineTo(17.5f)
+            curveTo(6f, 18.605f, 6.895f, 19.5f, 8f, 19.5f)
+            curveTo(8.552f, 19.5f, 9f, 19.948f, 9f, 20.5f)
+            curveTo(9f, 21.052f, 8.552f, 21.5f, 8f, 21.5f)
+            curveTo(5.791f, 21.5f, 4f, 19.709f, 4f, 17.5f)
+            verticalLineTo(6.5f)
+            curveTo(4f, 4.291f, 5.791f, 2.5f, 8f, 2.5f)
+            lineTo(17.7f, 2.5f)
+            curveTo(18.97f, 2.5f, 20f, 3.53f, 20f, 4.8f)
+            verticalLineTo(8.5f)
+            curveTo(20f, 9.052f, 19.552f, 9.5f, 19f, 9.5f)
+            curveTo(18.448f, 9.5f, 18f, 9.052f, 18f, 8.5f)
+            close()
+        }
+    }.build()
+
+    val Personalization = ImageVector.Builder(
+        name = "personalization",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color(0xFF0D0D0D)),
+            stroke = null,
+            pathFillType = PathFillType.EvenOdd
+        ) {
+            moveTo(12f, 4f)
+            curveTo(7.582f, 4f, 4f, 7.582f, 4f, 12f)
+            curveTo(4f, 16.418f, 7.582f, 20f, 12f, 20f)
+            curveTo(16.418f, 20f, 20f, 16.418f, 20f, 12f)
+            curveTo(20f, 7.582f, 16.418f, 4f, 12f, 4f)
+            close()
+            moveTo(2f, 12f)
+            curveTo(2f, 6.477f, 6.477f, 2f, 12f, 2f)
+            curveTo(17.523f, 2f, 22f, 6.477f, 22f, 12f)
+            curveTo(22f, 17.523f, 17.523f, 22f, 12f, 22f)
+            curveTo(6.477f, 22f, 2f, 17.523f, 2f, 12f)
+            close()
+            moveTo(7.399f, 14.201f)
+            curveTo(7.841f, 13.869f, 8.468f, 13.958f, 8.799f, 14.4f)
+            curveTo(10.37f, 16.49f, 13.63f, 16.49f, 15.2f, 14.4f)
+            curveTo(15.532f, 13.958f, 16.159f, 13.869f, 16.601f, 14.201f)
+            curveTo(17.042f, 14.533f, 17.131f, 15.16f, 16.799f, 15.601f)
+            curveTo(14.429f, 18.757f, 9.571f, 18.757f, 7.201f, 15.601f)
+            curveTo(6.869f, 15.16f, 6.958f, 14.533f, 7.399f, 14.201f)
+            close()
+        }
+    }.build()
+
+
     val Check = ImageVector.Builder(
         name = "check",
         defaultWidth = 24.dp,

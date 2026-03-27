@@ -1,8 +1,6 @@
 package me.rerere.rikkahub.ui.components.ai
 
 import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -91,7 +89,6 @@ import me.rerere.rikkahub.ui.components.ui.icons.HeartIcon
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
-import me.rerere.rikkahub.ui.theme.ZionAccentNeutralBorder
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
@@ -124,15 +121,13 @@ fun ModelSelector(
             Surface(
                 modifier = modifier
                     .clip(RoundedCornerShape(18.dp))
-                    .background(Color.White, RoundedCornerShape(18.dp))
                     .combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = LocalIndication.current,
                         onClick = { popup = true }
                     ),
                 shape = RoundedCornerShape(18.dp),
-                color = Color.White,
-                border = BorderStroke(1.dp, ZionAccentNeutralBorder)
+                color = ZionSectionItem
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
@@ -171,8 +166,7 @@ fun ModelSelector(
                 Surface(
                     modifier = Modifier.size(34.dp),
                     shape = CircleShape,
-                    color = Color.White,
-                    border = BorderStroke(1.dp, ZionAccentNeutralBorder),
+                    color = ZionSectionItem,
                     onClick = { onSelect(Model()) }
                 ) {
                     Icon(

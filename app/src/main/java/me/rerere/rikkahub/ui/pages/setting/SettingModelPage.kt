@@ -286,7 +286,7 @@ private fun DefaultModelSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = ZionSectionItem)
     ) {
         Row(
             modifier = Modifier

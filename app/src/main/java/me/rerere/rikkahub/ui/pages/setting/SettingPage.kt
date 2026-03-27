@@ -109,8 +109,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 ) {
                     item(
                         onClick = { navController.navigate(Screen.SettingDisplay) },
-                        leadingContent = { Icon(ZionAppIcons.Sun, null) },
-                        supportingContent = { Text(stringResource(R.string.setting_page_display_setting_desc)) },
+                        leadingContent = { Icon(ZionAppIcons.Sun, null, tint = Color.Unspecified) },
                         trailingContent = {
                             Text(
                                 text = when (colorMode) {
@@ -125,17 +124,17 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     )
                     item(
                         onClick = { navController.navigate(Screen.Personalization) },
-                        leadingContent = { Icon(ZionAppIcons.ChatGPTLogo, null) },
+                        leadingContent = { Icon(ZionAppIcons.Personalization, null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.setting_page_personalization)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.Assistant) },
-                        leadingContent = { Icon(ZionAppIcons.Bot, null) },
+                        leadingContent = { Icon(ZionAppIcons.Bot, null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.assistant_page_title)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.Prompts) },
-                        leadingContent = { Icon(ZionAppIcons.Files, null) },
+                        leadingContent = { Icon(ZionAppIcons.Files, null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.setting_page_prompts_title)) },
                     )
                 }
@@ -148,27 +147,27 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 ) {
                     item(
                         onClick = { navController.navigate(Screen.SettingModels) },
-                        leadingContent = { Icon(painterResource(R.drawable.ic_model), null) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_model), null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.setting_page_default_model)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingProvider) },
-                        leadingContent = { Icon(painterResource(R.drawable.ic_model_services), null) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_model_services), null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.setting_page_providers)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingSearch) },
-                        leadingContent = { Icon(ZionAppIcons.Globe, null) },
+                        leadingContent = { Icon(ZionAppIcons.Globe, null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.setting_page_search_service)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingTTS) },
-                        leadingContent = { Icon(ZionAppIcons.Volume, null) },
+                        leadingContent = { Icon(ZionAppIcons.Volume, null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.setting_page_tts_service)) },
                     )
                     item(
                         onClick = { navController.navigate(Screen.SettingMcp) },
-                        leadingContent = { Icon(painterResource(R.drawable.ic_mcp), null) },
+                        leadingContent = { Icon(painterResource(R.drawable.ic_mcp), null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.setting_page_mcp)) },
                     )
                 }
