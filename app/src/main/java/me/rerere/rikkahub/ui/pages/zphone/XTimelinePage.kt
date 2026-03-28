@@ -37,7 +37,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,6 +60,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,7 +77,6 @@ import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.Favourite
 import me.rerere.hugeicons.stroke.FavouriteCircle
 import me.rerere.hugeicons.stroke.Image03
-import me.rerere.hugeicons.stroke.Message01
 import me.rerere.hugeicons.stroke.MoreVertical
 import me.rerere.hugeicons.stroke.Search01
 import me.rerere.hugeicons.stroke.Share04
@@ -114,7 +113,6 @@ private val XText = Color(0xFF0F1419)
 private val XSubText = Color(0xFF536471)
 private val XBlue = Color(0xFF1D9BF0)
 private val XDivider = Color(0xFFEFF3F4)
-private val XFabBlue = Color(0xFF1A8CD8)
 private val XDanger = Color(0xFFF4212E)
 private val XWarn = Color(0xFFFFD400)
 
@@ -444,6 +442,7 @@ private fun XDetailView(
                         replies = "15",
                         reposts = "302",
                         likes = if (liked) "303" else "302",
+                        views = "571万",
                         liked = liked,
                         saved = saved,
                         onToggleLike = onToggleLike,
@@ -569,32 +568,43 @@ private fun XComposeReplyView(
         onSubmit = onSubmit,
         showReplyContext = true,
     ) {
-        Column(
-            modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
+        Row(
+            modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(40.dp)
+            ) {
                 AvatarBubble(label = "RS", background = Color(0xFF111111), modifier = Modifier.size(40.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Robert Scoble", color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        VerifiedBadge()
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("@Scobleizer · 8小时", color = XSubText, fontSize = 14.sp)
-                    }
-                    Text(
-                        text = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last time I asked it to do the same.",
-                        color = XText,
-                        fontSize = 15.sp,
-                        lineHeight = 21.sp,
-                    )
-                    Text(
-                        text = "回复给 @Scobleizer 和 @grok",
-                        color = XBlue,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                Box(
+                    modifier = Modifier
+                        .padding(top = 6.dp)
+                        .width(2.dp)
+                        .height(108.dp)
+                        .background(Color(0xFFCFD9DE), CircleShape)
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Robert Scoble", color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    VerifiedBadge()
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("@Scobleizer · 8小时", color = XSubText, fontSize = 14.sp)
                 }
+                Text(
+                    text = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last time I asked it to do the same.",
+                    color = XText,
+                    fontSize = 15.sp,
+                    lineHeight = 21.sp,
+                )
+                Text(
+                    text = "回复给 @Scobleizer 和 @grok",
+                    color = XBlue,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -703,23 +713,33 @@ private fun XComposerScaffold(
 
 @Composable
 private fun XFeedHeader() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(53.dp)
-            .padding(start = 16.dp, end = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+    Surface(
+        color = Color.White.copy(alpha = 0.96f),
+        shadowElevation = 0.dp
     ) {
-        AvatarBubble(label = "ME", background = Color(0xFF6C8CD5), modifier = Modifier.size(32.dp))
-        Image(
-            painter = painterResource(R.drawable.zphone_x_logo),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.size(22.dp)
-        )
-        CircleIconButton(onClick = {}) {
-            Icon(HugeIcons.MoreVertical, contentDescription = null, tint = XSubText, modifier = Modifier.size(18.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(53.dp)
+                .padding(start = 16.dp, end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            AvatarBubble(
+                label = "ME",
+                background = Color(0xFFD9E7F4),
+                textColor = XText,
+                modifier = Modifier.size(32.dp)
+            )
+            Image(
+                painter = painterResource(R.drawable.zphone_x_logo),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(24.dp)
+            )
+            CircleIconButton(onClick = {}) {
+                Icon(HugeIcons.MoreVertical, contentDescription = null, tint = XSubText, modifier = Modifier.size(18.dp))
+            }
         }
     }
 }
@@ -727,37 +747,41 @@ private fun XFeedHeader() {
 @Composable
 private fun XFeedTabs(selectedTab: Int, onSelect: (Int) -> Unit) {
     val tabs = listOf("为你推荐", "正在关注", "AI — Rumors & Insights")
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .border(1.dp, XDivider, RoundedCornerShape(0.dp))
-    ) {
-        tabs.forEachIndexed { index, title ->
-            Column(
-                modifier = Modifier
-                    .clickable { onSelect(index) }
-                    .padding(horizontal = 20.dp, vertical = 14.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = title,
-                    color = if (selectedTab == index) XText else XSubText,
-                    fontSize = 15.sp,
-                    fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(10.dp))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+        ) {
+            tabs.forEachIndexed { index, title ->
+                val tabWidth = if (index == 2) 188.dp else 118.dp
                 Box(
                     modifier = Modifier
-                        .width(56.dp)
-                        .height(4.dp)
-                        .clip(CircleShape)
-                        .background(if (selectedTab == index) XBlue else Color.Transparent)
-                )
+                        .width(tabWidth)
+                        .height(53.dp)
+                        .clickable { onSelect(index) }
+                ) {
+                    Text(
+                        text = title,
+                        color = if (selectedTab == index) XText else XSubText,
+                        fontSize = 15.sp,
+                        fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .width(56.dp)
+                            .height(4.dp)
+                            .clip(CircleShape)
+                            .background(if (selectedTab == index) XBlue else Color.Transparent)
+                    )
+                }
             }
         }
+        XDividerLine()
     }
 }
 
@@ -775,28 +799,49 @@ private fun XFeedCard(
             .fillMaxWidth()
             .background(Color.White)
             .clickable(enabled = card.id == "elon", onClick = onOpen)
-            .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
             AvatarBubble(
                 label = if (card.id == "elon") "EM" else "LE",
-                background = if (card.id == "elon") Color(0xFF111111) else Color(0xFF88936F),
+                background = if (card.id == "elon") Color(0xFF111111) else Color(0xFF8B936E),
                 modifier = Modifier.size(40.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(card.author, color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        VerifiedBadge()
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("${card.handle} · ${card.time}", color = XSubText, fontSize = 14.sp)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(card.author, color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            VerifiedBadge()
+                            if (card.id == "elon") {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Image(
+                                    painter = painterResource(R.drawable.zphone_x_logo),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "${card.handle} · ${card.time}",
+                                color = XSubText,
+                                fontSize = 14.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
-                    Icon(HugeIcons.MoreVertical, contentDescription = null, tint = XSubText, modifier = Modifier.size(18.dp))
+                    CircleIconButton(onClick = {}) {
+                        Icon(HugeIcons.MoreVertical, contentDescription = null, tint = XSubText, modifier = Modifier.size(18.dp))
+                    }
                 }
                 Text(
                     text = card.content,
@@ -818,6 +863,7 @@ private fun XFeedCard(
                     replies = card.replies,
                     reposts = card.reposts,
                     likes = if (card.id == "elon" && liked) "1万+" else card.likes,
+                    views = card.views,
                     liked = liked,
                     saved = saved,
                     onToggleLike = onToggleLike,
@@ -826,7 +872,7 @@ private fun XFeedCard(
                 )
             }
         }
-        XDividerLine(modifier = Modifier.padding(top = 14.dp))
+        XDividerLine()
     }
 }
 
@@ -867,16 +913,56 @@ private fun QuoteCard(
                 modifier = Modifier.padding(top = 8.dp)
             )
             if (preview != null) {
-                Surface(
-                    color = Color(0xFFF4F7F9),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(top = 12.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(preview, color = XSubText, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                if (preview == "订阅方案预览") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .padding(top = 12.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(Color(0xFFBDE3F3))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .height(112.dp)
+                                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                                .background(Color.White)
+                                .border(1.dp, XDivider, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                        ) {
+                            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(96.dp)
+                                        .height(10.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFE1E8EC))
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .width(128.dp)
+                                        .height(10.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFE7EDF0))
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Surface(
+                        color = Color(0xFFF4F7F9),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .padding(top = 12.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(preview, color = XSubText, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                        }
                     }
                 }
             }
@@ -889,6 +975,7 @@ private fun TweetActionRow(
     replies: String,
     reposts: String,
     likes: String,
+    views: String? = null,
     liked: Boolean,
     saved: Boolean,
     onToggleLike: () -> Unit,
@@ -900,32 +987,38 @@ private fun TweetActionRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        StatAction(icon = HugeIcons.BubbleChatQuestion, label = replies, onClick = {})
-        StatAction(icon = HugeIcons.Share04, label = reposts, activeColor = Color(0xFF00BA7C), onClick = {})
-        StatAction(
-            icon = HugeIcons.FavouriteCircle,
-            label = likes,
-            active = liked,
-            activeColor = Color(0xFFF91880),
-            onClick = onToggleLike
-        )
-        StatAction(
-            icon = HugeIcons.Favourite,
-            label = if (saved) "已存" else "保存",
-            active = saved,
-            activeColor = XBlue,
-            onClick = onToggleSave
-        )
+        StatAction(label = replies, onClick = {}) { tint ->
+            Icon(HugeIcons.BubbleChatQuestion, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        }
+        StatAction(label = reposts, activeColor = Color(0xFF00BA7C), onClick = {}) { tint ->
+            Icon(HugeIcons.Share04, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        }
+        StatAction(label = likes, active = liked, activeColor = Color(0xFFF91880), onClick = onToggleLike) { tint ->
+            Icon(HugeIcons.FavouriteCircle, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        }
+        if (views != null) {
+            StatAction(label = views, onClick = {}) { tint ->
+                ViewsGlyph(color = tint, modifier = Modifier.size(18.dp))
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            ActionGlyphButton(active = saved, activeColor = XBlue, onClick = onToggleSave) { tint ->
+                Icon(HugeIcons.Favourite, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+            }
+            ActionGlyphButton(active = false, activeColor = XBlue, onClick = {}) { tint ->
+                Icon(HugeIcons.Share04, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+            }
+        }
     }
 }
 
 @Composable
 private fun StatAction(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     active: Boolean = false,
     activeColor: Color = XBlue,
     onClick: () -> Unit,
+    icon: @Composable (Color) -> Unit,
 ) {
     val tint = if (active) activeColor else XSubText
     Row(
@@ -933,8 +1026,24 @@ private fun StatAction(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        icon(tint)
         Text(label, color = tint, fontSize = 13.sp)
+    }
+}
+
+@Composable
+private fun ActionGlyphButton(
+    active: Boolean,
+    activeColor: Color,
+    onClick: () -> Unit,
+    content: @Composable (Color) -> Unit,
+) {
+    val tint = if (active) activeColor else XSubText
+    Box(
+        modifier = Modifier.pressableScale(pressedScale = 0.94f, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        content(tint)
     }
 }
 
@@ -961,59 +1070,58 @@ private fun XBottomNav(selected: Int, onSelect: (Int) -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItem(selected = selected == 0, onClick = { onSelect(0) }) {
-                Image(painterResource(R.drawable.zphone_x_logo), contentDescription = null, modifier = Modifier.size(22.dp))
+            BottomNavItem(onClick = { onSelect(0) }) {
+                HomeGlyph(color = if (selected == 0) XText else XSubText, modifier = Modifier.size(22.dp))
             }
-            BottomNavItem(selected = selected == 1, onClick = { onSelect(1) }) {
+            BottomNavItem(onClick = { onSelect(1) }) {
                 Icon(HugeIcons.Search01, contentDescription = null, tint = if (selected == 1) XText else XSubText, modifier = Modifier.size(22.dp))
             }
-            BottomNavItem(selected = selected == 2, onClick = { onSelect(2) }) {
-                Text("AI", color = if (selected == 2) XText else XSubText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            BottomNavItem(onClick = { onSelect(2) }) {
+                SlashGlyph(color = if (selected == 2) XText else XSubText, modifier = Modifier.size(22.dp))
             }
-            BottomNavItem(selected = selected == 3, onClick = { onSelect(3) }) {
-                Icon(HugeIcons.Favourite, contentDescription = null, tint = if (selected == 3) XText else XSubText, modifier = Modifier.size(22.dp))
+            BottomNavItem(onClick = { onSelect(3) }) {
+                BellGlyph(color = if (selected == 3) XText else XSubText, modifier = Modifier.size(22.dp))
             }
-            BottomNavItem(selected = selected == 4, onClick = { onSelect(4) }) {
-                Icon(HugeIcons.Message01, contentDescription = null, tint = if (selected == 4) XText else XSubText, modifier = Modifier.size(22.dp))
+            BottomNavItem(onClick = { onSelect(4) }) {
+                MailGlyph(color = if (selected == 4) XText else XSubText, modifier = Modifier.size(22.dp))
             }
         }
     }
 }
 
 @Composable
-private fun BottomNavItem(selected: Boolean, onClick: () -> Unit, content: @Composable () -> Unit) {
-    Column(
-        modifier = Modifier.pressableScale(pressedScale = 0.94f, onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        content()
-        Box(
-            modifier = Modifier
-                .width(18.dp)
-                .height(2.dp)
-                .clip(CircleShape)
-                .background(if (selected) XBlue else Color.Transparent)
-        )
-    }
+private fun BottomNavItem(onClick: () -> Unit, content: @Composable BoxScope.() -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(width = 48.dp, height = 36.dp)
+            .pressableScale(pressedScale = 0.94f, onClick = onClick),
+        contentAlignment = Alignment.Center,
+        content = content
+    )
 }
 
 @Composable
-private fun AvatarBubble(label: String, background: Color, modifier: Modifier = Modifier) {
+private fun AvatarBubble(
+    label: String,
+    background: Color,
+    modifier: Modifier = Modifier,
+    textColor: Color = Color.White,
+) {
     Box(
         modifier = modifier
             .clip(CircleShape)
-            .background(background),
+            .background(background)
+            .border(1.dp, Color.White.copy(alpha = 0.24f), CircleShape),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            color = Color.White,
-            fontSize = 13.sp,
+            color = textColor,
+            fontSize = if (label.length <= 2) 13.sp else 11.sp,
             fontWeight = FontWeight.Bold
         )
     }
@@ -1134,24 +1242,41 @@ private fun ComposerMediaRow(modifier: Modifier = Modifier) {
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        ComposerMediaTile(
-            accent = XBlue,
-            title = "添加图片"
-        ) {
+        ComposerMediaTile(accent = Color.White, title = "添加图片") {
             Icon(HugeIcons.Image03, contentDescription = null, tint = XBlue, modifier = Modifier.size(28.dp))
         }
         ComposerMediaTile(accent = Color(0xFFE6DBCC), title = "Dog Meme") {
-            Text("DOG", color = XSubText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = "Dog Meme",
+                color = XSubText,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
         ComposerMediaTile(accent = Color.White, title = "草稿卡片") {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box(modifier = Modifier.width(48.dp).height(6.dp).clip(CircleShape).background(Color(0xFFD8E0E5)))
-                Box(modifier = Modifier.width(72.dp).height(6.dp).clip(CircleShape).background(Color(0xFFE7EDF0)))
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.align(Alignment.TopStart)
+            ) {
+                Box(modifier = Modifier.size(14.dp).clip(CircleShape).background(Color(0xFFD8E0E5)))
+                Box(modifier = Modifier.width(50.dp).height(6.dp).clip(CircleShape).background(Color(0xFFDDE5E9)))
+                Box(modifier = Modifier.width(68.dp).height(6.dp).clip(CircleShape).background(Color(0xFFE7EDF0)))
                 Box(modifier = Modifier.width(58.dp).height(6.dp).clip(CircleShape).background(Color(0xFFE7EDF0)))
             }
         }
         ComposerMediaTile(accent = Color(0xFF1C2128), title = "代码") {
-            Text("R68645", color = XBlue, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Text("This code will let", color = Color(0xFF8B949E), fontSize = 6.sp)
+                Text("you recover...", color = Color(0xFF8B949E), fontSize = 6.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("R68645", color = XBlue, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -1184,7 +1309,6 @@ private fun ReplyPermissionRow(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, XDivider, RoundedCornerShape(0.dp))
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1205,23 +1329,36 @@ private fun ReplyPermissionRow(modifier: Modifier = Modifier) {
 @Composable
 private fun ComposerToolbar(progress: Float, ringColor: Color, modifier: Modifier = Modifier) {
     Column(modifier = modifier.background(Color.White)) {
+        XDividerLine()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                ToolbarIcon(HugeIcons.Image03)
-                ToolbarIcon(HugeIcons.Search01)
-                ToolbarIcon(HugeIcons.Message01)
-                ToolbarIcon(HugeIcons.Favourite)
+            Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
+                ToolbarIcon {
+                    Icon(HugeIcons.Image03, contentDescription = null, tint = XBlue, modifier = Modifier.size(18.dp))
+                }
+                ToolbarIcon {
+                    PollGlyph(color = XBlue, modifier = Modifier.size(18.dp))
+                }
+                ToolbarIcon {
+                    ComposerLinesGlyph(color = XBlue, modifier = Modifier.size(18.dp))
+                }
+                ToolbarIcon {
+                    PinGlyph(color = XBlue, modifier = Modifier.size(18.dp))
+                }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ProgressRing(progress = progress, color = ringColor)
                 Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color(0xFFCFD9DE)))
-                Surface(color = Color.White, shape = CircleShape, modifier = Modifier.border(1.dp, Color(0xFFCFD9DE), CircleShape)) {
+                Surface(
+                    color = Color.White,
+                    shape = CircleShape,
+                    modifier = Modifier.border(1.dp, Color(0xFFCFD9DE), CircleShape)
+                ) {
                     Box(modifier = Modifier.size(28.dp), contentAlignment = Alignment.Center) {
                         Icon(HugeIcons.Add01, contentDescription = null, tint = XBlue, modifier = Modifier.size(16.dp))
                     }
@@ -1232,15 +1369,148 @@ private fun ComposerToolbar(progress: Float, ringColor: Color, modifier: Modifie
 }
 
 @Composable
-private fun ToolbarIcon(icon: androidx.compose.ui.graphics.vector.ImageVector) {
+private fun ToolbarIcon(content: @Composable BoxScope.() -> Unit) {
     Box(
         modifier = Modifier
             .size(40.dp)
             .clip(CircleShape)
             .pressableScale(pressedScale = 0.94f, onClick = {}),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(icon, contentDescription = null, tint = XBlue, modifier = Modifier.size(18.dp))
+        contentAlignment = Alignment.Center,
+        content = content
+    )
+}
+
+@Composable
+private fun HomeGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val stroke = 2.dp.toPx()
+        drawLine(color, Offset(size.width * 0.18f, size.height * 0.48f), Offset(size.width * 0.5f, size.height * 0.18f), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawLine(color, Offset(size.width * 0.82f, size.height * 0.48f), Offset(size.width * 0.5f, size.height * 0.18f), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawLine(color, Offset(size.width * 0.24f, size.height * 0.48f), Offset(size.width * 0.24f, size.height * 0.82f), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawLine(color, Offset(size.width * 0.76f, size.height * 0.48f), Offset(size.width * 0.76f, size.height * 0.82f), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawLine(color, Offset(size.width * 0.24f, size.height * 0.82f), Offset(size.width * 0.76f, size.height * 0.82f), strokeWidth = stroke, cap = StrokeCap.Round)
+    }
+}
+
+@Composable
+private fun SlashGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        drawLine(
+            color = color,
+            start = Offset(size.width * 0.72f, size.height * 0.14f),
+            end = Offset(size.width * 0.28f, size.height * 0.86f),
+            strokeWidth = 2.6.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+@Composable
+private fun BellGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val stroke = 2.dp.toPx()
+        drawArc(
+            color = color,
+            startAngle = 205f,
+            sweepAngle = 130f,
+            useCenter = false,
+            topLeft = Offset(size.width * 0.2f, size.height * 0.2f),
+            size = Size(size.width * 0.6f, size.height * 0.55f),
+            style = Stroke(width = stroke, cap = StrokeCap.Round)
+        )
+        drawLine(color, Offset(size.width * 0.27f, size.height * 0.52f), Offset(size.width * 0.2f, size.height * 0.74f), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawLine(color, Offset(size.width * 0.73f, size.height * 0.52f), Offset(size.width * 0.8f, size.height * 0.74f), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawLine(color, Offset(size.width * 0.2f, size.height * 0.74f), Offset(size.width * 0.8f, size.height * 0.74f), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawCircle(color, radius = 1.6.dp.toPx(), center = Offset(size.width * 0.5f, size.height * 0.82f))
+    }
+}
+
+@Composable
+private fun MailGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val stroke = 2.dp.toPx()
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(size.width * 0.14f, size.height * 0.24f),
+            size = Size(size.width * 0.72f, size.height * 0.52f),
+            cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx()),
+            style = Stroke(width = stroke)
+        )
+        drawLine(color, Offset(size.width * 0.16f, size.height * 0.28f), Offset(size.width * 0.5f, size.height * 0.52f), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawLine(color, Offset(size.width * 0.84f, size.height * 0.28f), Offset(size.width * 0.5f, size.height * 0.52f), strokeWidth = stroke, cap = StrokeCap.Round)
+    }
+}
+
+@Composable
+private fun ViewsGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val barWidth = size.width * 0.14f
+        val gap = size.width * 0.07f
+        val left = size.width * 0.14f
+        val heights = listOf(0.44f, 0.7f, 0.56f, 0.84f)
+        heights.forEachIndexed { index, factor ->
+            val x = left + index * (barWidth + gap)
+            val top = size.height * (1f - factor)
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(x, top),
+                size = Size(barWidth, size.height * factor),
+                cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun PollGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val stroke = 2.dp.toPx()
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(size.width * 0.16f, size.height * 0.16f),
+            size = Size(size.width * 0.68f, size.height * 0.68f),
+            cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
+            style = Stroke(width = stroke)
+        )
+        drawRoundRect(color, Offset(size.width * 0.26f, size.height * 0.55f), Size(size.width * 0.1f, size.height * 0.14f), CornerRadius(2.dp.toPx(), 2.dp.toPx()))
+        drawRoundRect(color, Offset(size.width * 0.45f, size.height * 0.42f), Size(size.width * 0.1f, size.height * 0.27f), CornerRadius(2.dp.toPx(), 2.dp.toPx()))
+        drawRoundRect(color, Offset(size.width * 0.64f, size.height * 0.3f), Size(size.width * 0.1f, size.height * 0.39f), CornerRadius(2.dp.toPx(), 2.dp.toPx()))
+    }
+}
+
+@Composable
+private fun ComposerLinesGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val stroke = 2.dp.toPx()
+        listOf(0.24f, 0.5f, 0.76f).forEach { y ->
+            drawLine(
+                color = color,
+                start = Offset(size.width * 0.18f, size.height * y),
+                end = Offset(size.width * 0.82f, size.height * y),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round
+            )
+        }
+    }
+}
+
+@Composable
+private fun PinGlyph(color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val stroke = 2.dp.toPx()
+        drawCircle(
+            color = color,
+            radius = size.width * 0.18f,
+            center = Offset(size.width * 0.5f, size.height * 0.34f),
+            style = Stroke(width = stroke)
+        )
+        drawLine(
+            color = color,
+            start = Offset(size.width * 0.5f, size.height * 0.52f),
+            end = Offset(size.width * 0.5f, size.height * 0.84f),
+            strokeWidth = stroke,
+            cap = StrokeCap.Round
+        )
     }
 }
 
