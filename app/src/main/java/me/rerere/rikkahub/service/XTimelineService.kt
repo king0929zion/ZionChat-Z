@@ -19,7 +19,7 @@ import me.rerere.rikkahub.data.datastore.getBotAssistants
 import me.rerere.rikkahub.data.datastore.getCurrentAssistant
 import me.rerere.rikkahub.data.db.entity.XPostEntity
 import me.rerere.rikkahub.data.model.Assistant
-import me.rerere.rikkahub.data.model.isPersonalization
+import me.rerere.rikkahub.data.datastore.isPersonalization
 import me.rerere.rikkahub.data.repository.MemoryRepository
 import me.rerere.rikkahub.data.repository.XPostRepository
 import kotlin.math.absoluteValue
