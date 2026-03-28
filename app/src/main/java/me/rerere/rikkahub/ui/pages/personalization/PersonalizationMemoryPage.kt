@@ -24,6 +24,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,7 +56,6 @@ import me.rerere.rikkahub.data.repository.MemoryRepository
 import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
-import me.rerere.rikkahub.ui.components.ui.Switch as ZionSwitch
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
@@ -265,18 +266,6 @@ fun PersonalizationMemoryPage(vm: SettingVM = koinViewModel()) {
 }
 
 @Composable
-private fun PersonalizationSectionTitle(title: String) {
-    Text(
-        text = title.uppercase(),
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Medium,
-        fontFamily = SourceSans3,
-        color = ZionTextSecondary,
-        modifier = Modifier.padding(start = 12.dp, bottom = 8.dp)
-    )
-}
-
-@Composable
 private fun PersonalizationSwitchRow(
     title: String,
     checked: Boolean,
@@ -298,14 +287,18 @@ private fun PersonalizationSwitchRow(
             color = if (enabled) ZionTextPrimary else ZionTextSecondary,
             modifier = Modifier.weight(1f)
         )
-        ZionSwitch(
+        Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             enabled = enabled,
-            trackColor = Color(0xFF1C1C1E),
-            trackColorUnchecked = Color(0xFFD9D9DE),
-            thumbColor = Color.White,
-            thumbColorUnchecked = Color.White
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = Color(0xFF1C1C1E),
+                checkedBorderColor = Color(0xFF1C1C1E),
+                uncheckedThumbColor = Color.White,
+                uncheckedTrackColor = Color(0xFFD9D9DE),
+                uncheckedBorderColor = Color(0xFFD9D9DE)
+            )
         )
     }
 }

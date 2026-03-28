@@ -1,3 +1,9 @@
+## v0.0.36
+
+- 聊天主链路继续对齐 ZionChat：侧边栏移除主 `ChatGPT` 入口与 `Bots` 标题，`New Chat` 统一回到 `Personalization` 主对话，顶部 `ChatGPT` pill 改为专门唤起聊天模型选择器。
+- 工具面板收口成 ZionChat 结构：删除 `Chat Model`、`Preview`、`Prompt Injections`、`Compress History`，只保留附件快捷区与 `Web Search / Reasoning / MCP`，其中 `Reasoning` 改为单开关并映射到 `thinkingBudget = -1 / 0`。
+- 完整删除 `Prompt Injections / Lorebooks` 相关页面、selector、transformer、导出逻辑、数据字段与多语言文案；同时重做模型选择器与默认模型页的白底外层 + 灰色模型区层级，并补上 ZionChat 的 `Reasoning / Photo / File` 图标资源与原生黑色 `Memories` 开关。
+
 ## v0.0.35
 
 - `Personalization / Memories` 入口与主聊天入口改为直接使用 ZionChat 原版图标，去掉之前混用的旧图标。

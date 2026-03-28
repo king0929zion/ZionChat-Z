@@ -102,7 +102,6 @@ fun ChatList(
     conversation: Conversation,
     state: LazyListState,
     loading: Boolean,
-    previewMode: Boolean,
     settings: Settings,
     hazeState: HazeState,
     errors: List<ChatError> = emptyList(),
@@ -121,47 +120,34 @@ fun ChatList(
     onToolAnswer: ((toolCallId: String, answer: String) -> Unit)? = null,
     onToggleFavorite: ((MessageNode) -> Unit)? = null,
 ) {
-    AnimatedContent(
-        targetState = previewMode,
-        label = "ChatListMode",
-        transitionSpec = {
-            (fadeIn() + scaleIn(initialScale = 0.8f) togetherWith fadeOut() + scaleOut(targetScale = 0.8f))
-        }
-    ) { target ->
-        if (target) {
-            ChatListPreview(
-                innerPadding = innerPadding,
-                conversation = conversation,
-                settings = settings,
-                hazeState = hazeState,
-                onJumpToMessage = onJumpToMessage,
-                animatedVisibilityScope = this@AnimatedContent,
-            )
-        } else {
-            ChatListNormal(
-                innerPadding = innerPadding,
-                conversation = conversation,
-                state = state,
-                loading = loading,
-                settings = settings,
-                hazeState = hazeState,
-                errors = errors,
-                onDismissError = onDismissError,
-                onClearAllErrors = onClearAllErrors,
-                onRegenerate = onRegenerate,
-                onEdit = onEdit,
-                onForkMessage = onForkMessage,
-                onDelete = onDelete,
-                onUpdateMessage = onUpdateMessage,
-                onClickSuggestion = onClickSuggestion,
-                onTranslate = onTranslate,
-                onClearTranslation = onClearTranslation,
-                animatedVisibilityScope = this@AnimatedContent,
-                onToolApproval = onToolApproval,
-                onToolAnswer = onToolAnswer,
-                onToggleFavorite = onToggleFavorite,
-            )
-        }
+    AnimatedVisibility(
+        visible = true,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        ChatListNormal(
+            innerPadding = innerPadding,
+            conversation = conversation,
+            state = state,
+            loading = loading,
+            settings = settings,
+            hazeState = hazeState,
+            errors = errors,
+            onDismissError = onDismissError,
+            onClearAllErrors = onClearAllErrors,
+            onRegenerate = onRegenerate,
+            onEdit = onEdit,
+            onForkMessage = onForkMessage,
+            onDelete = onDelete,
+            onUpdateMessage = onUpdateMessage,
+            onClickSuggestion = onClickSuggestion,
+            onTranslate = onTranslate,
+            onClearTranslation = onClearTranslation,
+            animatedVisibilityScope = this,
+            onToolApproval = onToolApproval,
+            onToolAnswer = onToolAnswer,
+            onToggleFavorite = onToggleFavorite,
+        )
     }
 }
 

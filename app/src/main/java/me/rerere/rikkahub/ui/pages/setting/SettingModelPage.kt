@@ -252,7 +252,7 @@ private fun DefaultModelSection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 8.dp, bottom = 4.dp),
+            .padding(start = 8.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -286,7 +286,7 @@ private fun DefaultModelSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(containerColor = ZionSectionItem)
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
             modifier = Modifier
@@ -336,7 +336,7 @@ private fun DefaultModelSelectorSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         dragHandle = null,
-        containerColor = ZionSectionItem,
+        containerColor = Color.White,
     ) {
         Column(
             modifier = Modifier
@@ -372,13 +372,13 @@ private fun DefaultModelSelectorSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (!required) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                        colors = CardDefaults.cardColors(containerColor = ZionSectionItem)
                     ) {
                         Row(
                             modifier = Modifier
@@ -424,7 +424,7 @@ private fun DefaultModelSelectorSheet(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                        colors = CardDefaults.cardColors(containerColor = ZionSectionItem)
                     ) {
                         availableModels.forEachIndexed { index, model ->
                             val selected = model.id == selectedModelId

@@ -35,7 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,6 +80,10 @@ fun ChatDrawerContent(
     val botAssistants = settings.getBotAssistants()
 
     var showMoveToAssistantSheet by remember { mutableStateOf(false) }
+    val openPersonalizationChat = {
+        vm.updateSettings(settings.copy(assistantId = personalizationAssistant.id))
+        navigateToChatPage(navController)
+    }
     var conversationToMove by remember { mutableStateOf<Conversation?>(null) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -96,7 +100,7 @@ fun ChatDrawerContent(
         ) {
             SidebarSearchHeader(
                 onSearchClick = { navController.navigate(Screen.MessageSearch) },
-                onNewChatClick = { navigateToChatPage(navController) }
+                onNewChatClick = openPersonalizationChat
             )
 
             Column(
@@ -104,37 +108,41 @@ fun ChatDrawerContent(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 SidebarMenuEntry(
-                    icon = ZionAppIcons.NewChat,
                     label = stringResource(R.string.chat_page_new_chat),
-                    onClick = { navigateToChatPage(navController) }
-                )
+                    onClick = openPersonalizationChat,
+                ) {
+                    Icon(
+                        imageVector = ZionAppIcons.NewChat,
+                        contentDescription = null,
+                        tint = ZionTextPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
                 SidebarMenuEntry(
-                    icon = ZionAppIcons.Personalization,
-                    label = stringResource(R.string.chat_drawer_main_chat),
-                    active = currentAssistant.isPersonalization(),
-                    iconTint = Color.Unspecified,
-                    onClick = {
-                        vm.updateSettings(settings.copy(assistantId = personalizationAssistant.id))
-                        navigateToChatPage(navController)
-                    }
-                )
-                SidebarMenuEntry(
-                    icon = ZionAppIcons.Image,
                     label = "Images",
-                    onClick = { navController.navigate(Screen.ImageGen) }
-                )
+                    onClick = { navController.navigate(Screen.ImageGen) },
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_photo_picker),
+                        contentDescription = null,
+                        tint = ZionTextPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
                 SidebarMenuEntry(
-                    icon = ZionAppIcons.Stats,
                     label = stringResource(R.string.stats_page_title),
-                    onClick = { navController.navigate(Screen.Stats) }
-                )
+                    onClick = { navController.navigate(Screen.Stats) },
+                ) {
+                    Icon(
+                        imageVector = ZionAppIcons.Stats,
+                        contentDescription = null,
+                        tint = ZionTextPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             if (botAssistants.isNotEmpty()) {
-                SidebarSectionTitle(
-                    title = stringResource(R.string.chat_drawer_bots),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
                 Column(
                     modifier = Modifier.padding(horizontal = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -303,27 +311,11 @@ private fun SidebarSearchHeader(
 }
 
 @Composable
-private fun SidebarSectionTitle(
-    title: String,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = title.uppercase(),
-        modifier = modifier,
-        fontFamily = SourceSans3,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Medium,
-        color = ZionTextSecondary
-    )
-}
-
-@Composable
 private fun SidebarMenuEntry(
-    icon: ImageVector,
     label: String,
     onClick: () -> Unit,
     active: Boolean = false,
-    iconTint: Color = ZionTextPrimary,
+    icon: @Composable () -> Unit,
 ) {
     androidx.compose.foundation.layout.Row(
         modifier = Modifier
@@ -344,12 +336,7 @@ private fun SidebarMenuEntry(
             modifier = Modifier.size(28.dp),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconTint,
-                modifier = Modifier.size(24.dp)
-            )
+            icon()
         }
         Text(
             text = label,

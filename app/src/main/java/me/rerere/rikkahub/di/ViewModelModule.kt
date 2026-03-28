@@ -11,7 +11,6 @@ import me.rerere.rikkahub.ui.pages.search.SearchVM
 import me.rerere.rikkahub.ui.pages.history.HistoryVM
 import me.rerere.rikkahub.ui.pages.stats.StatsVM
 import me.rerere.rikkahub.ui.pages.imggen.ImgGenVM
-import me.rerere.rikkahub.ui.pages.prompts.PromptVM
 import me.rerere.rikkahub.ui.pages.setting.SettingVM
 import me.rerere.rikkahub.ui.pages.translator.TranslatorVM
 import org.koin.core.module.dsl.viewModel
@@ -48,7 +47,6 @@ val viewModelModule = module {
     viewModelOf(::BackupVM)
     viewModelOf(::ImgGenVM)
     viewModelOf(::DeveloperVM)
-    viewModelOf(::PromptVM)
     viewModelOf(::FavoriteVM)
     viewModelOf(::SearchVM)
     viewModelOf(::StatsVM)

@@ -3,7 +3,6 @@ package me.rerere.rikkahub.ui.pages.chat
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,40 +10,37 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowDpSize
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -56,15 +52,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import me.rerere.ai.provider.Model
 import me.rerere.ai.ui.UIMessagePart
-import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.Settings
-import me.rerere.rikkahub.data.datastore.findProvider
 import me.rerere.rikkahub.data.datastore.getCurrentAssistant
-import me.rerere.rikkahub.data.datastore.getCurrentChatModel
+import me.rerere.rikkahub.data.datastore.getPersonalizationAssistant
 import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.service.ChatError
 import me.rerere.rikkahub.ui.components.ai.ChatInput
+import me.rerere.rikkahub.ui.components.ai.ChatModelPickerSheet
 import me.rerere.rikkahub.ui.components.ui.HeaderTranslucentBackdrop
 import me.rerere.rikkahub.ui.components.ui.headerActionButtonShadow
 import me.rerere.rikkahub.ui.components.ui.pressableScale
@@ -72,15 +67,12 @@ import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.context.Navigator
 import me.rerere.rikkahub.ui.hooks.ChatInputState
-import me.rerere.rikkahub.ui.hooks.EditStateContent
-import me.rerere.rikkahub.ui.hooks.useEditState
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.ZionChatBackground
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
-import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.base64Decode
 import me.rerere.rikkahub.utils.navigateToChatPage
 import org.koin.androidx.compose.koinViewModel
@@ -91,9 +83,7 @@ import kotlin.uuid.Uuid
 @Composable
 fun ChatPage(id: Uuid, text: String?, files: List<Uri>, nodeId: Uuid? = null) {
     val vm: ChatVM = koinViewModel(
-        parameters = {
-            parametersOf(id.toString())
-        }
+        parameters = { parametersOf(id.toString()) }
     )
     val filesManager: FilesManager = koinInject()
     val navController = LocalNavController.current
@@ -109,14 +99,10 @@ fun ChatPage(id: Uuid, text: String?, files: List<Uri>, nodeId: Uuid? = null) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val softwareKeyboardController = LocalSoftwareKeyboardController.current
 
-    // Handle back press when drawer is open
     BackHandler(enabled = drawerState.isOpen) {
-        scope.launch {
-            drawerState.close()
-        }
+        scope.launch { drawerState.close() }
     }
 
-    // Hide keyboard when drawer is open
     LaunchedEffect(drawerState.isOpen) {
         if (drawerState.isOpen) {
             softwareKeyboardController?.hide()
@@ -129,7 +115,6 @@ fun ChatPage(id: Uuid, text: String?, files: List<Uri>, nodeId: Uuid? = null) {
 
     val inputState = vm.inputState
 
-    // 初始化输入状态（处理传入的 files 和 text 参数）
     LaunchedEffect(files, text) {
         if (files.isNotEmpty()) {
             val localFiles = filesManager.createChatFilesByContents(files)
@@ -138,18 +123,16 @@ fun ChatPage(id: Uuid, text: String?, files: List<Uri>, nodeId: Uuid? = null) {
             }
             val parts = buildList {
                 localFiles.forEachIndexed { index, file ->
-                    val type = contentTypes.getOrNull(index)
-                    if (type?.startsWith("image/") == true) {
-                        add(UIMessagePart.Image(url = file.toString()))
-                    } else if (type?.startsWith("video/") == true) {
-                        add(UIMessagePart.Video(url = file.toString()))
-                    } else if (type?.startsWith("audio/") == true) {
-                        add(UIMessagePart.Audio(url = file.toString()))
+                    when {
+                        contentTypes.getOrNull(index)?.startsWith("image/") == true -> add(UIMessagePart.Image(url = file.toString()))
+                        contentTypes.getOrNull(index)?.startsWith("video/") == true -> add(UIMessagePart.Video(url = file.toString()))
+                        contentTypes.getOrNull(index)?.startsWith("audio/") == true -> add(UIMessagePart.Audio(url = file.toString()))
                     }
                 }
             }
             inputState.messageContent = parts
         }
+
         text?.base64Decode()?.let { decodedText ->
             if (decodedText.isNotEmpty()) {
                 inputState.setMessageText(decodedText)
@@ -158,7 +141,7 @@ fun ChatPage(id: Uuid, text: String?, files: List<Uri>, nodeId: Uuid? = null) {
     }
 
     val chatListState = rememberLazyListState()
-    LaunchedEffect(vm) {
+    LaunchedEffect(vm, nodeId, chatListState.layoutInfo.totalItemsCount) {
         if (nodeId == null && !vm.chatListInitialized && chatListState.layoutInfo.totalItemsCount > 0) {
             chatListState.scrollToItem(chatListState.layoutInfo.totalItemsCount)
             vm.chatListInitialized = true
@@ -175,69 +158,62 @@ fun ChatPage(id: Uuid, text: String?, files: List<Uri>, nodeId: Uuid? = null) {
         }
     }
 
-    when {
-        isBigScreen -> {
-            PermanentNavigationDrawer(
-                drawerContent = {
-                    ChatDrawerContent(
-                        navController = navController,
-                        current = conversation,
-                        vm = vm,
-                        settings = setting
-                    )
-                }
-            ) {
-                ChatPageContent(
-                    inputState = inputState,
-                    loadingJob = loadingJob,
-                    setting = setting,
-                    conversation = conversation,
-                    drawerState = drawerState,
+    if (isBigScreen) {
+        PermanentNavigationDrawer(
+            drawerContent = {
+                ChatDrawerContent(
                     navController = navController,
+                    current = conversation,
                     vm = vm,
-                    chatListState = chatListState,
-                    enableWebSearch = enableWebSearch,
-                    currentChatModel = currentChatModel,
-                    bigScreen = true,
-                    errors = errors,
-                    onDismissError = { vm.dismissError(it) },
-                    onClearAllErrors = { vm.clearAllErrors() },
+                    settings = setting
                 )
             }
-        }
-
-        else -> {
-            ModalNavigationDrawer(
+        ) {
+            ChatPageContent(
+                inputState = inputState,
+                loadingJob = loadingJob,
+                setting = setting,
+                conversation = conversation,
                 drawerState = drawerState,
-                drawerContent = {
-                    ChatDrawerContent(
-                        navController = navController,
-                        current = conversation,
-                        vm = vm,
-                        settings = setting
-                    )
-                }
-            ) {
-                ChatPageContent(
-                    inputState = inputState,
-                    loadingJob = loadingJob,
-                    setting = setting,
-                    conversation = conversation,
-                    drawerState = drawerState,
+                navController = navController,
+                vm = vm,
+                chatListState = chatListState,
+                enableWebSearch = enableWebSearch,
+                currentChatModel = currentChatModel,
+                bigScreen = true,
+                errors = errors,
+                onDismissError = { vm.dismissError(it) },
+                onClearAllErrors = { vm.clearAllErrors() },
+            )
+        }
+    } else {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ChatDrawerContent(
                     navController = navController,
+                    current = conversation,
                     vm = vm,
-                    chatListState = chatListState,
-                    enableWebSearch = enableWebSearch,
-                    currentChatModel = currentChatModel,
-                    bigScreen = false,
-                    errors = errors,
-                    onDismissError = { vm.dismissError(it) },
-                    onClearAllErrors = { vm.clearAllErrors() },
+                    settings = setting
                 )
             }
-            BackHandler(drawerState.isOpen) {
-                scope.launch { drawerState.close() }
-            }
+        ) {
+            ChatPageContent(
+                inputState = inputState,
+                loadingJob = loadingJob,
+                setting = setting,
+                conversation = conversation,
+                drawerState = drawerState,
+                navController = navController,
+                vm = vm,
+                chatListState = chatListState,
+                enableWebSearch = enableWebSearch,
+                currentChatModel = currentChatModel,
+                bigScreen = false,
+                errors = errors,
+                onDismissError = { vm.dismissError(it) },
+                onClearAllErrors = { vm.clearAllErrors() },
+            )
         }
     }
 }
@@ -261,8 +237,14 @@ private fun ChatPageContent(
 ) {
     val scope = rememberCoroutineScope()
     val toaster = LocalToaster.current
-    var previewMode by rememberSaveable { mutableStateOf(false) }
+    var showModelPicker by remember { mutableStateOf(false) }
     val hazeState = rememberHazeState()
+    val personalizationAssistant = remember(setting.assistants) { setting.getPersonalizationAssistant() }
+
+    fun openMainChat() {
+        vm.updateSettings(setting.copy(assistantId = personalizationAssistant.id))
+        navigateToChatPage(navController)
+    }
 
     TTSAutoPlay(vm = vm, setting = setting, conversation = conversation)
 
@@ -277,9 +259,8 @@ private fun ChatPageContent(
                 TopBar(
                     bigScreen = bigScreen,
                     drawerState = drawerState,
-                    onNewChat = {
-                        navigateToChatPage(navController)
-                    }
+                    onOpenModelPicker = { showModelPicker = true },
+                    onNewChat = { openMainChat() }
                 )
             },
             bottomBar = {
@@ -290,16 +271,10 @@ private fun ChatPageContent(
                     conversation = conversation,
                     mcpManager = vm.mcpManager,
                     hazeState = hazeState,
-                    onCancelClick = {
-                        loadingJob?.cancel()
-                    },
+                    onCancelClick = { loadingJob?.cancel() },
                     enableSearch = enableWebSearch,
                     onToggleSearch = { enabled ->
                         vm.updateSettings(setting.copy(enableWebSearch = enabled))
-                    },
-                    previewMode = previewMode,
-                    onTogglePreviewMode = {
-                        previewMode = !previewMode
                     },
                     onSendClick = {
                         if (currentChatModel == null) {
@@ -333,31 +308,17 @@ private fun ChatPageContent(
                         }
                         inputState.clearInput()
                     },
-                    onUpdateChatModel = {
-                        vm.setChatModel(assistant = setting.getCurrentAssistant(), model = it)
-                    },
-                    onUpdateAssistant = {
+                    onUpdateAssistant = { updatedAssistant ->
                         vm.updateSettings(
                             setting.copy(
                                 assistants = setting.assistants.map { assistant ->
-                                    if (assistant.id == it.id) {
-                                        it
-                                    } else {
-                                        assistant
-                                    }
+                                    if (assistant.id == updatedAssistant.id) updatedAssistant else assistant
                                 }
                             )
                         )
                     },
                     onUpdateSearchService = { index ->
-                        vm.updateSettings(
-                            setting.copy(
-                                searchServiceSelected = index
-                            )
-                        )
-                    },
-                    onCompressContext = { additionalPrompt, targetTokens, keepRecentMessages ->
-                        vm.handleCompressContext(additionalPrompt, targetTokens, keepRecentMessages)
+                        vm.updateSettings(setting.copy(searchServiceSelected = index))
                     },
                 )
             },
@@ -368,15 +329,12 @@ private fun ChatPageContent(
                 conversation = conversation,
                 state = chatListState,
                 loading = loadingJob != null,
-                previewMode = previewMode,
                 settings = setting,
                 hazeState = hazeState,
                 errors = errors,
                 onDismissError = onDismissError,
                 onClearAllErrors = onClearAllErrors,
-                onRegenerate = {
-                    vm.regenerateAtMessage(it)
-                },
+                onRegenerate = { vm.regenerateAtMessage(it) },
                 onEdit = {
                     inputState.editingMessage = it.id
                     inputState.setContents(it.parts)
@@ -398,27 +356,19 @@ private fun ChatPageContent(
                     vm.updateConversation(
                         conversation.copy(
                             messageNodes = conversation.messageNodes.map { node ->
-                                if (node.id == newNode.id) {
-                                    newNode
-                                } else {
-                                    node
-                                }
+                                if (node.id == newNode.id) newNode else node
                             }
-                        ))
+                        )
+                    )
                     vm.saveConversationAsync()
                 },
                 onClickSuggestion = { suggestion ->
                     inputState.editingMessage = null
                     inputState.setMessageText(suggestion)
                 },
-                onTranslate = { message, locale ->
-                    vm.translateMessage(message, locale)
-                },
-                onClearTranslation = { message ->
-                    vm.clearTranslationField(message.id)
-                },
+                onTranslate = { message, locale -> vm.translateMessage(message, locale) },
+                onClearTranslation = { message -> vm.clearTranslationField(message.id) },
                 onJumpToMessage = { index ->
-                    previewMode = false
                     scope.launch {
                         chatListState.animateScrollToItem(index)
                     }
@@ -435,12 +385,25 @@ private fun ChatPageContent(
             )
         }
     }
+
+    if (showModelPicker) {
+        ChatModelPickerSheet(
+            selectedModelId = setting.getCurrentAssistant().chatModelId ?: setting.chatModelId,
+            providers = setting.providers,
+            onSelect = { model ->
+                vm.setChatModel(assistant = setting.getCurrentAssistant(), model = model)
+                showModelPicker = false
+            },
+            onDismiss = { showModelPicker = false }
+        )
+    }
 }
 
 @Composable
 private fun TopBar(
     drawerState: DrawerState,
     bigScreen: Boolean,
+    onOpenModelPicker: () -> Unit,
     onNewChat: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -477,12 +440,7 @@ private fun TopBar(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = ZionAppIcons.HamburgerMenu,
-                            contentDescription = "Messages",
-                            tint = ZionTextPrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        DrawerToggleIcon()
                     }
                 } else {
                     Box(modifier = Modifier.size(42.dp))
@@ -494,7 +452,7 @@ private fun TopBar(
                         .clip(RoundedCornerShape(21.dp))
                         .pressableScale(
                             pressedScale = 0.97f,
-                            onClick = {}
+                            onClick = onOpenModelPicker
                         ),
                     shape = RoundedCornerShape(21.dp),
                     color = ZionSurface,
@@ -532,5 +490,26 @@ private fun TopBar(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DrawerToggleIcon() {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .width(20.dp)
+                .size(width = 20.dp, height = 2.dp)
+                .background(ZionTextPrimary, RoundedCornerShape(1.dp))
+        )
+        Box(
+            modifier = Modifier
+                .width(12.dp)
+                .size(width = 12.dp, height = 2.dp)
+                .background(ZionTextPrimary, RoundedCornerShape(1.dp))
+        )
     }
 }

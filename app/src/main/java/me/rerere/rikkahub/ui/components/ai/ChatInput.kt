@@ -110,13 +110,10 @@ import com.yalantis.ucrop.UCropActivity
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.HazeMaterials
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import me.rerere.ai.core.ReasoningLevel
 import me.rerere.ai.provider.BuiltInTools
 import me.rerere.ai.provider.Model
 import me.rerere.ai.provider.ModelAbility
-import me.rerere.ai.provider.ModelType
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.ai.registry.ModelRegistry
 import me.rerere.ai.ui.UIMessagePart
@@ -128,7 +125,6 @@ import me.rerere.hugeicons.stroke.MusicNote03
 import me.rerere.hugeicons.stroke.Package01
 import me.rerere.hugeicons.stroke.Video01
 import me.rerere.rikkahub.R
-import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.ai.mcp.McpManager
 import me.rerere.rikkahub.data.ai.mcp.McpStatus
 import me.rerere.rikkahub.data.datastore.Settings
@@ -140,14 +136,12 @@ import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
-import me.rerere.rikkahub.ui.components.ui.InjectionSelector
 import me.rerere.rikkahub.ui.components.ui.KeepScreenOn
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionCamera
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionManager
 import me.rerere.rikkahub.ui.components.ui.permission.PermissionState
 import me.rerere.rikkahub.ui.components.ui.permission.rememberPermissionState
 import me.rerere.rikkahub.ui.components.ui.pressableScale
-import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.hooks.ChatInputState
@@ -173,9 +167,7 @@ enum class ExpandState {
 
 private enum class ToolMenuPage {
     Tools,
-    Model,
     Search,
-    Reasoning,
     Mcp,
 }
 
@@ -189,13 +181,9 @@ fun ChatInput(
     hazeState: HazeState,
     enableSearch: Boolean,
     onToggleSearch: (Boolean) -> Unit,
-    previewMode: Boolean,
-    onTogglePreviewMode: () -> Unit,
     modifier: Modifier = Modifier,
-    onUpdateChatModel: (Model) -> Unit,
     onUpdateAssistant: (Assistant) -> Unit,
     onUpdateSearchService: (Int) -> Unit,
-    onCompressContext: (additionalPrompt: String, targetTokens: Int, keepRecentMessages: Int) -> Job,
     onCancelClick: () -> Unit,
     onSendClick: () -> Unit,
     onLongSendClick: () -> Unit,
@@ -221,14 +209,10 @@ fun ChatInput(
 
     var expand by remember { mutableStateOf(ExpandState.Collapsed) }
     var toolMenuPage by remember { mutableStateOf(ToolMenuPage.Tools) }
-    var showInjectionSheet by remember { mutableStateOf(false) }
-    var showCompressDialog by remember { mutableStateOf(false) }
     var toolMenuDismissSignal by remember { mutableStateOf(0) }
     fun dismissExpand() {
         expand = ExpandState.Collapsed
         toolMenuPage = ToolMenuPage.Tools
-        showInjectionSheet = false
-        showCompressDialog = false
     }
 
     fun dismissToolMenu() {
@@ -249,8 +233,8 @@ fun ChatInput(
 
     // Collapse when ime is visible
     val imeVisile = WindowInsets.isImeVisible
-    LaunchedEffect(imeVisile, showInjectionSheet, showCompressDialog) {
-        if (imeVisile && !showInjectionSheet && !showCompressDialog) {
+    LaunchedEffect(imeVisile) {
+        if (imeVisile) {
             if (expand == ExpandState.Tools) {
                 dismissToolMenu()
             } else {
@@ -360,16 +344,13 @@ fun ChatInput(
             ) {
                 ToolControlPanel(
                     state = state,
-                    conversation = conversation,
                     assistant = assistant,
                     settings = settings,
                     mcpManager = mcpManager,
                     cameraPermissionState = cameraPermissionState,
                     enableSearch = enableSearch,
-                    previewMode = previewMode,
                     toolMenuPage = toolMenuPage,
                     onToolMenuPageChange = { toolMenuPage = it },
-                    onTogglePreviewMode = onTogglePreviewMode,
                     onToggleSearch = { enabled ->
                         onToggleSearch(enabled)
                         toaster.show(
@@ -379,13 +360,7 @@ fun ChatInput(
                         )
                     },
                     onUpdateSearchService = onUpdateSearchService,
-                    onUpdateChatModel = onUpdateChatModel,
                     onUpdateAssistant = onUpdateAssistant,
-                    onCompressContext = onCompressContext,
-                    showInjectionSheet = showInjectionSheet,
-                    onShowInjectionSheetChange = { showInjectionSheet = it },
-                    showCompressDialog = showCompressDialog,
-                    onShowCompressDialogChange = { showCompressDialog = it },
                     onDismiss = { dismissExpand() },
                 )
             }
@@ -494,25 +469,16 @@ private fun ToolMenuBottomSheet(
 @Composable
 private fun ToolControlPanel(
     state: ChatInputState,
-    conversation: Conversation,
     assistant: Assistant,
     settings: Settings,
     mcpManager: McpManager,
     cameraPermissionState: PermissionState,
     enableSearch: Boolean,
-    previewMode: Boolean,
     toolMenuPage: ToolMenuPage,
     onToolMenuPageChange: (ToolMenuPage) -> Unit,
-    onTogglePreviewMode: () -> Unit,
     onToggleSearch: (Boolean) -> Unit,
     onUpdateSearchService: (Int) -> Unit,
-    onUpdateChatModel: (Model) -> Unit,
     onUpdateAssistant: (Assistant) -> Unit,
-    onCompressContext: (additionalPrompt: String, targetTokens: Int, keepRecentMessages: Int) -> Job,
-    showInjectionSheet: Boolean,
-    onShowInjectionSheetChange: (Boolean) -> Unit,
-    showCompressDialog: Boolean,
-    onShowCompressDialogChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val currentModel = settings.findModelById(assistant.chatModelId ?: settings.chatModelId)
@@ -521,34 +487,16 @@ private fun ToolControlPanel(
         when (toolMenuPage) {
             ToolMenuPage.Tools -> ToolMenuMainPage(
                 state = state,
-                conversation = conversation,
                 assistant = assistant,
                 settings = settings,
                 model = currentModel,
                 cameraPermissionState = cameraPermissionState,
                 enableSearch = enableSearch,
-                previewMode = previewMode,
                 onToolMenuPageChange = onToolMenuPageChange,
-                onTogglePreviewMode = onTogglePreviewMode,
-                onShowInjectionSheetChange = onShowInjectionSheetChange,
-                onShowCompressDialogChange = onShowCompressDialogChange,
+                onToggleSearch = onToggleSearch,
+                onUpdateAssistant = onUpdateAssistant,
                 onDismiss = onDismiss,
             )
-
-            ToolMenuPage.Model -> {
-                ToolMenuSubPageHeader(
-                    title = stringResource(R.string.setting_model_page_chat_model),
-                    onBack = { onToolMenuPageChange(ToolMenuPage.Tools) }
-                )
-                ToolMenuModelPage(
-                    selectedModel = currentModel,
-                    settings = settings,
-                    onSelectModel = {
-                        onUpdateChatModel(it)
-                        onToolMenuPageChange(ToolMenuPage.Tools)
-                    }
-                )
-            }
 
             ToolMenuPage.Search -> {
                 ToolMenuSubPageHeader(
@@ -561,20 +509,6 @@ private fun ToolControlPanel(
                     enableSearch = enableSearch,
                     onToggleSearch = onToggleSearch,
                     onUpdateSearchService = onUpdateSearchService
-                )
-            }
-
-            ToolMenuPage.Reasoning -> {
-                ToolMenuSubPageHeader(
-                    title = stringResource(R.string.setting_provider_page_reasoning),
-                    onBack = { onToolMenuPageChange(ToolMenuPage.Tools) }
-                )
-                ToolMenuReasoningPage(
-                    assistant = assistant,
-                    onUpdateAssistant = {
-                        onUpdateAssistant(it)
-                        onToolMenuPageChange(ToolMenuPage.Tools)
-                    }
                 )
             }
 
@@ -592,60 +526,27 @@ private fun ToolControlPanel(
             }
         }
     }
-
-    if (showInjectionSheet) {
-        InjectionQuickConfigSheet(
-            assistant = assistant,
-            settings = settings,
-            onUpdateAssistant = onUpdateAssistant,
-            onDismiss = { onShowInjectionSheetChange(false) }
-        )
-    }
-
-    if (showCompressDialog) {
-        CompressContextDialog(
-            onDismiss = {
-                onShowCompressDialogChange(false)
-                onDismiss()
-            },
-            onConfirm = { additionalPrompt, targetTokens, keepRecentMessages ->
-                onCompressContext(additionalPrompt, targetTokens, keepRecentMessages)
-            }
-        )
-    }
 }
 
 @Composable
 private fun ToolMenuMainPage(
     state: ChatInputState,
-    conversation: Conversation,
     assistant: Assistant,
     settings: Settings,
     model: Model?,
     cameraPermissionState: PermissionState,
     enableSearch: Boolean,
-    previewMode: Boolean,
     onToolMenuPageChange: (ToolMenuPage) -> Unit,
-    onTogglePreviewMode: () -> Unit,
-    onShowInjectionSheetChange: (Boolean) -> Unit,
-    onShowCompressDialogChange: (Boolean) -> Unit,
+    onToggleSearch: (Boolean) -> Unit,
+    onUpdateAssistant: (Assistant) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val currentSearchService = settings.searchServices.getOrNull(settings.searchServiceSelected)
     val currentSearchLabel = currentSearchService?.let {
         SearchServiceOptions.TYPES[it::class] ?: "Search"
     } ?: stringResource(R.string.setting_provider_page_disabled)
-    val reasoningLevel = ReasoningLevel.fromBudgetTokens(assistant.thinkingBudget ?: 0)
-    val reasoningLabel = when (reasoningLevel) {
-        ReasoningLevel.OFF -> stringResource(R.string.reasoning_off)
-        ReasoningLevel.AUTO -> stringResource(R.string.reasoning_auto)
-        ReasoningLevel.LOW -> stringResource(R.string.reasoning_light)
-        ReasoningLevel.MEDIUM -> stringResource(R.string.reasoning_medium)
-        ReasoningLevel.HIGH -> stringResource(R.string.reasoning_heavy)
-    }
     val provider = model?.findProvider(providers = settings.providers)
-    val hasInjectionOptions = settings.modeInjections.isNotEmpty() || settings.lorebooks.isNotEmpty()
-    val activeInjectionCount = assistant.modeInjectionIds.size + assistant.lorebookIds.size
+    val reasoningEnabled = assistant.thinkingBudget != 0
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
@@ -693,20 +594,6 @@ private fun ToolMenuMainPage(
             ToolMenuListItem(
                 icon = {
                     Icon(
-                        imageVector = ZionAppIcons.ChatGPTLogo,
-                        contentDescription = null,
-                        tint = ZionTextPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                },
-                title = stringResource(R.string.setting_model_page_chat_model),
-                subtitle = model?.displayName ?: stringResource(R.string.not_set),
-                onClick = { onToolMenuPageChange(ToolMenuPage.Model) }
-            )
-
-            ToolMenuListItem(
-                icon = {
-                    Icon(
                         imageVector = ZionAppIcons.Globe,
                         contentDescription = null,
                         tint = ZionTextPrimary,
@@ -728,15 +615,22 @@ private fun ToolMenuMainPage(
                 ToolMenuListItem(
                     icon = {
                         Icon(
-                            imageVector = ZionAppIcons.Think,
+                            painter = painterResource(R.drawable.ic_reasoning_tool),
                             contentDescription = null,
                             tint = ZionTextPrimary,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     },
                     title = stringResource(R.string.setting_provider_page_reasoning),
-                    subtitle = reasoningLabel,
-                    onClick = { onToolMenuPageChange(ToolMenuPage.Reasoning) }
+                    subtitle = stringResource(
+                        if (reasoningEnabled) R.string.setting_provider_page_enabled else R.string.setting_provider_page_disabled
+                    ),
+                    showChevron = false,
+                    onClick = {
+                        onUpdateAssistant(
+                            assistant.copy(thinkingBudget = if (reasoningEnabled) 0 else -1)
+                        )
+                    }
                 )
             }
 
@@ -756,55 +650,6 @@ private fun ToolMenuMainPage(
                 )
             }
 
-            ToolMenuListItem(
-                icon = {
-                    Icon(
-                        imageVector = ZionAppIcons.Image,
-                        contentDescription = null,
-                        tint = ZionTextPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                },
-                title = stringResource(R.string.code_block_preview),
-                subtitle = stringResource(
-                    if (previewMode) R.string.setting_provider_page_enabled else R.string.setting_provider_page_disabled
-                ),
-                onClick = onTogglePreviewMode
-            )
-
-            if (hasInjectionOptions) {
-                ToolMenuListItem(
-                    icon = {
-                        Icon(
-                            imageVector = ZionAppIcons.Tool,
-                            contentDescription = null,
-                            tint = ZionTextPrimary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    },
-                    title = stringResource(R.string.chat_page_prompt_injections),
-                    subtitle = if (activeInjectionCount > 0) {
-                        activeInjectionCount.toString()
-                    } else {
-                        stringResource(R.string.not_set)
-                    },
-                    onClick = { onShowInjectionSheetChange(true) }
-                )
-            }
-
-            ToolMenuListItem(
-                icon = {
-                    Icon(
-                        imageVector = ZionAppIcons.History,
-                        contentDescription = null,
-                        tint = ZionTextPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                },
-                title = stringResource(R.string.chat_page_compress_context),
-                subtitle = stringResource(R.string.chat_page_message_count, conversation.messageNodes.size),
-                onClick = { onShowCompressDialogChange(true) }
-            )
         }
     }
 }
@@ -843,81 +688,6 @@ private fun ToolMenuSubPageHeader(
             fontFamily = SourceSans3,
             color = ZionTextPrimary
         )
-    }
-}
-
-@Composable
-private fun ToolMenuModelPage(
-    selectedModel: Model?,
-    settings: Settings,
-    onSelectModel: (Model) -> Unit,
-) {
-    val enabledProviders = remember(settings.providers) {
-        settings.providers.filter { provider ->
-            provider.enabled && provider.models.any { model -> model.type == ModelType.CHAT }
-        }
-    }
-
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        enabledProviders.forEach { provider ->
-            val availableModels = provider.models.filter { it.type == ModelType.CHAT }
-            if (availableModels.isEmpty()) return@forEach
-
-            Text(
-                text = provider.name.uppercase(),
-                fontSize = 13.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                fontFamily = SourceSans3,
-                color = ZionTextSecondary,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                availableModels.forEachIndexed { index, candidate ->
-                    val selected = selectedModel?.id == candidate.id
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelectModel(candidate) }
-                            .padding(horizontal = 16.dp, vertical = 15.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        AutoAIIcon(
-                            name = candidate.modelId,
-                            modifier = Modifier.size(20.dp),
-                            color = Color.Transparent
-                        )
-                        Text(
-                            text = candidate.displayName,
-                            fontSize = 16.sp,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                            fontFamily = SourceSans3,
-                            color = ZionTextPrimary,
-                            modifier = Modifier.weight(1f)
-                        )
-                        if (selected) {
-                            Icon(
-                                imageVector = ZionAppIcons.Check,
-                                contentDescription = null,
-                                tint = ZionTextPrimary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                    if (index != availableModels.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = ZionGrayLight.copy(alpha = 0.55f)
-                        )
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -1054,56 +824,6 @@ private fun ToolMenuSearchPage(
 }
 
 @Composable
-private fun ToolMenuReasoningPage(
-    assistant: Assistant,
-    onUpdateAssistant: (Assistant) -> Unit,
-) {
-    val currentLevel = ReasoningLevel.fromBudgetTokens(assistant.thinkingBudget ?: 0)
-    val options = listOf(
-        ReasoningLevel.OFF to stringResource(R.string.reasoning_off_desc),
-        ReasoningLevel.AUTO to stringResource(R.string.reasoning_auto_desc),
-        ReasoningLevel.LOW to stringResource(R.string.reasoning_light_desc),
-        ReasoningLevel.MEDIUM to stringResource(R.string.reasoning_medium_desc),
-        ReasoningLevel.HIGH to stringResource(R.string.reasoning_heavy_desc),
-    )
-
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        options.forEach { (level, description) ->
-            val selected = currentLevel == level
-            ToolMenuChoiceCard(
-                selected = selected,
-                title = when (level) {
-                    ReasoningLevel.OFF -> stringResource(R.string.reasoning_off)
-                    ReasoningLevel.AUTO -> stringResource(R.string.reasoning_auto)
-                    ReasoningLevel.LOW -> stringResource(R.string.reasoning_light)
-                    ReasoningLevel.MEDIUM -> stringResource(R.string.reasoning_medium)
-                    ReasoningLevel.HIGH -> stringResource(R.string.reasoning_heavy)
-                },
-                subtitle = description,
-                onClick = {
-                    val tokens = when (level) {
-                        ReasoningLevel.OFF -> 0
-                        ReasoningLevel.AUTO -> -1
-                        ReasoningLevel.LOW -> 1024
-                        ReasoningLevel.MEDIUM -> 16_000
-                        ReasoningLevel.HIGH -> 32_000
-                    }
-                    onUpdateAssistant(assistant.copy(thinkingBudget = tokens))
-                },
-                icon = {
-                    Icon(
-                        imageVector = ZionAppIcons.Think,
-                        contentDescription = null,
-                        tint = ZionTextPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            )
-        }
-    }
-}
-
-@Composable
 private fun ToolMenuMcpPage(
     assistant: Assistant,
     settings: Settings,
@@ -1154,6 +874,7 @@ private fun ToolMenuListItem(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
+    showChevron: Boolean = true,
 ) {
     Row(
         modifier = Modifier
@@ -1188,50 +909,12 @@ private fun ToolMenuListItem(
             )
         }
 
-        Icon(
-            imageVector = ZionAppIcons.ChevronRight,
-            contentDescription = null,
-            tint = ZionTextSecondary,
-            modifier = Modifier.size(16.dp)
-        )
-    }
-}
-
-@Composable
-private fun PreviewModeChip(
-    active: Boolean,
-    onClick: () -> Unit,
-) {
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = if (active) ZionAccentNeutral else ZionSectionItem,
-        modifier = Modifier
-            .shadow(
-                elevation = if (active) 4.dp else 0.dp,
-                shape = RoundedCornerShape(18.dp),
-                clip = false,
-                ambientColor = Color.Black.copy(alpha = 0.06f),
-                spotColor = Color.Black.copy(alpha = 0.06f)
-            )
-            .clickable(onClick = onClick)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        if (showChevron) {
             Icon(
-                imageVector = ZionAppIcons.Image,
+                imageVector = ZionAppIcons.ChevronRight,
                 contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = if (active) Color.White else ZionTextSecondary
-            )
-            Text(
-                text = stringResource(R.string.code_block_preview),
-                color = if (active) Color.White else ZionTextPrimary,
-                fontFamily = SourceSans3,
-                fontSize = 14.sp,
-                fontWeight = if (active) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Medium
+                tint = ZionTextSecondary,
+                modifier = Modifier.size(16.dp)
             )
         }
     }
@@ -1688,272 +1371,6 @@ private fun attachmentNameFromUrl(
 }
 
 @Composable
-private fun FilesPicker(
-    conversation: Conversation,
-    assistant: Assistant,
-    state: ChatInputState,
-    cameraPermissionState: PermissionState,
-    onCompressContext: (additionalPrompt: String, targetTokens: Int, keepRecentMessages: Int) -> Job,
-    onUpdateAssistant: (Assistant) -> Unit,
-    showInjectionSheet: Boolean,
-    onShowInjectionSheetChange: (Boolean) -> Unit,
-    showCompressDialog: Boolean,
-    onShowCompressDialogChange: (Boolean) -> Unit,
-    onDismiss: () -> Unit,
-    compact: Boolean = false,
-) {
-    val settings = LocalSettings.current
-    val provider = settings.getCurrentChatModel()?.findProvider(providers = settings.providers)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = if (compact) 0.dp else 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            TakePicButton(cameraPermissionState = cameraPermissionState) {
-                state.addImages(it)
-                onDismiss()
-            }
-
-            ImagePickButton {
-                state.addImages(it)
-                onDismiss()
-            }
-
-            if (provider != null && provider is ProviderSetting.Google) {
-                VideoPickButton {
-                    state.addVideos(it)
-                    onDismiss()
-                }
-
-                AudioPickButton {
-                    state.addAudios(it)
-                    onDismiss()
-                }
-            }
-
-            FilePickButton {
-                state.addFiles(it)
-                onDismiss()
-            }
-        }
-
-        HorizontalDivider(
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Prompt Injections
-        if (settings.modeInjections.isNotEmpty() || settings.lorebooks.isNotEmpty()) {
-            val activeCount = assistant.modeInjectionIds.size + assistant.lorebookIds.size
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .clickable {
-                        onShowInjectionSheetChange(true)
-                    },
-                shape = RoundedCornerShape(20.dp),
-                color = ZionGrayLighter
-            ) {
-                ListItem(
-                    leadingContent = {
-                        Icon(
-                            imageVector = HugeIcons.Book03,
-                            contentDescription = stringResource(R.string.chat_page_prompt_injections),
-                        )
-                    },
-                    headlineContent = {
-                        Text(stringResource(R.string.chat_page_prompt_injections))
-                    },
-                    trailingContent = {
-                        if (activeCount > 0) {
-                            Text(
-                                text = activeCount.toString(),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = ZionTextPrimary,
-                            )
-                        }
-                    },
-                    colors = ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                        headlineColor = ZionTextPrimary,
-                        leadingIconColor = ZionTextSecondary,
-                        trailingIconColor = ZionTextSecondary
-                    ),
-                    modifier = Modifier.heightIn(min = 60.dp)
-                )
-            }
-        }
-
-        // Compress History Button
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .clickable {
-                    onShowCompressDialogChange(true)
-                },
-            shape = RoundedCornerShape(20.dp),
-            color = ZionGrayLighter
-        ) {
-            ListItem(
-                leadingContent = {
-                    Icon(
-                        imageVector = HugeIcons.Package01,
-                        contentDescription = stringResource(R.string.chat_page_compress_context),
-                    )
-                },
-                headlineContent = {
-                    Text(stringResource(R.string.chat_page_compress_context))
-                },
-                trailingContent = {
-                    if (conversation.messageNodes.isNotEmpty()) {
-                        Text(
-                            text = stringResource(R.string.chat_page_message_count, conversation.messageNodes.size),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = ZionTextSecondary,
-                        )
-                    }
-                },
-                colors = ListItemDefaults.colors(
-                    containerColor = Color.Transparent,
-                    headlineColor = ZionTextPrimary,
-                    leadingIconColor = ZionTextSecondary,
-                    trailingIconColor = ZionTextSecondary
-                ),
-                modifier = Modifier.heightIn(min = 60.dp)
-            )
-        }
-    }
-
-    // Injection Bottom Sheet
-    if (showInjectionSheet) {
-        InjectionQuickConfigSheet(
-            assistant = assistant,
-            settings = settings,
-            onUpdateAssistant = onUpdateAssistant,
-            onDismiss = { onShowInjectionSheetChange(false) })
-    }
-
-    // Compress Context Dialog
-    if (showCompressDialog) {
-        CompressContextDialog(onDismiss = {
-            onShowCompressDialogChange(false)
-            onDismiss()
-        }, onConfirm = { additionalPrompt, targetTokens, keepRecentMessages ->
-            onCompressContext(additionalPrompt, targetTokens, keepRecentMessages)
-        })
-    }
-}
-
-@Composable
-private fun FullScreenEditor(
-    state: ChatInputState, onDone: () -> Unit
-) {
-    BasicAlertDialog(
-        onDismissRequest = {
-            onDone()
-        },
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false, decorFitsSystemWindows = false
-        ),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .imePadding(),
-            verticalArrangement = Arrangement.Bottom
-        ) {
-            Surface(
-                modifier = Modifier
-                    .widthIn(max = 800.dp)
-                    .fillMaxHeight(0.9f),
-                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxSize(),
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Row {
-                        TextButton(
-                            onClick = {
-                                onDone()
-                            }) {
-                            Text(stringResource(R.string.chat_page_save))
-                        }
-                    }
-                    TextField(
-                        state = state.textContent,
-                        modifier = Modifier
-                            .padding(bottom = 2.dp)
-                            .fillMaxSize(),
-                        shape = RoundedCornerShape(32.dp),
-                        placeholder = {
-                            Text(stringResource(R.string.chat_input_placeholder))
-                        },
-                        colors = TextFieldDefaults.colors().copy(
-                            unfocusedIndicatorColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                        ),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun useCropLauncher(
-    onCroppedImageReady: (Uri) -> Unit, onCleanup: (() -> Unit)? = null
-): Pair<ActivityResultLauncher<Intent>, (Uri) -> Unit> {
-    val context = LocalContext.current
-    var cropOutputUri by remember { mutableStateOf<Uri?>(null) }
-
-    val cropActivityLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            cropOutputUri?.let { croppedUri ->
-                onCroppedImageReady(croppedUri)
-            }
-        }
-        // Clean up crop output file
-        cropOutputUri?.toFile()?.delete()
-        cropOutputUri = null
-        onCleanup?.invoke()
-    }
-
-    val launchCrop: (Uri) -> Unit = { sourceUri ->
-        val outputFile = File(context.appTempFolder, "crop_output_${System.currentTimeMillis()}.jpg")
-        cropOutputUri = Uri.fromFile(outputFile)
-
-        val cropIntent = UCrop.of(sourceUri, cropOutputUri!!).withOptions(UCrop.Options().apply {
-            setFreeStyleCropEnabled(true)
-            setAllowedGestures(
-                UCropActivity.SCALE, UCropActivity.ROTATE, UCropActivity.NONE
-            )
-            setCompressionFormat(Bitmap.CompressFormat.PNG)
-        }).withMaxResultSize(4096, 4096).getIntent(context)
-
-        cropActivityLauncher.launch(cropIntent)
-    }
-
-    return Pair(cropActivityLauncher, launchCrop)
-}
-
-@Composable
 private fun ImagePickButton(
     modifier: Modifier = Modifier,
     onAddImages: (List<Uri>) -> Unit = {}
@@ -2011,7 +1428,7 @@ private fun ImagePickButton(
         modifier = modifier,
         icon = {
             Icon(
-                imageVector = ZionAppIcons.Image,
+                painter = painterResource(R.drawable.ic_photo_picker),
                 contentDescription = null,
                 tint = ZionTextPrimary,
                 modifier = Modifier.size(28.dp)
@@ -2238,7 +1655,7 @@ fun FilePickButton(
     }
     BigIconTextButton(modifier = modifier, icon = {
         Icon(
-            imageVector = ZionAppIcons.Files,
+            painter = painterResource(R.drawable.ic_file_picker),
             contentDescription = null,
             tint = ZionTextPrimary,
             modifier = Modifier.size(28.dp)
@@ -2289,42 +1706,6 @@ private fun BigIconTextButton(
             )
         ) {
             text()
-        }
-    }
-}
-
-@Composable
-private fun InjectionQuickConfigSheet(
-    assistant: Assistant, settings: Settings, onUpdateAssistant: (Assistant) -> Unit, onDismiss: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope = rememberCoroutineScope()
-    val navController = LocalNavController.current
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.75f)
-                .padding(horizontal = 16.dp),
-        ) {
-            InjectionSelector(
-                assistant = assistant,
-                settings = settings,
-                onUpdate = onUpdateAssistant,
-                modifier = Modifier.weight(1f),
-                onNavigateToPrompts = {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismiss()
-                        navController.navigate(Screen.Prompts)
-                    }
-                })
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

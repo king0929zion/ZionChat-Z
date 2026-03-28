@@ -69,7 +69,6 @@ import me.rerere.rikkahub.ui.hooks.rememberCustomTtsState
 import me.rerere.rikkahub.ui.pages.assistant.AssistantPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantBasicPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantDetailPage
-import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantInjectionsPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantLocalToolPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantMcpPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantMemoryPage
@@ -85,7 +84,6 @@ import me.rerere.rikkahub.ui.pages.favorite.FavoritePage
 import me.rerere.rikkahub.ui.pages.history.HistoryPage
 import me.rerere.rikkahub.ui.pages.imggen.ImageGenPage
 import me.rerere.rikkahub.ui.pages.log.LogPage
-import me.rerere.rikkahub.ui.pages.prompts.PromptPage
 import me.rerere.rikkahub.ui.pages.search.SearchPage
 import me.rerere.rikkahub.ui.pages.stats.StatsPage
 import me.rerere.rikkahub.ui.pages.setting.SettingAboutPage
@@ -317,10 +315,6 @@ class RouteActivity : ComponentActivity() {
                                 AssistantLocalToolPage(key.id)
                             }
 
-                            entry<Screen.AssistantInjections> { key ->
-                                AssistantInjectionsPage(key.id)
-                            }
-
                             entry<Screen.Translator> {
                                 TranslatorPage()
                             }
@@ -391,10 +385,6 @@ class RouteActivity : ComponentActivity() {
 
                             entry<Screen.Log> {
                                 LogPage()
-                            }
-
-                            entry<Screen.Prompts> {
-                                PromptPage()
                             }
 
                             entry<Screen.MessageSearch> {
@@ -500,9 +490,6 @@ sealed interface Screen : NavKey {
     data class AssistantLocalTool(val id: String) : Screen
 
     @Serializable
-    data class AssistantInjections(val id: String) : Screen
-
-    @Serializable
     data object Translator : Screen
 
     @Serializable
@@ -555,9 +542,6 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Log : Screen
-
-    @Serializable
-    data object Prompts : Screen
 
     @Serializable
     data object MessageSearch : Screen

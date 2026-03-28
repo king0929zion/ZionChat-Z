@@ -1,5 +1,7 @@
 package me.rerere.rikkahub.ui.components.ai
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -110,7 +112,6 @@ fun ModelSelector(
     onSelect: (Model) -> Unit
 ) {
     var popup by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
     val model = providers.findModelById(modelId ?: Uuid.random())
 
     if (!onlyIcon) {
@@ -127,32 +128,35 @@ fun ModelSelector(
                         onClick = { popup = true }
                     ),
                 shape = RoundedCornerShape(18.dp),
-                color = ZionSectionItem
+                color = Color.White,
+                border = BorderStroke(1.dp, Color(0xFFE8E8EA))
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Box(
-                        modifier = Modifier.size(24.dp),
-                        contentAlignment = Alignment.Center
+                    Surface(
+                        modifier = Modifier.size(28.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        color = ZionSectionItem
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_model),
-                            contentDescription = null,
-                            tint = ZionTextSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_model),
+                                contentDescription = null,
+                                tint = ZionTextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                     Text(
                         text = model?.displayName ?: stringResource(R.string.model_list_select_model),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = ZionTextPrimary,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = SourceSans3
-                        )
+                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = SourceSans3),
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                     Icon(
                         imageVector = ZionAppIcons.ChevronRight,
@@ -166,7 +170,8 @@ fun ModelSelector(
                 Surface(
                     modifier = Modifier.size(34.dp),
                     shape = CircleShape,
-                    color = ZionSectionItem,
+                    color = Color.White,
+                    border = BorderStroke(1.dp, Color(0xFFE8E8EA)),
                     onClick = { onSelect(Model()) }
                 ) {
                     Icon(
@@ -179,57 +184,106 @@ fun ModelSelector(
             }
         }
     } else {
-        IconButton(
-            onClick = {
-                popup = true
-            },
+        Surface(
+            modifier = modifier.size(34.dp),
+            shape = CircleShape,
+            color = Color.White,
+            border = BorderStroke(1.dp, Color(0xFFE8E8EA)),
+            onClick = { popup = true }
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_model),
-                contentDescription = stringResource(R.string.setting_model_page_chat_model),
-                tint = ZionTextSecondary,
-                modifier = Modifier.size(20.dp)
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_model),
+                    contentDescription = stringResource(R.string.setting_model_page_chat_model),
+                    tint = ZionTextSecondary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 
     if (popup) {
-        val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            onDismissRequest = {
+        ModelPickerSheet(
+            selectedModelId = modelId,
+            providers = providers,
+            modelType = type,
+            onSelect = {
+                onSelect(it)
                 popup = false
             },
-            sheetState = state,
+            onDismiss = { popup = false }
+        )
+    }
+}
+
+@Composable
+fun ChatModelPickerSheet(
+    selectedModelId: Uuid?,
+    providers: List<ProviderSetting>,
+    onSelect: (Model) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModelPickerSheet(
+        selectedModelId = selectedModelId,
+        providers = providers,
+        modelType = ModelType.CHAT,
+        onSelect = onSelect,
+        onDismiss = onDismiss,
+    )
+}
+
+@Composable
+private fun ModelPickerSheet(
+    selectedModelId: Uuid?,
+    providers: List<ProviderSetting>,
+    modelType: ModelType,
+    onSelect: (Model) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val filteredProviders = remember(providers, modelType) {
+        providers.fastFilter { provider ->
+            provider.enabled && provider.models.fastAny { model -> model.type == modelType }
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = state,
+        containerColor = Color.White,
+        dragHandle = null,
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(start = 8.dp, end = 8.dp, top = 12.dp)
+                .fillMaxHeight(0.86f)
+                .imePadding(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxHeight(0.8f)
-                    .imePadding(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                val filteredProviderSettings = providers.fastFilter {
-                    it.enabled && it.models.fastAny { model -> model.type == type }
-                }
-                ModelList(
-                    currentModel = modelId,
-                    providers = filteredProviderSettings,
-                    modelType = type,
-                    onSelect = {
-                        onSelect(it)
-                        scope.launch {
-                            state.hide()
-                            popup = false
-                        }
-                    },
-                    onDismiss = {
-                        scope.launch {
-                            state.hide()
-                            popup = false
-                        }
-                    }
+                Box(
+                    modifier = Modifier
+                        .size(width = 38.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFFD7D7DB))
                 )
             }
+            ModelList(
+                currentModel = selectedModelId,
+                providers = filteredProviders,
+                modelType = modelType,
+                onSelect = { model ->
+                    onSelect(model)
+                    scope.launch { state.hide() }.invokeOnCompletion { onDismiss() }
+                },
+                onDismiss = {
+                    scope.launch { state.hide() }.invokeOnCompletion { onDismiss() }
+                }
+            )
         }
     }
 }
@@ -363,7 +417,8 @@ private fun ColumnScope.ModelList(
     }
 
     Surface(
-        shape = RoundedCornerShape(50),
+        shape = RoundedCornerShape(22.dp),
+        color = ZionSectionItem,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp),
@@ -404,7 +459,7 @@ private fun ColumnScope.ModelList(
                 Text(
                     text = stringResource(R.string.model_list_no_providers),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.extendColors.gray6,
+                    color = ZionTextSecondary,
                     modifier = Modifier.padding(8.dp)
                 )
             }
@@ -415,7 +470,7 @@ private fun ColumnScope.ModelList(
                 Text(
                     text = stringResource(R.string.model_list_favorite),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = ZionTextSecondary,
                     modifier = Modifier
                         .padding(bottom = 4.dp, top = 8.dp)
                 )
@@ -490,7 +545,7 @@ private fun ColumnScope.ModelList(
                     Text(
                         text = providerSetting.name,
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = ZionTextSecondary,
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -498,7 +553,7 @@ private fun ColumnScope.ModelList(
                     ProviderBalanceText(
                         providerSetting = providerSetting,
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = ZionTextSecondary,
                     )
                 }
             }
@@ -622,10 +677,8 @@ private fun ModelItem(
     val interactionSource = remember { MutableInteractionSource() }
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = if (select) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-            contentColor = if (select) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-        )
+        colors = CardDefaults.cardColors(containerColor = if (select) Color(0xFFE7E7E4) else ZionSectionItem),
+        border = BorderStroke(if (select) 1.dp else 0.dp, if (select) Color(0xFF111111) else Color.Transparent)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -655,8 +708,8 @@ private fun ModelItem(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = MaterialTheme.shapes.small,
+                    color = Color.White,
+                    shape = RoundedCornerShape(14.dp),
                 ) {
                     AutoAIIcon(
                         name = model.modelId,
@@ -671,7 +724,8 @@ private fun ModelItem(
                 ) {
                     Text(
                         text = model.displayName,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleSmall.copy(fontFamily = SourceSans3),
+                        color = ZionTextPrimary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

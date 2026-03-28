@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.Serializable
-import me.rerere.ai.core.MessageRole
 import me.rerere.ai.provider.Model
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.AppScope
@@ -26,15 +25,11 @@ import me.rerere.rikkahub.data.ai.prompts.DEFAULT_OCR_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_SUGGESTION_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_TITLE_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_TRANSLATION_PROMPT
-import me.rerere.rikkahub.data.ai.prompts.LEARNING_MODE_PROMPT
 import me.rerere.rikkahub.data.datastore.migration.PreferenceStoreV1Migration
 import me.rerere.rikkahub.data.datastore.migration.PreferenceStoreV2Migration
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Avatar
-import me.rerere.rikkahub.data.model.InjectionPosition
-import me.rerere.rikkahub.data.model.PromptInjection
 import me.rerere.rikkahub.data.model.Tag
-import me.rerere.rikkahub.data.model.Lorebook
 import me.rerere.rikkahub.data.sync.s3.S3Config
 import me.rerere.rikkahub.ui.theme.PresetThemes
 import me.rerere.rikkahub.utils.JsonInstant
@@ -116,10 +111,6 @@ class SettingsStore(
         val TTS_PROVIDERS = stringPreferencesKey("tts_providers")
         val SELECTED_TTS_PROVIDER = stringPreferencesKey("selected_tts_provider")
 
-        // 提示词注入
-        val MODE_INJECTIONS = stringPreferencesKey("mode_injections")
-        val LOREBOOKS = stringPreferencesKey("lorebooks")
-
         // 备份提醒
         val BACKUP_REMINDER_CONFIG = stringPreferencesKey("backup_reminder_config")
 
@@ -193,12 +184,6 @@ class SettingsStore(
                 } ?: emptyList(),
                 selectedTTSProviderId = preferences[SELECTED_TTS_PROVIDER]?.let { Uuid.parse(it) }
                     ?: DEFAULT_SYSTEM_TTS_ID,
-                modeInjections = preferences[MODE_INJECTIONS]?.let {
-                    JsonInstant.decodeFromString(it)
-                } ?: emptyList(),
-                lorebooks = preferences[LOREBOOKS]?.let {
-                    JsonInstant.decodeFromString(it)
-                } ?: emptyList(),
                 backupReminderConfig = preferences[BACKUP_REMINDER_CONFIG]?.let {
                     JsonInstant.decodeFromString(it)
                 } ?: BackupReminderConfig(),
@@ -260,8 +245,6 @@ class SettingsStore(
             sanitizedSettings.selectedTTSProviderId.let {
                 preferences[SELECTED_TTS_PROVIDER] = it.toString()
             }
-            preferences[MODE_INJECTIONS] = JsonInstant.encodeToString(sanitizedSettings.modeInjections)
-            preferences[LOREBOOKS] = JsonInstant.encodeToString(sanitizedSettings.lorebooks)
             preferences[BACKUP_REMINDER_CONFIG] = JsonInstant.encodeToString(sanitizedSettings.backupReminderConfig)
             preferences[LAUNCH_COUNT] = sanitizedSettings.launchCount
             preferences[SPONSOR_ALERT_DISMISSED_AT] = sanitizedSettings.sponsorAlertDismissedAt
@@ -320,26 +303,7 @@ class SettingsStore(
         }
     }
 
-    suspend fun updateAssistantInjections(
-        assistantId: Uuid,
-        modeInjectionIds: Set<Uuid>,
-        lorebookIds: Set<Uuid>
-    ) {
-        update { settings ->
-            settings.copy(
-                assistants = settings.assistants.map { assistant ->
-                    if (assistant.id == assistantId) {
-                        assistant.copy(
-                            modeInjectionIds = modeInjectionIds,
-                            lorebookIds = lorebookIds
-                        )
-                    } else {
-                        assistant
-                    }
-                }
-            )
-        }
-    }
+
 }
 
 private fun Settings.mergeBuiltInsAndSanitize(): Settings {
@@ -390,8 +354,6 @@ private fun Settings.mergeBuiltInsAndSanitize(): Settings {
 
 private fun Settings.sanitizeInvalidReferences(): Settings {
     val validMcpServerIds = mcpServers.map { it.id }.toSet()
-    val validModeInjectionIds = modeInjections.map { it.id }.toSet()
-    val validLorebookIds = lorebooks.map { it.id }.toSet()
     val validModelIds = providers.flatMap { it.models }.map { it.id }.toSet()
 
     val sanitizedAssistants = assistants.distinctBy { it.id }.map { assistant ->
@@ -399,12 +361,6 @@ private fun Settings.sanitizeInvalidReferences(): Settings {
             chatModelId = assistant.chatModelId?.takeIf { it in validModelIds },
             mcpServers = assistant.mcpServers.filter { serverId ->
                 serverId in validMcpServerIds
-            }.toSet(),
-            modeInjectionIds = assistant.modeInjectionIds.filter { id ->
-                id in validModeInjectionIds
-            }.toSet(),
-            lorebookIds = assistant.lorebookIds.filter { id ->
-                id in validLorebookIds
             }.toSet()
         )
     }
@@ -424,8 +380,6 @@ private fun Settings.sanitizeInvalidReferences(): Settings {
         assistants = sanitizedAssistants,
         ttsProviders = ttsProviders.distinctBy { it.id },
         favoriteModels = favoriteModels.filter { uuid -> uuid in validModelIds },
-        modeInjections = modeInjections.distinctBy { it.id },
-        lorebooks = lorebooks.distinctBy { it.id },
     )
 }
 
@@ -484,8 +438,6 @@ data class Settings(
     val s3Config: S3Config = S3Config(),
     val ttsProviders: List<TTSProviderSetting> = DEFAULT_TTS_PROVIDERS,
     val selectedTTSProviderId: Uuid = DEFAULT_SYSTEM_TTS_ID,
-    val modeInjections: List<PromptInjection.ModeInjection> = DEFAULT_MODE_INJECTIONS,
-    val lorebooks: List<Lorebook> = emptyList(),
     val backupReminderConfig: BackupReminderConfig = BackupReminderConfig(),
     val launchCount: Int = 0,
     val sponsorAlertDismissedAt: Int = 0,
@@ -676,12 +628,3 @@ private val DEFAULT_TTS_PROVIDERS = listOf(
 )
 
 internal val DEFAULT_ASSISTANTS_IDS = DEFAULT_ASSISTANTS.map { it.id }
-
-val DEFAULT_MODE_INJECTIONS = listOf(
-    PromptInjection.ModeInjection(
-        id = Uuid.parse("b87eaf16-f5cd-4ac1-9e4f-b11ae3a61d74"),
-        content = LEARNING_MODE_PROMPT,
-        position = InjectionPosition.AFTER_SYSTEM_PROMPT,
-        name = "Learning Mode"
-    )
-)

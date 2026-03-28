@@ -132,11 +132,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                         leadingContent = { Icon(ZionAppIcons.Bot, null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.assistant_page_title)) },
                     )
-                    item(
-                        onClick = { navController.navigate(Screen.Prompts) },
-                        leadingContent = { Icon(ZionAppIcons.Files, null, tint = Color.Unspecified) },
-                        headlineContent = { Text(stringResource(R.string.setting_page_prompts_title)) },
-                    )
                 }
             }
 

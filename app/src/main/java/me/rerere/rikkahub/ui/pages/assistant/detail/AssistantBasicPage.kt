@@ -34,7 +34,6 @@ import me.rerere.ai.provider.ModelType
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.ui.components.ai.ModelSelector
-import me.rerere.rikkahub.ui.components.ai.ReasoningButton
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.FormItem
@@ -390,24 +389,6 @@ internal fun AssistantBasicContent(
                     )
                 }
             )
-            HorizontalDivider()
-            FormItem(
-                modifier = Modifier.padding(8.dp),
-                label = {
-                    Text(stringResource(R.string.assistant_page_thinking_budget))
-                },
-            ) {
-                ReasoningButton(
-                    reasoningTokens = assistant.thinkingBudget ?: 0,
-                    onUpdateReasoningTokens = { tokens ->
-                        onUpdate(
-                            assistant.copy(
-                                thinkingBudget = tokens
-                            )
-                        )
-                    }
-                )
-            }
             HorizontalDivider()
             FormItem(
                 modifier = Modifier.padding(8.dp),
