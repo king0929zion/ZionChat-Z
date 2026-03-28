@@ -1,3 +1,9 @@
+## v0.0.37
+
+- 继续把 RikkaHub 的聊天页收口到 ZionChat：侧边栏彻底隐藏 `Bots` 入口，顶部抽屉按钮切回 ZionChat 原生菜单图标。
+- `Personalization > Memories` 页面改回原生 Android `Switch` 外观，去掉之前那套自定义黑色开关样式。
+- 清理聊天残留模块：删除 `Compress History` 的设置与底层死代码，并移除最后一份 `Prompt Injections` 残留测试文件。
+
 ## v0.0.36
 
 - 聊天主链路继续对齐 ZionChat：侧边栏移除主 `ChatGPT` 入口与 `Bots` 标题，`New Chat` 统一回到 `Personalization` 主对话，顶部 `ChatGPT` pill 改为专门唤起聊天模型选择器。

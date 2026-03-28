@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -440,7 +439,12 @@ private fun TopBar(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        DrawerToggleIcon()
+                        Icon(
+                            imageVector = ZionAppIcons.HamburgerMenu,
+                            contentDescription = "Open Sidebar",
+                            tint = ZionTextPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 } else {
                     Box(modifier = Modifier.size(42.dp))
@@ -493,23 +497,3 @@ private fun TopBar(
     }
 }
 
-@Composable
-private fun DrawerToggleIcon() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(5.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .width(20.dp)
-                .size(width = 20.dp, height = 2.dp)
-                .background(ZionTextPrimary, RoundedCornerShape(1.dp))
-        )
-        Box(
-            modifier = Modifier
-                .width(12.dp)
-                .size(width = 12.dp, height = 2.dp)
-                .background(ZionTextPrimary, RoundedCornerShape(1.dp))
-        )
-    }
-}

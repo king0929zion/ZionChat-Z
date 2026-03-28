@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -290,15 +289,7 @@ private fun PersonalizationSwitchRow(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            enabled = enabled,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = Color(0xFF1C1C1E),
-                checkedBorderColor = Color(0xFF1C1C1E),
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = Color(0xFFD9D9DE),
-                uncheckedBorderColor = Color(0xFFD9D9DE)
-            )
+            enabled = enabled
         )
     }
 }

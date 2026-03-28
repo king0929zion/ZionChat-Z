@@ -47,7 +47,6 @@ import me.rerere.ai.provider.Model
 import me.rerere.ai.provider.ModelType
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
-import me.rerere.rikkahub.data.ai.prompts.DEFAULT_COMPRESS_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_OCR_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_SUGGESTION_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_TITLE_PROMPT
@@ -152,22 +151,6 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
             },
             onPromptChange = { prompt ->
                 vm.updateSettings(settings.copy(ocrPrompt = prompt))
-            }
-        ),
-        ModelSectionConfig(
-            key = "compress",
-            title = stringResource(R.string.setting_model_page_compress_model).uppercase(),
-            required = false,
-            modelId = settings.compressModelId,
-            type = ModelType.CHAT,
-            prompt = settings.compressPrompt,
-            promptVariablesLabel = stringResource(R.string.setting_model_page_compress_prompt_vars),
-            resetPrompt = DEFAULT_COMPRESS_PROMPT,
-            onSelect = { model ->
-                vm.updateSettings(settings.copy(compressModelId = model?.id ?: Uuid.random()))
-            },
-            onPromptChange = { prompt ->
-                vm.updateSettings(settings.copy(compressPrompt = prompt))
             }
         )
     )

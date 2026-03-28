@@ -142,24 +142,6 @@ fun ChatDrawerContent(
                 }
             }
 
-            if (botAssistants.isNotEmpty()) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    botAssistants.forEach { assistant ->
-                        AssistantItem(
-                            assistant = assistant,
-                            isCurrentAssistant = assistant.id == currentAssistant.id,
-                            onClick = {
-                                vm.updateSettings(settings.copy(assistantId = assistant.id))
-                                navigateToChatPage(navController)
-                            }
-                        )
-                    }
-                }
-            }
-
             ConversationList(
                 current = current,
                 conversations = conversations,
