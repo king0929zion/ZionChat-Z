@@ -98,6 +98,7 @@ import me.rerere.rikkahub.ui.pages.setting.SettingSearchPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTTSPage
 import me.rerere.rikkahub.ui.pages.translator.TranslatorPage
 import me.rerere.rikkahub.ui.pages.zphone.ZPhonePage
+import me.rerere.rikkahub.ui.pages.zphone.XTimelinePage
 import me.rerere.rikkahub.ui.pages.webview.WebViewPage
 import me.rerere.rikkahub.ui.theme.LocalDarkMode
 import me.rerere.rikkahub.ui.theme.RikkahubTheme
@@ -336,6 +337,10 @@ class RouteActivity : ComponentActivity() {
                                 ZPhonePage()
                             }
 
+                            entry<Screen.XTimeline> {
+                                XTimelinePage()
+                            }
+
                             entry<Screen.WebView> { key ->
                                 WebViewPage(key.url, key.content)
                             }
@@ -508,6 +513,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object ZPhone : Screen
+
+    @Serializable
+    data object XTimeline : Screen
 
     @Serializable
     data class WebView(val url: String = "", val content: String = "") : Screen

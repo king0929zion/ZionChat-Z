@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -43,7 +42,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ContentScale
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -128,7 +127,7 @@ fun ZPhonePage() {
                 label = "X",
                 imageRes = R.drawable.zphone_x_logo,
                 containerColor = Color.Black,
-                onClick = { toaster.show("X 入口稍后接入", type = ToastType.Info) }
+                onClick = { navController.navigate(Screen.XTimeline) }
             ),
             ZPhoneApp(
                 label = "ZionChat",
@@ -192,7 +191,7 @@ fun ZPhonePage() {
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.displayCutout)
-                .padding(horizontal = 20.dp, top = 14.dp, bottom = 24.dp)
+                .padding(start = 20.dp, top = 14.dp, end = 20.dp, bottom = 24.dp)
         ) {
             ZPhoneStatusBar(timeText = rememberClockText())
             Spacer(modifier = Modifier.height(48.dp))
@@ -333,7 +332,7 @@ private fun DesktopAppIcon(
             }
             Box(
                 modifier = Modifier
-                    .matchParentSize()
+                    .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.02f))
             )
         }

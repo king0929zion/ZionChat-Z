@@ -1,3 +1,8 @@
+## v0.0.40
+
+- 修复 `v0.0.39` 远端构建失败：更正 `zPhone` 页面里 `ContentScale / padding / overlay` 的 Compose 写法，恢复签名打包。
+- `X_logo` 图标现在会进入原生 Android 版 `X` 页面，按你给的 HTML 重建 `feed / detail / compose-post / compose-reply` 四层视图和切换交互。
+
 ## v0.0.39
 
 - 侧边栏新增 `zPhone` 入口，并加入一套原生 Android 的桌面页，用你提供的壁纸和图标还原 iOS 风格图标桌面。
