@@ -1,3 +1,8 @@
+## v0.0.41
+
+- 修复 `v0.0.40` 远端构建失败：补回原生 `X` 页面遗漏的 `BoxScope` 导入，恢复 `XTimelinePage` 的 Compose 编译。
+- 保留上一轮 `zPhone` 主页、`X_logo` 入口和原生 Android 版 `X` 四层交互页面的全部改动，并重新触发签名构建发布。
+
 ## v0.0.40
 
 - 修复 `v0.0.39` 远端构建失败：更正 `zPhone` 页面里 `ContentScale / padding / overlay` 的 Compose 写法，恢复签名打包。
