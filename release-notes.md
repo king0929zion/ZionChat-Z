@@ -1,3 +1,8 @@
+## v0.0.43
+
+- 修复应用启动黑屏闪退：移除 Compose 中直接读取自适应图标 `R.mipmap.ic_launcher` 的写法，改成安全的栅格图资源，避免启动阶段因 `painterResource` 解析 launcher XML 崩溃。
+- 同步修正侧边栏 `zPhone` 入口和 `zPhone` 桌面内的 `ZionChat` 图标加载方式，保证进入主界面和进入 `zPhone` 时都不会再因为图标资源类型崩溃。
+
 ## v0.0.42
 
 - 继续细化原生 Android 版 `X` 页面：顶部栏、tabs、信息流卡片、引用预览、底部导航与发帖工具栏都进一步向参考 HTML 靠拢。

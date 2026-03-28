@@ -131,7 +131,7 @@ fun ZPhonePage() {
             ),
             ZPhoneApp(
                 label = "ZionChat",
-                imageRes = R.mipmap.ic_launcher,
+                imageRes = R.mipmap.ic_launcher_foreground,
                 containerColor = Color.White,
                 contentScale = ContentScale.Fit,
                 onClick = { navigateToChatPage(navController) }
