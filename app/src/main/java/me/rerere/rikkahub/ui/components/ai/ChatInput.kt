@@ -1,5 +1,6 @@
 package me.rerere.rikkahub.ui.components.ai
 
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
@@ -169,6 +170,46 @@ private enum class ToolMenuPage {
     Tools,
     Search,
     Mcp,
+}
+
+@Composable
+private fun useCropLauncher(
+    onCroppedImageReady: (Uri) -> Unit,
+    onCleanup: () -> Unit = {},
+): Pair<ActivityResultLauncher<Intent>, (Uri) -> Unit> {
+    val context = LocalContext.current
+    val cropLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        when (result.resultCode) {
+            Activity.RESULT_OK -> {
+                result.data?.let(UCrop::getOutput)?.let(onCroppedImageReady)
+            }
+
+            UCrop.RESULT_ERROR -> {
+                Log.e("ChatInput", "Crop failed", result.data?.let(UCrop::getError))
+            }
+        }
+        onCleanup()
+    }
+
+    val launchCrop: (Uri) -> Unit = { sourceUri ->
+        val destinationUri = Uri.fromFile(File(context.cacheDir, "crop_${System.currentTimeMillis()}.jpg"))
+        val options = UCrop.Options().apply {
+            setCompressionFormat(Bitmap.CompressFormat.JPEG)
+            setCompressionQuality(95)
+            setAllowedGestures(UCropActivity.ALL, UCropActivity.ALL, UCropActivity.ALL)
+        }
+        val intent = UCrop.of(sourceUri, destinationUri)
+            .withOptions(options)
+            .getIntent(context)
+            .apply {
+                setClass(context, UCropActivity::class.java)
+            }
+        cropLauncher.launch(intent)
+    }
+
+    return cropLauncher to launchCrop
 }
 
 @Composable

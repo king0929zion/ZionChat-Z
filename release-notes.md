@@ -1,3 +1,8 @@
+## v0.0.38
+
+- 修复 `v0.0.37` 远端构建失败：补回聊天输入区图片裁剪的 `useCropLauncher` 实现，并修正聊天页顶部 `matchParentSize` 的错误导入。
+- 保留上一轮 ZionChat 对齐结果：隐藏侧边栏 `Bots` 入口、恢复原生 Android `Memories` 开关，并继续移除 `Compress History / Prompt Injections` 残留。
+
 ## v0.0.37
 
 - 继续把 RikkaHub 的聊天页收口到 ZionChat：侧边栏彻底隐藏 `Bots` 入口，顶部抽屉按钮切回 ZionChat 原生菜单图标。
