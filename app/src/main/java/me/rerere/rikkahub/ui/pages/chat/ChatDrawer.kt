@@ -140,6 +140,17 @@ fun ChatDrawerContent(
                         modifier = Modifier.size(24.dp)
                     )
                 }
+                SidebarMenuEntry(
+                    label = "zPhone",
+                    onClick = { navController.navigate(Screen.ZPhone) },
+                ) {
+                    Icon(
+                        painter = painterResource(R.mipmap.ic_launcher),
+                        contentDescription = null,
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             ConversationList(
