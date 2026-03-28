@@ -7,15 +7,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,11 +21,14 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -36,11 +36,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,6 +74,7 @@ import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dokar.sonner.ToastType
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Add01
@@ -75,94 +82,66 @@ import me.rerere.hugeicons.stroke.ArrowLeft01
 import me.rerere.hugeicons.stroke.BubbleChatQuestion
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.Favourite
-import me.rerere.hugeicons.stroke.FavouriteCircle
 import me.rerere.hugeicons.stroke.Image03
 import me.rerere.hugeicons.stroke.MoreVertical
 import me.rerere.hugeicons.stroke.Search01
 import me.rerere.hugeicons.stroke.Share04
 import me.rerere.rikkahub.R
+import me.rerere.rikkahub.data.datastore.Settings
+import me.rerere.rikkahub.data.db.entity.XPostEntity
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.utils.getActivity
+import org.koin.androidx.compose.koinViewModel
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-private enum class XView {
+private enum class XLayer {
     Feed,
     Detail,
     ComposePost,
     ComposeReply,
 }
 
-private data class FeedCard(
-    val id: String,
-    val author: String,
-    val handle: String,
-    val time: String,
-    val content: String,
-    val quoteTitle: String? = null,
-    val quoteHandle: String? = null,
-    val quoteContent: String? = null,
-    val quotePreview: String? = null,
-    val replies: String,
-    val reposts: String,
-    val likes: String,
-    val views: String,
-)
-
 private val XOuter = Color(0xFF242D34)
+private val XPanel = Color.White
 private val XText = Color(0xFF0F1419)
 private val XSubText = Color(0xFF536471)
 private val XBlue = Color(0xFF1D9BF0)
 private val XDivider = Color(0xFFEFF3F4)
+private val XCard = Color(0xFFF7F9FA)
+private val XGreen = Color(0xFF00BA7C)
 private val XDanger = Color(0xFFF4212E)
 private val XWarn = Color(0xFFFFD400)
+private val ComposerLimit = 280
+private val AbsoluteTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy年M月d日 HH:mm")
 
 @Composable
-fun XTimelinePage() {
+fun XTimelinePage(vm: XTimelineVM = koinViewModel()) {
     val context = LocalContext.current
     val activity = remember(context) { context.getActivity() }
     val toaster = LocalToaster.current
 
-    var currentView by rememberSaveable { mutableStateOf(XView.Feed) }
-    var selectedTab by rememberSaveable { mutableStateOf(0) }
+    val settings by vm.settings.collectAsStateWithLifecycle()
+    val bots by vm.bots.collectAsStateWithLifecycle()
+    val feed by vm.feed.collectAsStateWithLifecycle()
+    val selectedPostId by vm.selectedPostId.collectAsStateWithLifecycle()
+    val selectedPost by vm.selectedPost.collectAsStateWithLifecycle()
+    val replies by vm.replies.collectAsStateWithLifecycle()
+    val aiPosting by vm.aiPosting.collectAsStateWithLifecycle()
+    val submitting by vm.submitting.collectAsStateWithLifecycle()
+    val requestingBotReplies by vm.requestingBotReplies.collectAsStateWithLifecycle()
+
+    var currentLayer by rememberSaveable { mutableStateOf(XLayer.Feed) }
+    var selectedTopTab by rememberSaveable { mutableStateOf(0) }
     var selectedBottomTab by rememberSaveable { mutableStateOf(0) }
-    var firstLiked by rememberSaveable { mutableStateOf(false) }
-    var firstSaved by rememberSaveable { mutableStateOf(false) }
     var composePostText by rememberSaveable { mutableStateOf("") }
     var composeReplyText by rememberSaveable { mutableStateOf("") }
-
-    val feedCards = remember {
-        listOf(
-            FeedCard(
-                id = "elon",
-                author = "Elon Musk",
-                handle = "@elonmusk",
-                time = "2小时",
-                content = "Grok gets faster & smarter every week",
-                quoteTitle = "Robert Scoble",
-                quoteHandle = "@Scobleizer",
-                quoteContent = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last ...",
-                replies = "1,711",
-                reposts = "1,141",
-                likes = "1万",
-                views = "568万"
-            ),
-            FeedCard(
-                id = "leo",
-                author = "leo 🐾",
-                handle = "@synthwavedd",
-                time = "1小时",
-                content = "The $200/mo ChatGPT Pro plan will soon no longer be unlimited\n\nI think we all knew this was coming, but still 👎",
-                quoteTitle = "Chetaslua",
-                quoteHandle = "@chetaslua",
-                quoteContent = "🚨 ChatGPT 100$ plan is coming soon\n\nOne bad news - now the 200$ plan is not truly unlimited (it's 20 times the plus uses)...",
-                quotePreview = "订阅方案预览",
-                replies = "682",
-                reposts = "209",
-                likes = "3,402",
-                views = "112万"
-            )
-        )
-    }
+    var awaitingPostOpen by rememberSaveable { mutableStateOf(false) }
+    var awaitingReplyClose by rememberSaveable { mutableStateOf(false) }
+    var awaitingAiOpen by rememberSaveable { mutableStateOf(false) }
 
     DisposableEffect(activity) {
         val window = activity?.window
@@ -178,12 +157,72 @@ fun XTimelinePage() {
         }
     }
 
-    BackHandler(enabled = currentView != XView.Feed) {
-        currentView = when (currentView) {
-            XView.Detail -> XView.Feed
-            XView.ComposePost -> XView.Feed
-            XView.ComposeReply -> XView.Detail
-            XView.Feed -> XView.Feed
+    LaunchedEffect(Unit) {
+        vm.bootstrap()
+        vm.events.collect { message ->
+            toaster.show(
+                message,
+                type = if (message.contains("失败") || message.contains("不能为空") || message.contains("没有可用")) {
+                    ToastType.Info
+                } else {
+                    ToastType.Success
+                }
+            )
+        }
+    }
+
+    LaunchedEffect(awaitingPostOpen, selectedPostId, submitting) {
+        if (awaitingPostOpen && !submitting && selectedPostId != null) {
+            composePostText = ""
+            currentLayer = XLayer.Detail
+            awaitingPostOpen = false
+        }
+        if (awaitingPostOpen && !submitting && selectedPostId == null) {
+            awaitingPostOpen = false
+        }
+    }
+
+    LaunchedEffect(awaitingReplyClose, submitting) {
+        if (awaitingReplyClose && !submitting) {
+            composeReplyText = ""
+            currentLayer = XLayer.Detail
+            awaitingReplyClose = false
+        }
+    }
+
+    LaunchedEffect(awaitingAiOpen, aiPosting, selectedPostId) {
+        if (awaitingAiOpen && !aiPosting) {
+            if (selectedPostId != null) {
+                currentLayer = XLayer.Detail
+            }
+            awaitingAiOpen = false
+        }
+    }
+
+    LaunchedEffect(selectedPost, currentLayer) {
+        if (selectedPost == null && (currentLayer == XLayer.Detail || currentLayer == XLayer.ComposeReply)) {
+            currentLayer = XLayer.Feed
+        }
+    }
+
+    BackHandler(enabled = currentLayer != XLayer.Feed) {
+        currentLayer = when (currentLayer) {
+            XLayer.Detail -> {
+                vm.closeDetail()
+                XLayer.Feed
+            }
+
+            XLayer.ComposePost -> XLayer.Feed
+            XLayer.ComposeReply -> XLayer.Detail
+            XLayer.Feed -> XLayer.Feed
+        }
+    }
+
+    val filteredFeed = remember(feed, selectedTopTab) {
+        when (selectedTopTab) {
+            1 -> feed.filter { it.authorKind != "system" }
+            2 -> feed.filter { it.authorKind != "user" }
+            else -> feed
         }
     }
 
@@ -196,65 +235,103 @@ fun XTimelinePage() {
         val pageHeight = maxHeight
 
         val feedOffsetX by animateDpAsState(
-            targetValue = if (currentView == XView.Detail || currentView == XView.ComposeReply) -pageWidth else 0.dp,
-            animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
-            label = "x_feed_offset"
+            targetValue = if (currentLayer == XLayer.Detail || currentLayer == XLayer.ComposeReply) -pageWidth else 0.dp,
+            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+            label = "feed_offset"
         )
         val detailOffsetX by animateDpAsState(
-            targetValue = if (currentView == XView.Detail || currentView == XView.ComposeReply) 0.dp else pageWidth,
-            animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
-            label = "x_detail_offset"
+            targetValue = if (currentLayer == XLayer.Detail || currentLayer == XLayer.ComposeReply) 0.dp else pageWidth,
+            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+            label = "detail_offset"
         )
         val composePostOffsetY by animateDpAsState(
-            targetValue = if (currentView == XView.ComposePost) 0.dp else pageHeight,
-            animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
-            label = "x_post_offset"
+            targetValue = if (currentLayer == XLayer.ComposePost) 0.dp else pageHeight,
+            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+            label = "compose_post_offset"
         )
         val composeReplyOffsetY by animateDpAsState(
-            targetValue = if (currentView == XView.ComposeReply) 0.dp else pageHeight,
-            animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing),
-            label = "x_reply_offset"
+            targetValue = if (currentLayer == XLayer.ComposeReply) 0.dp else pageHeight,
+            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+            label = "compose_reply_offset"
         )
 
-        XFeedView(
-            cards = feedCards,
-            selectedTab = selectedTab,
+        XFeedLayer(
+            settings = settings,
+            posts = filteredFeed,
+            allPosts = feed,
+            bots = bots.map { it.name.ifBlank { "Bot" } },
+            selectedTopTab = selectedTopTab,
             selectedBottomTab = selectedBottomTab,
-            firstLiked = firstLiked,
-            firstSaved = firstSaved,
-            onSelectTab = { selectedTab = it },
-            onSelectBottomTab = { selectedBottomTab = it },
-            onToggleFirstLike = { firstLiked = !firstLiked },
-            onToggleFirstSave = { firstSaved = !firstSaved },
-            onOpenDetail = { currentView = XView.Detail },
-            onOpenCompose = { currentView = XView.ComposePost },
+            aiPosting = aiPosting,
+            onSelectTopTab = { selectedTopTab = it },
+            onSelectBottomTab = { index ->
+                if (index == 2) {
+                    currentLayer = XLayer.ComposePost
+                } else {
+                    selectedBottomTab = index
+                }
+            },
+            onOpenPost = {
+                vm.openPost(it)
+                currentLayer = XLayer.Detail
+            },
+            onCompose = {
+                currentLayer = XLayer.ComposePost
+            },
+            onGenerateAiPost = {
+                awaitingAiOpen = true
+                vm.generateAiPost()
+            },
+            onToggleLike = vm::toggleLike,
+            onToggleRepost = vm::toggleRepost,
+            onToggleBookmark = vm::toggleBookmark,
             modifier = Modifier
                 .fillMaxSize()
                 .offset(x = feedOffsetX)
                 .zIndex(0f)
         )
 
-        XDetailView(
-            liked = firstLiked,
-            saved = firstSaved,
-            onBack = { currentView = XView.Feed },
-            onToggleLike = { firstLiked = !firstLiked },
-            onToggleSave = { firstSaved = !firstSaved },
-            onReply = { currentView = XView.ComposeReply },
+        XDetailLayer(
+            post = selectedPost,
+            replies = replies,
+            requestingBotReplies = requestingBotReplies,
+            onBack = {
+                vm.closeDetail()
+                currentLayer = XLayer.Feed
+            },
+            onReply = {
+                currentLayer = XLayer.ComposeReply
+            },
+            onToggleLike = { selectedPost?.id?.let(vm::toggleLike) },
+            onToggleRepost = { selectedPost?.id?.let(vm::toggleRepost) },
+            onToggleBookmark = { selectedPost?.id?.let(vm::toggleBookmark) },
+            onOpenPost = {
+                vm.openPost(it)
+                currentLayer = XLayer.Detail
+            },
+            onToggleLikeForReply = vm::toggleLike,
+            onToggleRepostForReply = vm::toggleRepost,
+            onToggleBookmarkForReply = vm::toggleBookmark,
+            onRequestBotReplies = vm::requestBotReplies,
             modifier = Modifier
                 .fillMaxSize()
                 .offset(x = detailOffsetX)
                 .zIndex(1f)
         )
 
-        XComposePostView(
+        XComposeLayer(
+            title = "发帖",
             text = composePostText,
+            buttonText = if (submitting) "发布中" else "发帖",
+            submitting = submitting,
+            hint = "有什么新鲜事？",
+            onClose = { currentLayer = XLayer.Feed },
             onTextChange = { composePostText = it },
-            onClose = { currentView = XView.Feed },
             onSubmit = {
-                toaster.show("帖子草稿已保存", type = ToastType.Success)
-                composePostText = ""
-                currentView = XView.Feed
+                if (composePostText.isNotBlank() && composePostText.length <= ComposerLimit && !submitting) {
+                    awaitingPostOpen = true
+                    vm.submitPost(composePostText)
+                }
             },
             modifier = Modifier
                 .fillMaxSize()
@@ -262,14 +339,18 @@ fun XTimelinePage() {
                 .zIndex(2f)
         )
 
-        XComposeReplyView(
+        XReplyComposeLayer(
+            post = selectedPost,
             text = composeReplyText,
+            buttonText = if (submitting) "回复中" else "回复",
+            submitting = submitting,
+            onClose = { currentLayer = XLayer.Detail },
             onTextChange = { composeReplyText = it },
-            onClose = { currentView = XView.Detail },
             onSubmit = {
-                toaster.show("回复已保存", type = ToastType.Success)
-                composeReplyText = ""
-                currentView = XView.Detail
+                if (composeReplyText.isNotBlank() && composeReplyText.length <= ComposerLimit && !submitting) {
+                    awaitingReplyClose = true
+                    vm.submitReply(composeReplyText)
+                }
             },
             modifier = Modifier
                 .fillMaxSize()
@@ -280,330 +361,192 @@ fun XTimelinePage() {
 }
 
 @Composable
-private fun XFeedView(
-    cards: List<FeedCard>,
-    selectedTab: Int,
+private fun XFeedLayer(
+    settings: Settings,
+    posts: List<XPostEntity>,
+    allPosts: List<XPostEntity>,
+    bots: List<String>,
+    selectedTopTab: Int,
     selectedBottomTab: Int,
-    firstLiked: Boolean,
-    firstSaved: Boolean,
-    onSelectTab: (Int) -> Unit,
+    aiPosting: Boolean,
+    onSelectTopTab: (Int) -> Unit,
     onSelectBottomTab: (Int) -> Unit,
-    onToggleFirstLike: () -> Unit,
-    onToggleFirstSave: () -> Unit,
-    onOpenDetail: () -> Unit,
-    onOpenCompose: () -> Unit,
+    onOpenPost: (String) -> Unit,
+    onCompose: () -> Unit,
+    onGenerateAiPost: () -> Unit,
+    onToggleLike: (String) -> Unit,
+    onToggleRepost: (String) -> Unit,
+    onToggleBookmark: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier,
-        color = Color.White,
+        color = XPanel,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.displayCutout)
         ) {
-            XFeedHeader()
-            XFeedTabs(selectedTab = selectedTab, onSelect = onSelectTab)
+            XHeader(
+                onPrimaryAction = onCompose,
+                onSecondaryAction = onGenerateAiPost,
+                aiPosting = aiPosting
+            )
+            XTopTabs(selectedTopTab = selectedTopTab, onSelectTopTab = onSelectTopTab)
             Box(modifier = Modifier.weight(1f)) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 92.dp)
-                ) {
-                    items(cards) { card ->
-                        XFeedCard(
-                            card = card,
-                            liked = if (card.id == "elon") firstLiked else false,
-                            saved = if (card.id == "elon") firstSaved else false,
-                            onToggleLike = if (card.id == "elon") onToggleFirstLike else ({}),
-                            onToggleSave = if (card.id == "elon") onToggleFirstSave else ({}),
-                            onOpen = if (card.id == "elon") onOpenDetail else ({})
-                        )
-                    }
-                }
-                XComposeFab(
-                    onClick = onOpenCompose,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 16.dp, bottom = 88.dp)
-                )
-            }
-            XBottomNav(selected = selectedBottomTab, onSelect = onSelectBottomTab)
-        }
-    }
-}
-
-@Composable
-private fun XDetailView(
-    liked: Boolean,
-    saved: Boolean,
-    onBack: () -> Unit,
-    onToggleLike: () -> Unit,
-    onToggleSave: () -> Unit,
-    onReply: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier,
-        color = Color.White,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.displayCutout)
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(53.dp)
-                        .padding(start = 8.dp, end = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircleIconButton(onClick = onBack) {
-                        Icon(HugeIcons.ArrowLeft01, contentDescription = null, tint = XText, modifier = Modifier.size(18.dp))
-                    }
-                    Text(
-                        text = "发帖",
-                        color = XText,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 20.dp)
-                    )
-                }
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(bottom = 76.dp)
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                AvatarBubble(label = "RS", background = Color(0xFF111111), modifier = Modifier.size(40.dp))
-                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text("Robert Scoble", color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        VerifiedBadge()
-                                    }
-                                    Text("@Scobleizer", color = XSubText, fontSize = 15.sp)
-                                }
-                            }
-                            Surface(
-                                color = XText,
-                                shape = CircleShape,
-                                modifier = Modifier.pressableScale(pressedScale = 0.96f, onClick = {})
-                            ) {
-                                Text(
-                                    text = "订阅",
-                                    color = Color.White,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                when (selectedBottomTab) {
+                    1 -> XExplorePanel(posts = allPosts, onOpenPost = onOpenPost)
+                    3 -> XActivityPanel(posts = allPosts, onOpenPost = onOpenPost)
+                    4 -> XMessagesPanel(posts = allPosts, bots = bots, onOpenPost = onOpenPost)
+                    else -> LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 154.dp)
+                    ) {
+                        item {
+                            QuickComposerCard(
+                                nickname = settings.displaySetting.userNickname.ifBlank { "你" },
+                                botCount = bots.size,
+                                aiPosting = aiPosting,
+                                onCompose = onCompose,
+                                onGenerateAiPost = onGenerateAiPost
+                            )
+                        }
+                        if (posts.isEmpty()) {
+                            item {
+                                EmptyStateCard(
+                                    title = "时间线还是空的",
+                                    subtitle = "现在发第一条，或者让已配置好的 bots 自动开始活跃。"
                                 )
                             }
                         }
-
-                        Text(
-                            text = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last time I asked it to do the same.",
-                            color = XText,
-                            fontSize = 17.sp,
-                            lineHeight = 24.sp,
-                            modifier = Modifier.padding(top = 14.dp)
-                        )
-
-                        Text(
-                            text = "26年3月28日, 13:35 · 571万 查看",
-                            color = XSubText,
-                            fontSize = 15.sp,
-                            modifier = Modifier.padding(top = 14.dp)
-                        )
-                    }
-
-                    XDividerLine()
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(18.dp)
-                    ) {
-                        Text("15 转帖", color = XText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                        Text("302 喜欢", color = XText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                        Text("19 书签", color = XText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                    }
-                    XDividerLine()
-                    TweetActionRow(
-                        replies = "15",
-                        reposts = "302",
-                        likes = if (liked) "303" else "302",
-                        views = "571万",
-                        liked = liked,
-                        saved = saved,
-                        onToggleLike = onToggleLike,
-                        onToggleSave = onToggleSave,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                    )
-                    XDividerLine()
-                    Text(
-                        text = "最相关的回复",
-                        color = XText,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                    )
-                    XDividerLine()
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.White)
-                            .padding(horizontal = 16.dp, vertical = 14.dp)
-                    ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            AvatarBubble(label = "G", background = Color.Black, modifier = Modifier.size(40.dp))
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Grok", color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Surface(
-                                        color = Color(0xFFFFD700),
-                                        shape = RoundedCornerShape(6.dp)
-                                    ) {
-                                        Text("𝕏I", color = Color.Black, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp))
-                                    }
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("@grok · 7小时", color = XSubText, fontSize = 14.sp)
-                                }
-                                Text(
-                                    text = "回复给 @Scobleizer\n\nThanks! We've been optimizing hard at xAI—speed improvements like this are rolling out fast. Glad the transcript readings feel snappier.",
-                                    color = XText,
-                                    fontSize = 15.sp,
-                                    lineHeight = 21.sp,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
+                        items(posts, key = { it.id }) { post ->
+                            TimelinePostCard(
+                                post = post,
+                                onOpen = { onOpenPost(post.id) },
+                                onReply = { onOpenPost(post.id) },
+                                onToggleLike = { onToggleLike(post.id) },
+                                onToggleRepost = { onToggleRepost(post.id) },
+                                onToggleBookmark = { onToggleBookmark(post.id) }
+                            )
+                            HorizontalDivider(color = XDivider)
                         }
                     }
                 }
-            }
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-                color = Color.White,
-                shadowElevation = 6.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    AvatarBubble(label = "ME", background = Color(0xFF6C8CD5), modifier = Modifier.size(32.dp))
-                    Surface(
-                        color = Color(0xFFF4F7F9),
-                        shape = CircleShape,
-                        modifier = Modifier
-                            .weight(1f)
-                            .pressableScale(pressedScale = 0.98f, onClick = onReply)
-                    ) {
-                        Text(
-                            text = "发布你的回复",
-                            color = XSubText,
-                            fontSize = 15.sp,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 11.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
-@Composable
-private fun XComposePostView(
-    text: String,
-    onTextChange: (String) -> Unit,
-    onClose: () -> Unit,
-    onSubmit: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    XComposerScaffold(
-        modifier = modifier,
-        title = "草稿",
-        actionText = "发帖",
-        placeholder = "有什么新鲜事？",
-        text = text,
-        onTextChange = onTextChange,
-        onClose = onClose,
-        onSubmit = onSubmit,
-        showReplyContext = false,
-    ) {
-        AudienceChip()
-    }
-}
-
-@Composable
-private fun XComposeReplyView(
-    text: String,
-    onTextChange: (String) -> Unit,
-    onClose: () -> Unit,
-    onSubmit: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    XComposerScaffold(
-        modifier = modifier,
-        title = null,
-        actionText = "回复",
-        placeholder = "发布你的回复",
-        text = text,
-        onTextChange = onTextChange,
-        onClose = onClose,
-        onSubmit = onSubmit,
-        showReplyContext = true,
-    ) {
-        Row(
-            modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.width(40.dp)
-            ) {
-                AvatarBubble(label = "RS", background = Color(0xFF111111), modifier = Modifier.size(40.dp))
                 Box(
                     modifier = Modifier
-                        .padding(top = 6.dp)
-                        .width(2.dp)
-                        .height(108.dp)
-                        .background(Color(0xFFCFD9DE), CircleShape)
-                )
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Robert Scoble", color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    VerifiedBadge()
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("@Scobleizer · 8小时", color = XSubText, fontSize = 14.sp)
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 18.dp, bottom = 92.dp)
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(XBlue)
+                        .pressableScale(pressedScale = 0.9f, onClick = onCompose),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = HugeIcons.Add01,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
-                Text(
-                    text = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last time I asked it to do the same.",
-                    color = XText,
-                    fontSize = 15.sp,
-                    lineHeight = 21.sp,
+            }
+            XBottomTabs(
+                selectedIndex = selectedBottomTab,
+                onSelect = onSelectBottomTab
+            )
+        }
+    }
+}
+
+@Composable
+private fun XDetailLayer(
+    post: XPostEntity?,
+    replies: List<XPostEntity>,
+    requestingBotReplies: Boolean,
+    onBack: () -> Unit,
+    onReply: () -> Unit,
+    onToggleLike: () -> Unit,
+    onToggleRepost: () -> Unit,
+    onToggleBookmark: () -> Unit,
+    onOpenPost: (String) -> Unit,
+    onToggleLikeForReply: (String) -> Unit,
+    onToggleRepostForReply: (String) -> Unit,
+    onToggleBookmarkForReply: (String) -> Unit,
+    onRequestBotReplies: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        color = XPanel,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.displayCutout)
+        ) {
+            DetailTopBar(onBack = onBack)
+            if (post == null) {
+                EmptyStateCard(
+                    title = "帖子不存在",
+                    subtitle = "这条内容可能还没加载好，返回时间线再试一次。",
+                    modifier = Modifier.padding(24.dp)
                 )
-                Text(
-                    text = "回复给 @Scobleizer 和 @grok",
-                    color = XBlue,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = 108.dp)
+                ) {
+                    item {
+                        DetailHeroCard(
+                            post = post,
+                            replyCount = replies.size,
+                            requestingBotReplies = requestingBotReplies,
+                            onReply = onReply,
+                            onToggleLike = onToggleLike,
+                            onToggleRepost = onToggleRepost,
+                            onToggleBookmark = onToggleBookmark,
+                            onRequestBotReplies = onRequestBotReplies
+                        )
+                    }
+                    item {
+                        Surface(color = XPanel) {
+                            Text(
+                                text = if (replies.isEmpty()) "还没有回复" else "${replies.size} 条回复",
+                                color = XText,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)
+                            )
+                        }
+                        HorizontalDivider(color = XDivider)
+                    }
+                    if (replies.isEmpty()) {
+                        item {
+                            EmptyStateCard(
+                                title = "这里还很安静",
+                                subtitle = "你可以先回一条，已配置好的 bots 也会自动跟进。",
+                                modifier = Modifier.padding(20.dp)
+                            )
+                        }
+                    }
+                    items(replies, key = { it.id }) { reply ->
+                        TimelinePostCard(
+                            post = reply,
+                            onOpen = { onOpenPost(reply.rootPostId) },
+                            onReply = { onOpenPost(post.id) },
+                            onToggleLike = { onToggleLikeForReply(reply.id) },
+                            onToggleRepost = { onToggleRepostForReply(reply.id) },
+                            onToggleBookmark = { onToggleBookmarkForReply(reply.id) }
+                        )
+                        HorizontalDivider(color = XDivider)
+                    }
+                }
+                ReplyEntryBar(
+                    onReply = onReply,
+                    onRequestBotReplies = onRequestBotReplies,
+                    requestingBotReplies = requestingBotReplies
                 )
             }
         }
@@ -611,358 +554,453 @@ private fun XComposeReplyView(
 }
 
 @Composable
-private fun XComposerScaffold(
-    title: String?,
-    actionText: String,
-    placeholder: String,
+private fun XComposeLayer(
+    title: String,
     text: String,
-    onTextChange: (String) -> Unit,
+    buttonText: String,
+    submitting: Boolean,
+    hint: String,
     onClose: () -> Unit,
+    onTextChange: (String) -> Unit,
     onSubmit: () -> Unit,
-    showReplyContext: Boolean,
     modifier: Modifier = Modifier,
-    contentTop: @Composable ColumnScope.() -> Unit,
 ) {
-    val overLimit = text.length > 280
-    val canSubmit = text.isNotBlank() && !overLimit
-    val progress = (text.length.coerceAtMost(280) / 280f)
-    val ringColor = when {
-        overLimit -> XDanger
-        progress > 0.8f -> XWarn
-        text.isNotBlank() -> XBlue
-        else -> XDivider
-    }
-
+    val overLimit = text.length > ComposerLimit
+    val canSubmit = text.isNotBlank() && !overLimit && !submitting
     Surface(
         modifier = modifier,
-        color = Color.White,
-        shadowElevation = 10.dp
+        color = XPanel,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.displayCutout)
+                .imePadding()
         ) {
+            ComposerTopBar(
+                title = title,
+                buttonText = buttonText,
+                canSubmit = canSubmit,
+                submitting = submitting,
+                onClose = onClose,
+                onSubmit = onSubmit
+            )
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(53.dp)
-                    .padding(start = 8.dp, end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .weight(1f)
+                    .padding(horizontal = 20.dp, vertical = 18.dp)
             ) {
-                CircleIconButton(onClick = onClose) {
-                    Icon(HugeIcons.Cancel01, contentDescription = null, tint = XText, modifier = Modifier.size(18.dp))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    if (title != null) {
-                        Text(title, color = XBlue, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    }
-                    SubmitButton(text = actionText, enabled = canSubmit, onClick = onSubmit)
+                UserAvatarBubble(modifier = Modifier.size(44.dp))
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    VisibilityChip()
+                    Spacer(modifier = Modifier.height(14.dp))
+                    ComposerTextArea(
+                        text = text,
+                        hint = hint,
+                        onTextChange = onTextChange,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
                 }
             }
+            ComposerFooter(
+                textLength = text.length,
+                overLimit = overLimit
+            )
+        }
+    }
+}
 
+@Composable
+private fun XReplyComposeLayer(
+    post: XPostEntity?,
+    text: String,
+    buttonText: String,
+    submitting: Boolean,
+    onClose: () -> Unit,
+    onTextChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val overLimit = text.length > ComposerLimit
+    val canSubmit = text.isNotBlank() && !overLimit && !submitting
+    Surface(
+        modifier = modifier,
+        color = XPanel,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.displayCutout)
+                .imePadding()
+        ) {
+            ComposerTopBar(
+                title = "回复",
+                buttonText = buttonText,
+                canSubmit = canSubmit,
+                submitting = submitting,
+                onClose = onClose,
+                onSubmit = onSubmit
+            )
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(start = 16.dp, top = 8.dp, end = 16.dp)
+                    .padding(horizontal = 20.dp, vertical = 18.dp)
             ) {
-                contentTop()
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-                    AvatarBubble(label = "ME", background = Color(0xFF6C8CD5), modifier = Modifier.size(40.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        if (!showReplyContext) {
-                            Text(
-                                text = "每个人",
-                                color = XBlue,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .border(1.dp, Color(0xFFCFD9DE), CircleShape)
-                                    .padding(horizontal = 12.dp, vertical = 5.dp)
-                            )
-                        }
-                        ComposerTextField(
-                            value = text,
-                            onValueChange = onTextChange,
-                            placeholder = placeholder,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp)
-                        )
-                    }
+                if (post != null) {
+                    ReplyContextCard(post = post)
+                    Spacer(modifier = Modifier.height(18.dp))
                 }
-                ComposerMediaRow(modifier = Modifier.padding(top = 18.dp))
-                if (!showReplyContext) {
-                    ReplyPermissionRow(modifier = Modifier.padding(top = 12.dp))
+                Row {
+                    UserAvatarBubble(modifier = Modifier.size(44.dp))
+                    Spacer(modifier = Modifier.width(14.dp))
+                    ComposerTextArea(
+                        text = text,
+                        hint = "发布你的回复",
+                        onTextChange = onTextChange,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
-                Spacer(modifier = Modifier.height(120.dp))
             }
+            ComposerFooter(
+                textLength = text.length,
+                overLimit = overLimit
+            )
+        }
+    }
+}
 
-            Column(modifier = Modifier.fillMaxWidth()) {
-                ComposerToolbar(
-                    progress = progress,
-                    ringColor = ringColor,
-                    modifier = Modifier.fillMaxWidth()
+@Composable
+private fun XHeader(
+    onPrimaryAction: () -> Unit,
+    onSecondaryAction: () -> Unit,
+    aiPosting: Boolean,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(76.dp)
+            .padding(horizontal = 18.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        UserAvatarBubble(modifier = Modifier.size(34.dp))
+        Spacer(modifier = Modifier.weight(1f))
+        Image(
+            painter = painterResource(R.drawable.zphone_x_logo),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(28.dp)
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            HeaderAction(
+                icon = HugeIcons.Search01,
+                onClick = onPrimaryAction
+            )
+            HeaderAction(
+                icon = HugeIcons.MoreVertical,
+                onClick = onSecondaryAction,
+                loading = aiPosting
+            )
+        }
+    }
+}
+
+@Composable
+private fun HeaderAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    loading: Boolean = false,
+) {
+    Box(
+        modifier = Modifier
+            .size(38.dp)
+            .clip(CircleShape)
+            .background(XCard)
+            .pressableScale(pressedScale = 0.92f, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                color = XBlue,
+                strokeWidth = 2.dp
+            )
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = XText,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun XTopTabs(selectedTopTab: Int, onSelectTopTab: (Int) -> Unit) {
+    val tabs = listOf("为你推荐", "正在关注", "AI 动态")
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(62.dp)
+            .background(XPanel)
+    ) {
+        tabs.forEachIndexed { index, title ->
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .clickable { onSelectTopTab(index) },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = title,
+                    color = if (selectedTopTab == index) XText else XSubText,
+                    fontSize = 15.sp,
+                    fontWeight = if (selectedTopTab == index) FontWeight.Bold else FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .width(56.dp)
+                        .height(3.dp)
+                        .clip(CircleShape)
+                        .background(if (selectedTopTab == index) XBlue else Color.Transparent)
                 )
             }
         }
     }
+    HorizontalDivider(color = XDivider)
 }
 
 @Composable
-private fun XFeedHeader() {
+private fun QuickComposerCard(
+    nickname: String,
+    botCount: Int,
+    aiPosting: Boolean,
+    onCompose: () -> Unit,
+    onGenerateAiPost: () -> Unit,
+) {
     Surface(
-        color = Color.White.copy(alpha = 0.96f),
-        shadowElevation = 0.dp
+        shape = RoundedCornerShape(24.dp),
+        color = XCard,
+        shadowElevation = 2.dp,
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(53.dp)
-                .padding(start = 16.dp, end = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            AvatarBubble(
-                label = "ME",
-                background = Color(0xFFD9E7F4),
-                textColor = XText,
-                modifier = Modifier.size(32.dp)
-            )
-            Image(
-                painter = painterResource(R.drawable.zphone_x_logo),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(24.dp)
-            )
-            CircleIconButton(onClick = {}) {
-                Icon(HugeIcons.MoreVertical, contentDescription = null, tint = XSubText, modifier = Modifier.size(18.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun XFeedTabs(selectedTab: Int, onSelect: (Int) -> Unit) {
-    val tabs = listOf("为你推荐", "正在关注", "AI — Rumors & Insights")
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-        ) {
-            tabs.forEachIndexed { index, title ->
-                val tabWidth = if (index == 2) 188.dp else 118.dp
-                Box(
-                    modifier = Modifier
-                        .width(tabWidth)
-                        .height(53.dp)
-                        .clickable { onSelect(index) }
-                ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                UserAvatarBubble(modifier = Modifier.size(40.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = title,
-                        color = if (selectedTab == index) XText else XSubText,
-                        fontSize = 15.sp,
-                        fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.align(Alignment.Center)
+                        text = nickname,
+                        color = XText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .width(56.dp)
-                            .height(4.dp)
-                            .clip(CircleShape)
-                            .background(if (selectedTab == index) XBlue else Color.Transparent)
+                    Text(
+                        text = if (botCount > 0) "$botCount 个 bots 正在自动活跃和回复" else "还没有可自动发帖的 bots",
+                        color = XSubText,
+                        fontSize = 13.sp
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "完整支持本地持久化发帖、bots 自动回复、AI 工具代发和自动发帖。",
+                color = XText,
+                fontSize = 15.sp,
+                lineHeight = 22.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = onCompose,
+                    shape = RoundedCornerShape(999.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("马上发一条")
+                }
+                Button(
+                    onClick = onGenerateAiPost,
+                    enabled = !aiPosting,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = XBlue,
+                        contentColor = Color.White,
+                        disabledContainerColor = XBlue.copy(alpha = 0.45f),
+                        disabledContentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(999.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (aiPosting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("AI 代发")
+                    }
+                }
+            }
         }
-        XDividerLine()
     }
 }
 
 @Composable
-private fun XFeedCard(
-    card: FeedCard,
-    liked: Boolean,
-    saved: Boolean,
-    onToggleLike: () -> Unit,
-    onToggleSave: () -> Unit,
+private fun TimelinePostCard(
+    post: XPostEntity,
     onOpen: () -> Unit,
+    onReply: () -> Unit,
+    onToggleLike: () -> Unit,
+    onToggleRepost: () -> Unit,
+    onToggleBookmark: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
-            .clickable(enabled = card.id == "elon", onClick = onOpen)
+            .clickable(onClick = onOpen)
+            .padding(horizontal = 18.dp, vertical = 14.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            AvatarBubble(
-                label = if (card.id == "elon") "EM" else "LE",
-                background = if (card.id == "elon") Color(0xFF111111) else Color(0xFF8B936E),
-                modifier = Modifier.size(40.dp)
-            )
+        Row(verticalAlignment = Alignment.Top) {
+            PostAvatar(post = post, modifier = Modifier.size(42.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(card.author, color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            VerifiedBadge()
-                            if (card.id == "elon") {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Image(
-                                    painter = painterResource(R.drawable.zphone_x_logo),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = post.authorName,
+                        color = XText,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (post.authorKind != "user") {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            color = XBlue.copy(alpha = 0.14f),
+                            shape = RoundedCornerShape(999.dp)
+                        ) {
                             Text(
-                                text = "${card.handle} · ${card.time}",
-                                color = XSubText,
-                                fontSize = 14.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                text = if (post.authorKind == "system") "官方" else "BOT",
+                                color = XBlue,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                             )
                         }
                     }
-                    CircleIconButton(onClick = {}) {
-                        Icon(HugeIcons.MoreVertical, contentDescription = null, tint = XSubText, modifier = Modifier.size(18.dp))
-                    }
-                }
-                Text(
-                    text = card.content,
-                    color = XText,
-                    fontSize = 15.sp,
-                    lineHeight = 21.sp,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-                if (card.quoteTitle != null && card.quoteContent != null) {
-                    QuoteCard(
-                        title = card.quoteTitle,
-                        handle = card.quoteHandle.orEmpty(),
-                        content = card.quoteContent,
-                        preview = card.quotePreview,
-                        modifier = Modifier.padding(top = 14.dp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = post.authorHandle,
+                        color = XSubText,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = " · ${formatRelativeTime(post.createAt)}",
+                        color = XSubText,
+                        fontSize = 14.sp
                     )
                 }
-                TweetActionRow(
-                    replies = card.replies,
-                    reposts = card.reposts,
-                    likes = if (card.id == "elon" && liked) "1万+" else card.likes,
-                    views = card.views,
-                    liked = liked,
-                    saved = saved,
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = post.content,
+                    color = XText,
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp
+                )
+                if (!post.quoteContent.isNullOrBlank() || !post.quotePreview.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    QuotePreviewCard(post = post)
+                }
+                Spacer(modifier = Modifier.height(14.dp))
+                PostActionsRow(
+                    post = post,
+                    onReply = onReply,
                     onToggleLike = onToggleLike,
-                    onToggleSave = onToggleSave,
-                    modifier = Modifier.padding(top = 12.dp)
+                    onToggleRepost = onToggleRepost,
+                    onToggleBookmark = onToggleBookmark
                 )
             }
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                imageVector = HugeIcons.MoreVertical,
+                contentDescription = null,
+                tint = XSubText,
+                modifier = Modifier.size(18.dp)
+            )
         }
-        XDividerLine()
     }
 }
 
 @Composable
-private fun QuoteCard(
-    title: String,
-    handle: String,
-    content: String,
-    preview: String?,
-    modifier: Modifier = Modifier,
-) {
+private fun QuotePreviewCard(post: XPostEntity) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = Color.White,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = XPanel,
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = 0.dp,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier
-                .border(1.dp, XDivider, RoundedCornerShape(20.dp))
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(XCard)
                 .padding(14.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AvatarBubble(label = title.take(1), background = Color(0xFF1C2128), modifier = Modifier.size(22.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(title, color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.width(4.dp))
-                VerifiedBadge(size = 14.dp)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(handle, color = XSubText, fontSize = 14.sp)
+                Text(
+                    text = post.quoteAuthorName ?: "引用内容",
+                    color = XText,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                if (!post.quoteHandle.isNullOrBlank()) {
+                    Text(
+                        text = "  ${post.quoteHandle}",
+                        color = XSubText,
+                        fontSize = 13.sp
+                    )
+                }
             }
-            Text(
-                text = content,
-                color = XText,
-                fontSize = 15.sp,
-                lineHeight = 21.sp,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            if (preview != null) {
-                if (preview == "订阅方案预览") {
+            if (!post.quoteContent.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = post.quoteContent,
+                    color = XText,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (!post.quotePreview.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFFE5F2F9)
+                ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(140.dp)
-                            .padding(top = 12.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(Color(0xFFBDE3F3))
+                            .height(92.dp)
+                            .padding(12.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(horizontal = 16.dp)
-                                .fillMaxWidth()
-                                .height(112.dp)
-                                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                                .background(Color.White)
-                                .border(1.dp, XDivider, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                        ) {
-                            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(96.dp)
-                                        .height(10.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFFE1E8EC))
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .width(128.dp)
-                                        .height(10.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFFE7EDF0))
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    Surface(
-                        color = Color(0xFFF4F7F9),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .padding(top = 12.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(preview, color = XSubText, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                        }
+                        Text(
+                            text = post.quotePreview,
+                            color = XSubText,
+                            fontSize = 13.sp,
+                            modifier = Modifier.align(Alignment.BottomStart)
+                        )
                     }
                 }
             }
@@ -971,261 +1009,397 @@ private fun QuoteCard(
 }
 
 @Composable
-private fun TweetActionRow(
-    replies: String,
-    reposts: String,
-    likes: String,
-    views: String? = null,
-    liked: Boolean,
-    saved: Boolean,
+private fun PostActionsRow(
+    post: XPostEntity,
+    onReply: () -> Unit,
     onToggleLike: () -> Unit,
-    onToggleSave: () -> Unit,
-    modifier: Modifier = Modifier,
+    onToggleRepost: () -> Unit,
+    onToggleBookmark: () -> Unit,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        StatAction(label = replies, onClick = {}) { tint ->
-            Icon(HugeIcons.BubbleChatQuestion, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
-        }
-        StatAction(label = reposts, activeColor = Color(0xFF00BA7C), onClick = {}) { tint ->
-            Icon(HugeIcons.Share04, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
-        }
-        StatAction(label = likes, active = liked, activeColor = Color(0xFFF91880), onClick = onToggleLike) { tint ->
-            Icon(HugeIcons.FavouriteCircle, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
-        }
-        if (views != null) {
-            StatAction(label = views, onClick = {}) { tint ->
-                ViewsGlyph(color = tint, modifier = Modifier.size(18.dp))
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            ActionGlyphButton(active = saved, activeColor = XBlue, onClick = onToggleSave) { tint ->
-                Icon(HugeIcons.Favourite, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
-            }
-            ActionGlyphButton(active = false, activeColor = XBlue, onClick = {}) { tint ->
-                Icon(HugeIcons.Share04, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
-            }
-        }
+        ActionChip(
+            icon = HugeIcons.BubbleChatQuestion,
+            label = formatMetric(post.replyCount),
+            tint = XSubText,
+            onClick = onReply
+        )
+        ActionChip(
+            icon = HugeIcons.Share04,
+            label = formatMetric(post.repostCount),
+            tint = if (post.repostedByUser) XGreen else XSubText,
+            onClick = onToggleRepost
+        )
+        ActionChip(
+            icon = HugeIcons.Favourite,
+            label = formatMetric(post.likeCount),
+            tint = if (post.likedByUser) XDanger else XSubText,
+            onClick = onToggleLike
+        )
+        MetricChip(label = "浏览 ${formatMetric(post.viewCount)}")
+        MetricChip(
+            label = if (post.bookmarkedByUser) "已收藏" else "收藏",
+            tint = if (post.bookmarkedByUser) XBlue else XSubText,
+            onClick = onToggleBookmark
+        )
     }
 }
 
 @Composable
-private fun StatAction(
+private fun ActionChip(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
-    active: Boolean = false,
-    activeColor: Color = XBlue,
+    tint: Color,
     onClick: () -> Unit,
-    icon: @Composable (Color) -> Unit,
 ) {
-    val tint = if (active) activeColor else XSubText
-    Row(
-        modifier = Modifier.pressableScale(pressedScale = 0.95f, onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        icon(tint)
-        Text(label, color = tint, fontSize = 13.sp)
-    }
-}
-
-@Composable
-private fun ActionGlyphButton(
-    active: Boolean,
-    activeColor: Color,
-    onClick: () -> Unit,
-    content: @Composable (Color) -> Unit,
-) {
-    val tint = if (active) activeColor else XSubText
-    Box(
-        modifier = Modifier.pressableScale(pressedScale = 0.94f, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        content(tint)
-    }
-}
-
-@Composable
-private fun XComposeFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.pressableScale(pressedScale = 0.94f, onClick = onClick),
-        color = XBlue,
-        shape = CircleShape,
-        shadowElevation = 10.dp
+        color = tint.copy(alpha = 0.08f),
+        shape = RoundedCornerShape(999.dp),
+        modifier = Modifier.pressableScale(pressedScale = 0.94f, onClick = onClick)
     ) {
-        Box(
-            modifier = Modifier.size(56.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(HugeIcons.Add01, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
-        }
-    }
-}
-
-@Composable
-private fun XBottomNav(selected: Int, onSelect: (Int) -> Unit) {
-    Surface(color = Color.White, shadowElevation = 6.dp) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            BottomNavItem(onClick = { onSelect(0) }) {
-                HomeGlyph(color = if (selected == 0) XText else XSubText, modifier = Modifier.size(22.dp))
-            }
-            BottomNavItem(onClick = { onSelect(1) }) {
-                Icon(HugeIcons.Search01, contentDescription = null, tint = if (selected == 1) XText else XSubText, modifier = Modifier.size(22.dp))
-            }
-            BottomNavItem(onClick = { onSelect(2) }) {
-                SlashGlyph(color = if (selected == 2) XText else XSubText, modifier = Modifier.size(22.dp))
-            }
-            BottomNavItem(onClick = { onSelect(3) }) {
-                BellGlyph(color = if (selected == 3) XText else XSubText, modifier = Modifier.size(22.dp))
-            }
-            BottomNavItem(onClick = { onSelect(4) }) {
-                MailGlyph(color = if (selected == 4) XText else XSubText, modifier = Modifier.size(22.dp))
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = label,
+                color = tint,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
 
 @Composable
-private fun BottomNavItem(onClick: () -> Unit, content: @Composable BoxScope.() -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(width = 48.dp, height = 36.dp)
-            .pressableScale(pressedScale = 0.94f, onClick = onClick),
-        contentAlignment = Alignment.Center,
-        content = content
-    )
-}
-
-@Composable
-private fun AvatarBubble(
+private fun MetricChip(
     label: String,
-    background: Color,
-    modifier: Modifier = Modifier,
-    textColor: Color = Color.White,
+    tint: Color = XSubText,
+    onClick: (() -> Unit)? = null,
 ) {
-    Box(
+    val modifier = if (onClick == null) {
+        Modifier
+    } else {
+        Modifier.pressableScale(pressedScale = 0.94f, onClick = onClick)
+    }
+    Surface(
+        color = tint.copy(alpha = 0.08f),
+        shape = RoundedCornerShape(999.dp),
         modifier = modifier
-            .clip(CircleShape)
-            .background(background)
-            .border(1.dp, Color.White.copy(alpha = 0.24f), CircleShape),
-        contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            color = textColor,
-            fontSize = if (label.length <= 2) 13.sp else 11.sp,
-            fontWeight = FontWeight.Bold
+            color = tint,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
         )
     }
 }
 
 @Composable
-private fun VerifiedBadge(size: androidx.compose.ui.unit.Dp = 16.dp) {
-    Box(
+private fun DetailTopBar(onBack: () -> Unit) {
+    Row(
         modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(XBlue),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "✓",
-            color = Color.White,
-            fontSize = (size.value * 0.6f).sp,
-            fontWeight = FontWeight.Bold,
-            lineHeight = (size.value * 0.6f).sp
-        )
-    }
-}
-
-@Composable
-private fun XDividerLine(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
             .fillMaxWidth()
-            .height(1.dp)
-            .background(XDivider)
-    )
+            .height(74.dp)
+            .padding(horizontal = 18.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(XCard)
+                .pressableScale(pressedScale = 0.92f, onClick = onBack),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = HugeIcons.ArrowLeft01,
+                contentDescription = null,
+                tint = XText,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column {
+            Text(
+                text = "帖子",
+                color = XText,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "真实发帖、回复和 bots 互动",
+                color = XSubText,
+                fontSize = 12.sp
+            )
+        }
+    }
+    HorizontalDivider(color = XDivider)
 }
 
 @Composable
-private fun CircleIconButton(onClick: () -> Unit, content: @Composable BoxScope.() -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(36.dp)
-            .clip(CircleShape)
-            .pressableScale(pressedScale = 0.94f, onClick = onClick),
-        contentAlignment = Alignment.Center,
-        content = content
-    )
+private fun DetailHeroCard(
+    post: XPostEntity,
+    replyCount: Int,
+    requestingBotReplies: Boolean,
+    onReply: () -> Unit,
+    onToggleLike: () -> Unit,
+    onToggleRepost: () -> Unit,
+    onToggleBookmark: () -> Unit,
+    onRequestBotReplies: () -> Unit,
+) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
+        Row(verticalAlignment = Alignment.Top) {
+            PostAvatar(post = post, modifier = Modifier.size(48.dp))
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = post.authorName,
+                    color = XText,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = post.authorHandle,
+                    color = XSubText,
+                    fontSize = 15.sp
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = post.content,
+            color = XText,
+            fontSize = 18.sp,
+            lineHeight = 28.sp
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        Text(
+            text = "${formatAbsoluteTime(post.createAt)} · ${formatMetric(post.viewCount)} 查看",
+            color = XSubText,
+            fontSize = 14.sp
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        HorizontalDivider(color = XDivider)
+        Spacer(modifier = Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MetricChip(label = "${formatMetric(post.repostCount)} 转发")
+            MetricChip(label = "${formatMetric(post.likeCount)} 喜欢")
+            MetricChip(label = "$replyCount 回复")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        PostActionsRow(
+            post = post,
+            onReply = onReply,
+            onToggleLike = onToggleLike,
+            onToggleRepost = onToggleRepost,
+            onToggleBookmark = onToggleBookmark
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(
+                onClick = onRequestBotReplies,
+                enabled = !requestingBotReplies,
+                shape = RoundedCornerShape(999.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                if (requestingBotReplies) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = XBlue,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("催 bots 回复")
+                }
+            }
+            MetricChip(
+                label = if (post.bookmarkedByUser) "已收藏到本地" else "收藏到本地",
+                tint = if (post.bookmarkedByUser) XBlue else XSubText,
+                onClick = onToggleBookmark
+            )
+        }
+    }
+    HorizontalDivider(color = XDivider)
 }
 
 @Composable
-private fun SubmitButton(text: String, enabled: Boolean, onClick: () -> Unit) {
+private fun ReplyEntryBar(
+    onReply: () -> Unit,
+    onRequestBotReplies: () -> Unit,
+    requestingBotReplies: Boolean,
+) {
     Surface(
-        color = if (enabled) XBlue else Color(0xFF8ECDF8),
-        shape = CircleShape,
-        modifier = Modifier.pressableScale(pressedScale = if (enabled) 0.97f else 1f, onClick = { if (enabled) onClick() })
+        color = XPanel,
+        shadowElevation = 8.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            UserAvatarBubble(modifier = Modifier.size(34.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(XCard)
+                    .clickable(onClick = onReply)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = "发布你的回复",
+                    color = XSubText,
+                    fontSize = 15.sp
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            OutlinedButton(
+                onClick = onRequestBotReplies,
+                enabled = !requestingBotReplies,
+                shape = RoundedCornerShape(999.dp)
+            ) {
+                if (requestingBotReplies) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(14.dp),
+                        color = XBlue,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Bots")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ComposerTopBar(
+    title: String,
+    buttonText: String,
+    canSubmit: Boolean,
+    submitting: Boolean,
+    onClose: () -> Unit,
+    onSubmit: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(76.dp)
+            .padding(horizontal = 18.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(XCard)
+                .pressableScale(pressedScale = 0.92f, onClick = onClose),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = HugeIcons.Cancel01,
+                contentDescription = null,
+                tint = XText,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Text(
+            text = title,
+            color = XText,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f)
+        )
+        Button(
+            onClick = onSubmit,
+            enabled = canSubmit,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = XBlue,
+                contentColor = Color.White,
+                disabledContainerColor = XBlue.copy(alpha = 0.42f),
+                disabledContentColor = Color.White
+            ),
+            shape = RoundedCornerShape(999.dp)
+        ) {
+            if (submitting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(buttonText)
+            }
+        }
+    }
+    HorizontalDivider(color = XDivider)
+}
+
+@Composable
+private fun VisibilityChip() {
+    Surface(
+        color = XPanel,
+        shape = RoundedCornerShape(999.dp),
+        modifier = Modifier.clip(RoundedCornerShape(999.dp))
     ) {
         Text(
-            text = text,
-            color = Color.White,
-            fontSize = 15.sp,
+            text = "每个人都能看到",
+            color = XBlue,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier
+                .background(XBlue.copy(alpha = 0.09f))
+                .padding(horizontal = 12.dp, vertical = 7.dp)
         )
     }
 }
 
 @Composable
-private fun AudienceChip() {
-    Text(
-        text = "每个人",
-        color = XBlue,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier
-            .border(1.dp, Color(0xFFCFD9DE), CircleShape)
-            .padding(horizontal = 12.dp, vertical = 5.dp)
-    )
-}
-
-@Composable
-private fun ComposerTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
+private fun ComposerTextArea(
+    text: String,
+    hint: String,
+    onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BasicTextField(
-        value = value,
-        onValueChange = {
-            if (it.length <= 400) onValueChange(it)
-        },
-        modifier = modifier,
+        value = text,
+        onValueChange = onTextChange,
         textStyle = TextStyle(
             color = XText,
             fontSize = 22.sp,
-            lineHeight = 27.sp,
+            lineHeight = 30.sp,
             fontWeight = FontWeight.Normal
         ),
-        minLines = 6,
+        modifier = modifier.fillMaxWidth(),
         decorationBox = { innerTextField ->
-            Box {
-                if (value.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+            ) {
+                if (text.isBlank()) {
                     Text(
-                        text = placeholder,
+                        text = hint,
                         color = XSubText,
                         fontSize = 22.sp,
-                        lineHeight = 27.sp
+                        lineHeight = 30.sp
                     )
                 }
                 innerTextField()
@@ -1235,133 +1409,207 @@ private fun ComposerTextField(
 }
 
 @Composable
-private fun ComposerMediaRow(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        ComposerMediaTile(accent = Color.White, title = "添加图片") {
-            Icon(HugeIcons.Image03, contentDescription = null, tint = XBlue, modifier = Modifier.size(28.dp))
-        }
-        ComposerMediaTile(accent = Color(0xFFE6DBCC), title = "Dog Meme") {
-            Text(
-                text = "Dog Meme",
-                color = XSubText,
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
-        }
-        ComposerMediaTile(accent = Color.White, title = "草稿卡片") {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.align(Alignment.TopStart)
-            ) {
-                Box(modifier = Modifier.size(14.dp).clip(CircleShape).background(Color(0xFFD8E0E5)))
-                Box(modifier = Modifier.width(50.dp).height(6.dp).clip(CircleShape).background(Color(0xFFDDE5E9)))
-                Box(modifier = Modifier.width(68.dp).height(6.dp).clip(CircleShape).background(Color(0xFFE7EDF0)))
-                Box(modifier = Modifier.width(58.dp).height(6.dp).clip(CircleShape).background(Color(0xFFE7EDF0)))
-            }
-        }
-        ComposerMediaTile(accent = Color(0xFF1C2128), title = "代码") {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Text("This code will let", color = Color(0xFF8B949E), fontSize = 6.sp)
-                Text("you recover...", color = Color(0xFF8B949E), fontSize = 6.sp)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("R68645", color = XBlue, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@Composable
-private fun ComposerMediaTile(
-    accent: Color,
-    title: String,
-    content: @Composable BoxScope.() -> Unit,
-) {
-    Surface(
-        color = accent,
-        shape = RoundedCornerShape(18.dp),
-        modifier = Modifier.size(width = 88.dp, height = 88.dp),
-        shadowElevation = 1.dp
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .border(1.dp, Color(0xFFCFD9DE), RoundedCornerShape(18.dp))
-                .padding(10.dp),
-            contentAlignment = Alignment.Center,
-            content = content
-        )
-    }
-}
-
-@Composable
-private fun ReplyPermissionRow(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(18.dp)
-                .clip(CircleShape)
-                .background(XBlue),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("i", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        }
-        Text("所有人可以回复", color = XBlue, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-private fun ComposerToolbar(progress: Float, ringColor: Color, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.background(Color.White)) {
-        XDividerLine()
+private fun ComposerFooter(textLength: Int, overLimit: Boolean) {
+    Column {
+        HorizontalDivider(color = XDivider)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
-                ToolbarIcon {
-                    Icon(HugeIcons.Image03, contentDescription = null, tint = XBlue, modifier = Modifier.size(18.dp))
-                }
-                ToolbarIcon {
-                    PollGlyph(color = XBlue, modifier = Modifier.size(18.dp))
-                }
-                ToolbarIcon {
-                    ComposerLinesGlyph(color = XBlue, modifier = Modifier.size(18.dp))
-                }
-                ToolbarIcon {
-                    PinGlyph(color = XBlue, modifier = Modifier.size(18.dp))
-                }
+            ComposerActionChip(icon = HugeIcons.Image03, label = "图片")
+            MetricChip(label = "文件")
+            MetricChip(label = "位置")
+            MetricChip(label = "草稿")
+        }
+        HorizontalDivider(color = XDivider)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "所有人都可以回复",
+                color = XBlue,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            CharacterProgress(
+                length = textLength,
+                overLimit = overLimit
+            )
+        }
+    }
+}
+
+@Composable
+private fun ComposerActionChip(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+) {
+    Surface(
+        color = XBlue.copy(alpha = 0.08f),
+        shape = RoundedCornerShape(999.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = XBlue,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = label,
+                color = XBlue,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun CharacterProgress(length: Int, overLimit: Boolean) {
+    val progress = (length.coerceAtMost(ComposerLimit)).toFloat() / ComposerLimit.toFloat()
+    val color = when {
+        overLimit -> XDanger
+        length > 220 -> XWarn
+        length > 0 -> XBlue
+        else -> XDivider
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Canvas(modifier = Modifier.size(26.dp)) {
+            val strokeWidth = 2.5.dp.toPx()
+            drawCircle(
+                color = XDivider,
+                radius = size.minDimension / 2f - strokeWidth,
+                style = Stroke(width = strokeWidth)
+            )
+            if (length > 0) {
+                drawArc(
+                    color = color,
+                    startAngle = -90f,
+                    sweepAngle = progress * 360f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
             }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ProgressRing(progress = progress, color = ringColor)
-                Box(modifier = Modifier.width(1.dp).height(24.dp).background(Color(0xFFCFD9DE)))
-                Surface(
-                    color = Color.White,
-                    shape = CircleShape,
-                    modifier = Modifier.border(1.dp, Color(0xFFCFD9DE), CircleShape)
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = "$length/$ComposerLimit",
+            color = color,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun ReplyContextCard(post: XPostEntity) {
+    Row {
+        PostAvatar(post = post, modifier = Modifier.size(42.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "${post.authorName} ${post.authorHandle}",
+                color = XText,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = post.content,
+                color = XText,
+                fontSize = 15.sp,
+                lineHeight = 22.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "回复给 ${post.authorHandle}",
+                color = XBlue,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun XExplorePanel(posts: List<XPostEntity>, onOpenPost: (String) -> Unit) {
+    val keywords = remember(posts) {
+        posts.flatMap { post ->
+            post.content
+                .split(Regex("[\\s\\n，。！？,.!?:：]+"))
+                .map { it.trim() }
+                .filter { it.length in 2..14 }
+        }
+            .groupingBy { it }
+            .eachCount()
+            .entries
+            .sortedByDescending { it.value }
+            .take(6)
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+    ) {
+        item {
+            SectionIntroCard(
+                title = "探索",
+                subtitle = "从你自己的时间线里提炼热点，点进去可以直接回到原帖。"
+            )
+        }
+        if (keywords.isEmpty()) {
+            item {
+                EmptyStateCard(
+                    title = "还没有足够的内容生成热点",
+                    subtitle = "先发几条帖子，探索页会开始自己长出来。"
+                )
+            }
+        }
+        items(keywords, key = { it.key }) { entry ->
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = XCard,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                val target = posts.firstOrNull { it.content.contains(entry.key) }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { target?.let { onOpenPost(it.id) } }
+                        .padding(18.dp)
                 ) {
-                    Box(modifier = Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-                        Icon(HugeIcons.Add01, contentDescription = null, tint = XBlue, modifier = Modifier.size(16.dp))
-                    }
+                    Text(
+                        text = "趋势话题",
+                        color = XSubText,
+                        fontSize = 13.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = entry.key,
+                        color = XText,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "被提到 ${entry.value} 次",
+                        color = XSubText,
+                        fontSize = 14.sp
+                    )
                 }
             }
         }
@@ -1369,169 +1617,324 @@ private fun ComposerToolbar(progress: Float, ringColor: Color, modifier: Modifie
 }
 
 @Composable
-private fun ToolbarIcon(content: @Composable BoxScope.() -> Unit) {
-    Box(
+private fun XActivityPanel(posts: List<XPostEntity>, onOpenPost: (String) -> Unit) {
+    val activityItems = remember(posts) {
+        posts.take(8)
+    }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+    ) {
+        item {
+            SectionIntroCard(
+                title = "提醒",
+                subtitle = "这里会汇总最新的发帖、回复和互动信号。"
+            )
+        }
+        if (activityItems.isEmpty()) {
+            item {
+                EmptyStateCard(
+                    title = "暂时没有提醒",
+                    subtitle = "时间线有新动态后，这里会同步更新。"
+                )
+            }
+        }
+        items(activityItems, key = { it.id }) { post ->
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = XCard,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenPost(post.rootPostId) }
+                        .padding(18.dp)
+                ) {
+                    Text(
+                        text = "${post.authorName} ${if (post.parentPostId == null) "发布了新动态" else "参与了这条讨论"}",
+                        color = XText,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = post.content,
+                        color = XSubText,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = formatRelativeTime(post.createAt),
+                        color = XSubText,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun XMessagesPanel(
+    posts: List<XPostEntity>,
+    bots: List<String>,
+    onOpenPost: (String) -> Unit,
+) {
+    val conversations = remember(posts, bots) {
+        val botPosts = posts.filter { it.authorKind == "bot" }.take(8)
+        if (botPosts.isNotEmpty()) {
+            botPosts
+        } else {
+            posts.take(4)
+        }
+    }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+    ) {
+        item {
+            SectionIntroCard(
+                title = "私信",
+                subtitle = if (bots.isNotEmpty()) "已配置 bots 可以在这里形成更像真实产品的会话入口。" else "先配置 bots，私信页会更像真实社交应用。"
+            )
+        }
+        if (conversations.isEmpty()) {
+            item {
+                EmptyStateCard(
+                    title = "私信列表还是空的",
+                    subtitle = "等 bots 和时间线都活跃起来后，这里会自然丰富。"
+                )
+            }
+        }
+        items(conversations, key = { it.id }) { post ->
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = XCard,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenPost(post.rootPostId) }
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PostAvatar(post = post, modifier = Modifier.size(44.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = post.authorName,
+                            color = XText,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = post.content,
+                            color = XSubText,
+                            fontSize = 14.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = formatRelativeTime(post.createAt),
+                        color = XSubText,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionIntroCard(title: String, subtitle: String) {
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = XCard,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                text = title,
+                color = XText,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = subtitle,
+                color = XSubText,
+                fontSize = 14.sp,
+                lineHeight = 21.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyStateCard(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = XCard,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                color = XText,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = subtitle,
+                color = XSubText,
+                fontSize = 14.sp,
+                lineHeight = 21.sp,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+private fun XBottomTabs(
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+) {
+    val labels = listOf("首页", "探索", "发帖", "提醒", "私信")
+    HorizontalDivider(color = XDivider)
+    Row(
         modifier = Modifier
-            .size(40.dp)
+            .fillMaxWidth()
+            .height(78.dp)
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        labels.forEachIndexed { index, label ->
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .clickable { onSelect(index) },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = label,
+                    color = if (selectedIndex == index && index != 2) XText else XSubText,
+                    fontSize = 13.sp,
+                    fontWeight = if (selectedIndex == index && index != 2) FontWeight.Bold else FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .width(if (index == 2) 34.dp else 24.dp)
+                        .height(3.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                index == 2 -> XBlue.copy(alpha = 0.22f)
+                                selectedIndex == index -> XText
+                                else -> Color.Transparent
+                            }
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PostAvatar(post: XPostEntity, modifier: Modifier = Modifier) {
+    val background = when (post.authorKind) {
+        "bot" -> Color.Black
+        "system" -> XBlue
+        else -> Color(0xFFE7ECF0)
+    }
+    val textColor = if (post.authorKind == "user") XText else Color.White
+    Box(
+        modifier = modifier
             .clip(CircleShape)
-            .pressableScale(pressedScale = 0.94f, onClick = {}),
-        contentAlignment = Alignment.Center,
-        content = content
-    )
-}
-
-@Composable
-private fun HomeGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val stroke = 2.dp.toPx()
-        drawLine(color, Offset(size.width * 0.18f, size.height * 0.48f), Offset(size.width * 0.5f, size.height * 0.18f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.82f, size.height * 0.48f), Offset(size.width * 0.5f, size.height * 0.18f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.24f, size.height * 0.48f), Offset(size.width * 0.24f, size.height * 0.82f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.76f, size.height * 0.48f), Offset(size.width * 0.76f, size.height * 0.82f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.24f, size.height * 0.82f), Offset(size.width * 0.76f, size.height * 0.82f), strokeWidth = stroke, cap = StrokeCap.Round)
-    }
-}
-
-@Composable
-private fun SlashGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.72f, size.height * 0.14f),
-            end = Offset(size.width * 0.28f, size.height * 0.86f),
-            strokeWidth = 2.6.dp.toPx(),
-            cap = StrokeCap.Round
+            .background(background),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = post.authorName.take(1).ifBlank { "Z" },
+            color = textColor,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
 
 @Composable
-private fun BellGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val stroke = 2.dp.toPx()
-        drawArc(
-            color = color,
-            startAngle = 205f,
-            sweepAngle = 130f,
-            useCenter = false,
-            topLeft = Offset(size.width * 0.2f, size.height * 0.2f),
-            size = Size(size.width * 0.6f, size.height * 0.55f),
-            style = Stroke(width = stroke, cap = StrokeCap.Round)
+private fun UserAvatarBubble(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(Color(0xFFE7ECF0)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "你",
+            color = XText,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
         )
-        drawLine(color, Offset(size.width * 0.27f, size.height * 0.52f), Offset(size.width * 0.2f, size.height * 0.74f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.73f, size.height * 0.52f), Offset(size.width * 0.8f, size.height * 0.74f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.2f, size.height * 0.74f), Offset(size.width * 0.8f, size.height * 0.74f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawCircle(color, radius = 1.6.dp.toPx(), center = Offset(size.width * 0.5f, size.height * 0.82f))
     }
 }
 
-@Composable
-private fun MailGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val stroke = 2.dp.toPx()
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(size.width * 0.14f, size.height * 0.24f),
-            size = Size(size.width * 0.72f, size.height * 0.52f),
-            cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx()),
-            style = Stroke(width = stroke)
-        )
-        drawLine(color, Offset(size.width * 0.16f, size.height * 0.28f), Offset(size.width * 0.5f, size.height * 0.52f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.84f, size.height * 0.28f), Offset(size.width * 0.5f, size.height * 0.52f), strokeWidth = stroke, cap = StrokeCap.Round)
+private fun formatRelativeTime(timestamp: Long): String {
+    val duration = Duration.between(Instant.ofEpochMilli(timestamp), Instant.now())
+    val minutes = duration.toMinutes().coerceAtLeast(0)
+    return when {
+        minutes < 1 -> "刚刚"
+        minutes < 60 -> "${minutes}分钟"
+        minutes < 24 * 60 -> "${minutes / 60}小时"
+        minutes < 24 * 60 * 7 -> "${minutes / (24 * 60)}天"
+        else -> "${minutes / (24 * 60 * 7)}周"
     }
 }
 
-@Composable
-private fun ViewsGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val barWidth = size.width * 0.14f
-        val gap = size.width * 0.07f
-        val left = size.width * 0.14f
-        val heights = listOf(0.44f, 0.7f, 0.56f, 0.84f)
-        heights.forEachIndexed { index, factor ->
-            val x = left + index * (barWidth + gap)
-            val top = size.height * (1f - factor)
-            drawRoundRect(
-                color = color,
-                topLeft = Offset(x, top),
-                size = Size(barWidth, size.height * factor),
-                cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)
-            )
+private fun formatAbsoluteTime(timestamp: Long): String {
+    return AbsoluteTimeFormatter.format(Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()))
+}
+
+private fun formatMetric(value: Int): String {
+    return when {
+        value >= 10_000 -> {
+            val formatted = String.format("%.1f", value / 10_000f)
+                .removeSuffix(".0")
+            "${formatted}万"
         }
-    }
-}
 
-@Composable
-private fun PollGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val stroke = 2.dp.toPx()
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(size.width * 0.16f, size.height * 0.16f),
-            size = Size(size.width * 0.68f, size.height * 0.68f),
-            cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
-            style = Stroke(width = stroke)
-        )
-        drawRoundRect(color, Offset(size.width * 0.26f, size.height * 0.55f), Size(size.width * 0.1f, size.height * 0.14f), CornerRadius(2.dp.toPx(), 2.dp.toPx()))
-        drawRoundRect(color, Offset(size.width * 0.45f, size.height * 0.42f), Size(size.width * 0.1f, size.height * 0.27f), CornerRadius(2.dp.toPx(), 2.dp.toPx()))
-        drawRoundRect(color, Offset(size.width * 0.64f, size.height * 0.3f), Size(size.width * 0.1f, size.height * 0.39f), CornerRadius(2.dp.toPx(), 2.dp.toPx()))
-    }
-}
-
-@Composable
-private fun ComposerLinesGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val stroke = 2.dp.toPx()
-        listOf(0.24f, 0.5f, 0.76f).forEach { y ->
-            drawLine(
-                color = color,
-                start = Offset(size.width * 0.18f, size.height * y),
-                end = Offset(size.width * 0.82f, size.height * y),
-                strokeWidth = stroke,
-                cap = StrokeCap.Round
-            )
+        value >= 1_000 -> {
+            val formatted = String.format("%.1f", value / 1_000f)
+                .removeSuffix(".0")
+            "${formatted}k"
         }
-    }
-}
 
-@Composable
-private fun PinGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val stroke = 2.dp.toPx()
-        drawCircle(
-            color = color,
-            radius = size.width * 0.18f,
-            center = Offset(size.width * 0.5f, size.height * 0.34f),
-            style = Stroke(width = stroke)
-        )
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.5f, size.height * 0.52f),
-            end = Offset(size.width * 0.5f, size.height * 0.84f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round
-        )
-    }
-}
-
-@Composable
-private fun ProgressRing(progress: Float, color: Color) {
-    Canvas(modifier = Modifier.size(26.dp)) {
-        drawArc(
-            color = XDivider,
-            startAngle = -90f,
-            sweepAngle = 360f,
-            useCenter = false,
-            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-        )
-        if (progress > 0f) {
-            drawArc(
-                color = color,
-                startAngle = -90f,
-                sweepAngle = 360f * progress,
-                useCenter = false,
-                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-            )
-        }
+        else -> value.toString()
     }
 }

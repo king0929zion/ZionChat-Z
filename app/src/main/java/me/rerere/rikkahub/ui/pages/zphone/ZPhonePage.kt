@@ -73,7 +73,7 @@ import java.time.format.DateTimeFormatter
 
 private val DesktopTextColor = Color(0xFF191919)
 private val StatusIconColor = Color(0xFF20201A)
-private val IconShape = RoundedCornerShape(24.dp)
+private val IconShape = RoundedCornerShape(22.dp)
 private val ClockFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 private data class ZPhoneApp(
@@ -82,8 +82,8 @@ private data class ZPhoneApp(
     val imageVector: ImageVector? = null,
     val containerColor: Color = Color.White,
     val iconTint: Color = Color.Unspecified,
-    val imagePadding: Dp = 0.dp,
-    val contentScale: ContentScale = ContentScale.Crop,
+    val imagePadding: Dp = 8.dp,
+    val contentScale: ContentScale = ContentScale.Fit,
     val onClick: () -> Unit,
 )
 
@@ -245,13 +245,13 @@ private fun ZPhoneStatusBar(timeText: String) {
 @Composable
 private fun DesktopGrid(apps: List<ZPhoneApp>) {
     Column(
-        modifier = Modifier.fillMaxWidth(0.92f),
-        verticalArrangement = Arrangement.spacedBy(28.dp)
+        modifier = Modifier.fillMaxWidth(0.94f),
+        verticalArrangement = Arrangement.spacedBy(26.dp)
     ) {
         apps.chunked(4).forEachIndexed { rowIndex, rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(18.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 rowItems.forEachIndexed { columnIndex, app ->
                     DesktopAppIcon(
@@ -309,7 +309,7 @@ private fun DesktopAppIcon(
     ) {
         Box(
             modifier = Modifier
-                .size(72.dp)
+                .size(78.dp)
                 .pressableScale(pressedScale = 0.86f, onClick = app.onClick)
                 .clip(IconShape),
             contentAlignment = Alignment.Center
@@ -318,7 +318,7 @@ private fun DesktopAppIcon(
                 shape = IconShape,
                 color = app.containerColor,
                 tonalElevation = 0.dp,
-                shadowElevation = 10.dp,
+                shadowElevation = 14.dp,
                 modifier = Modifier.fillMaxSize()
             ) {
                 Box(

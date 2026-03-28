@@ -6,6 +6,7 @@ import me.rerere.rikkahub.data.repository.FavoriteRepository
 import me.rerere.rikkahub.data.repository.FilesRepository
 import me.rerere.rikkahub.data.repository.GenMediaRepository
 import me.rerere.rikkahub.data.repository.MemoryRepository
+import me.rerere.rikkahub.data.repository.XPostRepository
 import org.koin.dsl.module
 
 val repositoryModule = module {
@@ -27,6 +28,10 @@ val repositoryModule = module {
 
     single {
         FavoriteRepository(get())
+    }
+
+    single {
+        XPostRepository(get())
     }
 
     single {

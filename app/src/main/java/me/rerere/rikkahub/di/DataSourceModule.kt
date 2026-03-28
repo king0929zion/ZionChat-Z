@@ -140,6 +140,10 @@ val dataSourceModule = module {
     }
 
     single {
+        get<AppDatabase>().xPostDao()
+    }
+
+    single {
         MessageFtsManager(get())
     }
 

@@ -18,6 +18,7 @@ import me.rerere.ai.core.Tool
 import me.rerere.ai.ui.UIMessagePart
 import me.rerere.rikkahub.data.event.AppEvent
 import me.rerere.rikkahub.data.event.AppEventBus
+import me.rerere.rikkahub.service.XTimelineService
 import me.rerere.rikkahub.utils.readClipboardText
 import me.rerere.rikkahub.utils.writeClipboardText
 import java.time.ZonedDateTime
@@ -47,7 +48,11 @@ sealed class LocalToolOption {
     data object AskUser : LocalToolOption()
 }
 
-class LocalTools(private val context: Context, private val eventBus: AppEventBus) {
+class LocalTools(
+    private val context: Context,
+    private val eventBus: AppEventBus,
+    private val xTimelineService: XTimelineService,
+) {
     val javascriptTool by lazy {
         Tool(
             name = "eval_javascript",
@@ -288,6 +293,44 @@ class LocalTools(private val context: Context, private val eventBus: AppEventBus
         )
     }
 
+    val publishZPhonePostTool by lazy {
+        Tool(
+            name = "publish_z_phone_post",
+            description = """
+                Publish a post to the local Z-Phone X timeline.
+                Provide `content` to create a new post, or also provide `reply_to_id` to publish a reply to an existing post.
+                Use this when the user asks you to post something, publish a short update, or reply inside the Z-Phone social timeline.
+            """.trimIndent().replace("\n", " "),
+            parameters = {
+                InputSchema.Obj(
+                    properties = buildJsonObject {
+                        put("content", buildJsonObject {
+                            put("type", "string")
+                            put("description", "Text content to publish to the Z-Phone timeline")
+                        })
+                        put("reply_to_id", buildJsonObject {
+                            put("type", "string")
+                            put("description", "Optional post ID to reply to")
+                        })
+                    },
+                    required = listOf("content")
+                )
+            },
+            execute = {
+                val params = it.jsonObject
+                val content = params["content"]?.jsonPrimitive?.contentOrNull ?: error("content is required")
+                val replyToId = params["reply_to_id"]?.jsonPrimitive?.contentOrNull
+                val postId = xTimelineService.createToolPost(content = content, replyToId = replyToId)
+                    ?: error("failed to publish post")
+                val payload = buildJsonObject {
+                    put("success", true)
+                    put("post_id", postId)
+                }
+                listOf(UIMessagePart.Text(payload.toString()))
+            }
+        )
+    }
+
     fun getTools(options: List<LocalToolOption>): List<Tool> {
         val tools = mutableListOf<Tool>()
         if (options.contains(LocalToolOption.JavascriptEngine)) {
@@ -305,6 +348,7 @@ class LocalTools(private val context: Context, private val eventBus: AppEventBus
         if (options.contains(LocalToolOption.AskUser)) {
             tools.add(askUserTool)
         }
+        tools.add(publishZPhonePostTool)
         return tools
     }
 }
