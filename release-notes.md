@@ -1,3 +1,8 @@
+## v0.0.48
+
+- 修复 `v0.0.47` 远端构建失败：补回 `ZPhonePage` 在精简系统状态栏处理后仍然需要的 Compose `remember` 导入，恢复桌面页 Kotlin 编译。
+- 保留上一轮的系统状态栏接入、`X` 页面 HTML 化收口和 `X tools` 插件控制能力。
+
 ## v0.0.47
 
 - 修复 `v0.0.46` 远端构建失败：移除 `Z-Phone / X` 页面里更敏感的 `WindowInsetsControllerCompat` 行为常量写法，避免因 AndroidX 兼容差异卡住 Kotlin 编译。

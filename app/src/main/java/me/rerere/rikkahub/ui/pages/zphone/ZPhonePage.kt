@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -45,9 +43,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import com.dokar.sonner.ToastType
 import kotlinx.coroutines.delay
 import me.rerere.rikkahub.R
@@ -56,7 +51,6 @@ import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
-import me.rerere.rikkahub.utils.getActivity
 import me.rerere.rikkahub.utils.navigateToChatPage
 
 private val DesktopTextColor = Color(0xFF191919)
@@ -78,20 +72,6 @@ private data class ZPhoneApp(
 fun ZPhonePage() {
     val navController = LocalNavController.current
     val toaster = LocalToaster.current
-    val context = LocalContext.current
-    val activity = remember(context) { context.getActivity() }
-
-    DisposableEffect(activity) {
-        val window = activity?.window
-        if (window != null) {
-            val controller = WindowCompat.getInsetsController(window, window.decorView)
-            controller.show(WindowInsetsCompat.Type.systemBars())
-            controller.isAppearanceLightStatusBars = true
-            controller.isAppearanceLightNavigationBars = true
-        }
-        onDispose { }
-    }
-
     val apps = remember(navController, toaster) {
         listOf(
             ZPhoneApp(
