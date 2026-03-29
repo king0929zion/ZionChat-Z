@@ -168,7 +168,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                     item(
                         onClick = { navController.navigate(Screen.SettingPlugins) },
                         leadingContent = { Icon(ZionAppIcons.Blocks, null, tint = Color.Unspecified) },
-                        headlineContent = { Text("插件") },
+                        headlineContent = { Text(stringResource(R.string.setting_page_plugins)) },
                     )
                 }
             }

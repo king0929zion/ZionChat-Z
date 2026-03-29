@@ -15,6 +15,7 @@ import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.db.entity.XPostEntity
 import me.rerere.rikkahub.service.XTimelineService
+import java.util.Locale
 
 sealed interface XTimelineEvent {
     data class Error(val message: String) : XTimelineEvent
@@ -82,7 +83,7 @@ class XTimelineVM(
         val normalized = text.trim()
         if (normalized.isBlank()) {
             viewModelScope.launch {
-                _events.emit(XTimelineEvent.Error("帖子内容不能为空"))
+                _events.emit(XTimelineEvent.Error(localizedText(emptyPost = true)))
             }
             return
         }
@@ -93,7 +94,7 @@ class XTimelineVM(
             _submitting.value = false
 
             if (postId == null) {
-                _events.emit(XTimelineEvent.Error("帖子发布失败"))
+                _events.emit(XTimelineEvent.Error(localizedText(postFailed = true)))
                 return@launch
             }
 
@@ -107,7 +108,7 @@ class XTimelineVM(
         val normalized = text.trim()
         if (normalized.isBlank()) {
             viewModelScope.launch {
-                _events.emit(XTimelineEvent.Error("回复内容不能为空"))
+                _events.emit(XTimelineEvent.Error(localizedText(emptyReply = true)))
             }
             return
         }
@@ -118,7 +119,7 @@ class XTimelineVM(
             _submitting.value = false
 
             if (replyId == null) {
-                _events.emit(XTimelineEvent.Error("回复发布失败"))
+                _events.emit(XTimelineEvent.Error(localizedText(replyFailed = true)))
                 return@launch
             }
 
@@ -141,6 +142,22 @@ class XTimelineVM(
     fun toggleBookmark(postId: String) {
         viewModelScope.launch {
             timelineService.toggleBookmark(postId)
+        }
+    }
+
+    private fun localizedText(
+        emptyPost: Boolean = false,
+        postFailed: Boolean = false,
+        emptyReply: Boolean = false,
+        replyFailed: Boolean = false,
+    ): String {
+        val isChinese = Locale.getDefault().language.equals("zh", ignoreCase = true)
+        return when {
+            emptyPost -> if (isChinese) "帖子内容不能为空" else "Post content cannot be empty"
+            postFailed -> if (isChinese) "帖子发布失败" else "Failed to publish post"
+            emptyReply -> if (isChinese) "回复内容不能为空" else "Reply content cannot be empty"
+            replyFailed -> if (isChinese) "回复发布失败" else "Failed to publish reply"
+            else -> if (isChinese) "操作失败" else "Operation failed"
         }
     }
 }

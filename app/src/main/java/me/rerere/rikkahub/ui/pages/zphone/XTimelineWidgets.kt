@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -90,7 +91,11 @@ internal fun FeedTopTabs(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
 ) {
-    val titles = listOf("为你推荐", "正在关注", "AI — Rumors & Insights")
+    val titles = listOf(
+        stringResource(R.string.x_timeline_tab_for_you),
+        stringResource(R.string.x_timeline_tab_following),
+        stringResource(R.string.x_timeline_tab_ai)
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -213,7 +218,7 @@ internal fun ReplyBar(
                 .clickable(onClick = onClick)
                 .padding(horizontal = 14.dp, vertical = 11.dp)
         ) {
-            Text(text = "发布你的回复", color = XSubText, fontSize = 15.sp)
+            Text(text = stringResource(R.string.x_timeline_reply_placeholder), color = XSubText, fontSize = 15.sp)
         }
     }
 }
@@ -251,13 +256,25 @@ internal fun DetailPostContent(
         }
 
         Text(text = post.content, color = XText, fontSize = 17.sp, lineHeight = 24.sp, modifier = Modifier.padding(horizontal = 16.dp))
-        Text(text = "${absoluteTime(post.createAt)} · ${compactCount(post.viewCount)} 查看", color = XSubText, fontSize = 15.sp, modifier = Modifier.padding(start = 16.dp, top = 18.dp))
+        Text(
+            text = "${absoluteTime(post.createAt)} · ${compactCount(post.viewCount)} ${stringResource(R.string.x_timeline_views_suffix)}",
+            color = XSubText,
+            fontSize = 15.sp,
+            modifier = Modifier.padding(start = 16.dp, top = 18.dp)
+        )
         HorizontalDivider(color = XDivider, modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp))
 
         Row(modifier = Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-            DetailMetric(label = "转帖", value = compactCount(post.repostCount))
-            DetailMetric(label = "喜欢", value = compactCount(post.likeCount))
-            DetailMetric(label = "书签", value = if (post.bookmarkedByUser) "已收藏" else "未收藏")
+            DetailMetric(label = stringResource(R.string.x_timeline_metric_reposts), value = compactCount(post.repostCount))
+            DetailMetric(label = stringResource(R.string.x_timeline_metric_likes), value = compactCount(post.likeCount))
+            DetailMetric(
+                label = stringResource(R.string.x_timeline_metric_bookmarks),
+                value = if (post.bookmarkedByUser) {
+                    stringResource(R.string.x_timeline_bookmarked_value)
+                } else {
+                    stringResource(R.string.x_timeline_not_bookmarked_value)
+                }
+            )
         }
 
         HorizontalDivider(color = XDivider, modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp))
@@ -283,6 +300,6 @@ internal fun XFollowChip() {
             .background(XText)
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Text(text = "订阅", color = Color.White, fontSize = 15.sp)
+        Text(text = stringResource(R.string.x_timeline_follow), color = Color.White, fontSize = 15.sp)
     }
 }

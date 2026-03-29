@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,13 +28,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dokar.sonner.ToastType
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.utils.navigateToChatPage
 
@@ -45,22 +48,58 @@ private data class ZPhoneApp(
     val imageVector: ImageVector? = null,
     val tileColor: Color = Color.White,
     val iconTint: Color = Color(0xFF111111),
+    val imagePadding: Dp = 12.dp,
+    val imageContentScale: ContentScale = ContentScale.Fit,
     val onClick: () -> Unit,
 )
 
 @Composable
 fun ZPhonePage() {
     val navController = LocalNavController.current
-    val apps = remember(navController) {
-        listOf(
-            ZPhoneApp("ZionChat", imageRes = R.drawable.zphone_openai, onClick = { navigateToChatPage(navController) }),
-            ZPhoneApp("X", imageRes = R.drawable.zphone_x_logo, tileColor = Color.Black, onClick = { navController.navigate(Screen.XTimeline) }),
-            ZPhoneApp("图片", imageVector = ZionAppIcons.Image, tileColor = Color(0xFFF6CCD2), onClick = { navController.navigate(Screen.ImageGen) }),
-            ZPhoneApp("文件", imageVector = ZionAppIcons.Files, tileColor = Color(0xFFEADFD2), onClick = { navController.navigate(Screen.SettingFiles) }),
-            ZPhoneApp("灵感", imageRes = R.drawable.zphone_xiaohongshu, onClick = { navController.navigate(Screen.SettingPlugins) }),
-            ZPhoneApp("设置", imageVector = ZionAppIcons.Settings, tileColor = Color(0xFFF2F0EA), onClick = { navController.navigate(Screen.Setting) }),
-        )
-    }
+    val toaster = LocalToaster.current
+    val apps = listOf(
+        ZPhoneApp(
+            label = "ZionChat",
+            imageRes = R.drawable.zphone_openai,
+            imagePadding = 10.dp,
+            onClick = { navigateToChatPage(navController) }
+        ),
+        ZPhoneApp(
+            label = "X",
+            imageRes = R.drawable.zphone_x_logo,
+            tileColor = Color.Black,
+            imagePadding = 12.dp,
+            onClick = { navController.navigate(Screen.XTimeline) }
+        ),
+        ZPhoneApp(
+            label = stringResource(R.string.zphone_app_photos),
+            imageVector = ZionAppIcons.Image,
+            tileColor = Color(0xFFF6CCD2),
+            onClick = { navController.navigate(Screen.ImageGen) }
+        ),
+        ZPhoneApp(
+            label = stringResource(R.string.zphone_app_files),
+            imageVector = ZionAppIcons.Files,
+            tileColor = Color(0xFFEADFD2),
+            onClick = { navController.navigate(Screen.SettingFiles) }
+        ),
+        ZPhoneApp(
+            label = stringResource(R.string.zphone_app_wechat),
+            imageRes = R.drawable.zphone_wechat_icon,
+            tileColor = Color(0xFF1AAD19),
+            imagePadding = 8.dp,
+            imageContentScale = ContentScale.Fit,
+            onClick = {
+                toaster.show(stringResource(R.string.zphone_wechat_coming_soon), type = ToastType.Info)
+            }
+        ),
+        ZPhoneApp(
+            label = stringResource(R.string.zphone_app_settings),
+            imageVector = ZionAppIcons.Settings,
+            tileColor = Color(0xFFF2F0EA),
+            onClick = { navController.navigate(Screen.Setting) }
+        ),
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -91,13 +130,13 @@ fun ZPhonePage() {
                 .padding(horizontal = 24.dp, vertical = 18.dp)
         ) {
             Text(
-                text = "ZiCode",
+                text = stringResource(R.string.zphone_title),
                 color = Color.White,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "从这里进入内置 X 应用",
+                text = stringResource(R.string.zphone_subtitle),
                 color = Color.White.copy(alpha = 0.88f),
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 4.dp, bottom = 22.dp)
@@ -139,8 +178,8 @@ private fun AppIconCard(
     ) {
         Box(
             modifier = Modifier
-                .size(78.dp)
-                .clip(RoundedCornerShape(24.dp))
+                .size(64.dp)
+                .clip(RoundedCornerShape(18.dp))
                 .background(app.tileColor)
                 .pressableScale(pressedScale = 0.9f, onClick = app.onClick),
             contentAlignment = Alignment.Center
@@ -150,8 +189,10 @@ private fun AppIconCard(
                     Image(
                         painter = painterResource(app.imageRes),
                         contentDescription = app.label,
-                        modifier = Modifier.fillMaxSize().padding(12.dp),
-                        contentScale = ContentScale.Fit
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(app.imagePadding),
+                        contentScale = app.imageContentScale
                     )
                 }
 
@@ -160,7 +201,7 @@ private fun AppIconCard(
                         imageVector = app.imageVector,
                         contentDescription = app.label,
                         tint = app.iconTint,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -169,7 +210,7 @@ private fun AppIconCard(
         Text(
             text = app.label,
             color = Color.White,
-            fontSize = 12.sp,
+            fontSize = 10.sp,
             modifier = Modifier.padding(top = 8.dp)
         )
     }

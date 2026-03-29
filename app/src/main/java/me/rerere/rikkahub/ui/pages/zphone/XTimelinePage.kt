@@ -40,10 +40,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dokar.sonner.ToastType
+import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.db.entity.XPostEntity
 import me.rerere.rikkahub.ui.context.LocalToaster
@@ -257,12 +259,12 @@ private fun XDetailLayer(
                 Box(modifier = Modifier.size(36.dp).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
                     Icon(imageVector = XCloneIcons.Back, contentDescription = null, tint = XText, modifier = Modifier.size(20.dp))
                 }
-                Text(text = "帖子", color = XText, fontSize = 20.sp, modifier = Modifier.padding(start = 20.dp))
+                Text(text = stringResource(R.string.x_timeline_detail_title), color = XText, fontSize = 20.sp, modifier = Modifier.padding(start = 20.dp))
             }
 
             if (post == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "帖子不存在了", color = XSubText, fontSize = 16.sp)
+                    Text(text = stringResource(R.string.x_timeline_post_missing), color = XSubText, fontSize = 16.sp)
                 }
             } else {
                 LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 92.dp)) {
@@ -281,7 +283,7 @@ private fun XDetailLayer(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "最相关的回复", color = XText, fontSize = 15.sp)
+                            Text(text = stringResource(R.string.x_timeline_relevant_replies), color = XText, fontSize = 15.sp)
                         }
                         HorizontalDivider(color = XDivider)
                     }
@@ -315,12 +317,23 @@ private fun ComposePostLayer(
     onPost: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize().background(XSurface).imePadding()) {
-        ComposerHeader(label = "发帖", enabled = text.isNotBlank() && text.length <= ComposerLimit && !posting, onClose = onClose, onSubmit = onPost, trailingHint = "草稿")
+        ComposerHeader(
+            label = stringResource(R.string.x_timeline_compose_post),
+            enabled = text.isNotBlank() && text.length <= ComposerLimit && !posting,
+            onClose = onClose,
+            onSubmit = onPost,
+            trailingHint = stringResource(R.string.x_timeline_draft)
+        )
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 14.dp)) {
             ComposerAudienceChip()
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top, modifier = Modifier.padding(top = 12.dp)) {
                 CurrentUserAvatar(settings = settings, size = 40.dp)
-                ComposerTextField(value = text, placeholder = "有什么新鲜事？", modifier = Modifier.weight(1f), onValueChange = onTextChange)
+                ComposerTextField(
+                    value = text,
+                    placeholder = stringResource(R.string.x_timeline_compose_post_placeholder),
+                    modifier = Modifier.weight(1f),
+                    onValueChange = onTextChange
+                )
             }
         }
         EveryoneCanReplyRow()
@@ -340,12 +353,22 @@ private fun ComposeReplyLayer(
     onReply: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize().background(XSurface).imePadding()) {
-        ComposerHeader(label = "回复", enabled = text.isNotBlank() && text.length <= ComposerLimit && !posting, onClose = onClose, onSubmit = onReply)
+        ComposerHeader(
+            label = stringResource(R.string.x_timeline_compose_reply),
+            enabled = text.isNotBlank() && text.length <= ComposerLimit && !posting,
+            onClose = onClose,
+            onSubmit = onReply
+        )
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 16.dp)) {
             post?.let { ReplyContextCard(settings = settings, post = it) }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top, modifier = Modifier.padding(top = 8.dp)) {
                 CurrentUserAvatar(settings = settings, size = 40.dp)
-                ComposerTextField(value = text, placeholder = "发布你的回复", modifier = Modifier.weight(1f), onValueChange = onTextChange)
+                ComposerTextField(
+                    value = text,
+                    placeholder = stringResource(R.string.x_timeline_reply_placeholder),
+                    modifier = Modifier.weight(1f),
+                    onValueChange = onTextChange
+                )
             }
         }
         ComposerFooter(textLength = text.length, modifier = Modifier.fillMaxWidth(), showReplyInfo = false)

@@ -299,8 +299,8 @@ class LocalTools(
 
     val readXTimelineTool by lazy {
         Tool(
-            name = "read_x_timeline",
-            description = "Read the latest posts from the local built-in X timeline. Returns post IDs, author info, text content, and interaction counts for AI context.",
+            name = "read_twitter_timeline",
+            description = "Read the latest posts from the local built-in Twitter timeline. Returns post IDs, author info, text content, and interaction counts for AI context.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -339,8 +339,8 @@ class LocalTools(
 
     val publishXPostTool by lazy {
         Tool(
-            name = "publish_x_post",
-            description = "Publish a new post to the local built-in X timeline.",
+            name = "publish_twitter_post",
+            description = "Publish a new post to the local built-in Twitter timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -364,8 +364,8 @@ class LocalTools(
 
     val replyXPostTool by lazy {
         Tool(
-            name = "reply_x_post",
-            description = "Reply to an existing post in the local built-in X timeline.",
+            name = "reply_twitter_post",
+            description = "Reply to an existing post in the local built-in Twitter timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -395,8 +395,8 @@ class LocalTools(
 
     val likeXPostTool by lazy {
         Tool(
-            name = "like_x_post",
-            description = "Like or unlike a post in the local built-in X timeline.",
+            name = "like_twitter_post",
+            description = "Like or unlike a post in the local built-in Twitter timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -424,8 +424,8 @@ class LocalTools(
 
     val repostXPostTool by lazy {
         Tool(
-            name = "repost_x_post",
-            description = "Repost or undo repost for a post in the local built-in X timeline.",
+            name = "repost_twitter_post",
+            description = "Repost or undo repost for a post in the local built-in Twitter timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -453,8 +453,8 @@ class LocalTools(
 
     val bookmarkXPostTool by lazy {
         Tool(
-            name = "bookmark_x_post",
-            description = "Bookmark or remove bookmark for a post in the local built-in X timeline.",
+            name = "bookmark_twitter_post",
+            description = "Bookmark or remove bookmark for a post in the local built-in Twitter timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {

@@ -23,6 +23,7 @@ import me.rerere.rikkahub.data.model.Avatar
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 internal val XSurface = Color.White
 internal val XBackground = Color(0xFFF5F8FA)
@@ -33,7 +34,6 @@ internal val XBlue = Color(0xFF1D9BF0)
 internal val XGreen = Color(0xFF00BA7C)
 internal val XPink = Color(0xFFF91880)
 internal const val ComposerLimit = 280
-private val DetailTimeFormatter = DateTimeFormatter.ofPattern("yy年M月d日, HH:mm")
 
 internal data class AuthorVisual(
     val avatarUrl: String? = null,
@@ -48,7 +48,7 @@ internal fun CurrentUserAvatar(
     size: Dp,
 ) {
     val avatar = settings.displaySetting.userAvatar
-    val name = settings.displaySetting.userNickname.ifBlank { "你" }
+    val name = settings.displaySetting.userNickname.ifBlank { localizedYou() }
 
     Box(
         modifier = Modifier
@@ -167,43 +167,59 @@ internal fun isVerified(post: XPostEntity): Boolean {
 }
 
 internal fun relativeTime(timestamp: Long): String {
+    val isChinese = isChineseLocale()
     val diffMinutes = ((System.currentTimeMillis() - timestamp) / 60_000L).coerceAtLeast(0L)
     return when {
-        diffMinutes < 1L -> "刚刚"
-        diffMinutes < 60L -> "${diffMinutes}分钟"
-        diffMinutes < 60L * 24L -> "${diffMinutes / 60L}小时"
-        else -> "${diffMinutes / (60L * 24L)}天"
+        diffMinutes < 1L -> if (isChinese) "刚刚" else "now"
+        diffMinutes < 60L -> if (isChinese) "${diffMinutes}分钟" else "${diffMinutes}m"
+        diffMinutes < 60L * 24L -> if (isChinese) "${diffMinutes / 60L}小时" else "${diffMinutes / 60L}h"
+        else -> if (isChinese) "${diffMinutes / (60L * 24L)}天" else "${diffMinutes / (60L * 24L)}d"
     }
 }
 
 internal fun absoluteTime(timestamp: Long): String {
-    return DetailTimeFormatter.format(
+    val locale = Locale.getDefault()
+    val formatter = DateTimeFormatter.ofPattern(
+        if (isChineseLocale(locale)) "yy年M月d日, HH:mm" else "MMM d, yy, HH:mm",
+        locale
+    )
+    return formatter.format(
         Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault())
     )
 }
 
 internal fun compactCount(count: Int): String {
     if (count <= 0) return "0"
+    val locale = Locale.getDefault()
+    val isChinese = isChineseLocale(locale)
     return when {
         count >= 1_000_000 -> {
             val value = count / 1_000_000f
             if (value >= 100f || value % 1f == 0f) {
                 "${value.toInt()}M"
             } else {
-                String.format("%.1fM", value)
+                String.format(locale, "%.1fM", value)
             }
         }
 
-        count >= 10_000 -> {
+        isChinese && count >= 10_000 -> {
             val value = count / 10_000f
             if (value >= 100f || value % 1f == 0f) {
                 "${value.toInt()}万"
             } else {
-                String.format("%.1f万", value)
+                String.format(locale, "%.1f万", value)
             }
         }
 
-        count >= 1_000 -> String.format("%.1fK", count / 1_000f)
+        count >= 1_000 -> String.format(locale, "%.1fK", count / 1_000f)
         else -> count.toString()
     }
+}
+
+private fun localizedYou(): String {
+    return if (isChineseLocale()) "你" else "You"
+}
+
+private fun isChineseLocale(locale: Locale = Locale.getDefault()): Boolean {
+    return locale.language.equals("zh", ignoreCase = true)
 }

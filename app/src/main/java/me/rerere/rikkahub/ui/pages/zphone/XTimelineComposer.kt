@@ -34,8 +34,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.db.entity.XPostEntity
 import me.rerere.rikkahub.ui.components.ui.pressableScale
@@ -94,7 +96,7 @@ internal fun ComposerAudienceChip() {
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "每个人", color = XBlue, fontSize = 14.sp)
+        Text(text = stringResource(R.string.x_timeline_audience_everyone), color = XBlue, fontSize = 14.sp)
         Spacer(modifier = Modifier.width(4.dp))
         Icon(imageVector = XCloneIcons.ChevronDown, contentDescription = null, tint = XBlue, modifier = Modifier.size(16.dp))
     }
@@ -111,7 +113,7 @@ internal fun EveryoneCanReplyRow() {
     ) {
         Icon(imageVector = XCloneIcons.Info, contentDescription = null, tint = XBlue, modifier = Modifier.size(18.dp))
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "所有人可以回复", color = XBlue, fontSize = 14.sp)
+        Text(text = stringResource(R.string.x_timeline_everyone_can_reply), color = XBlue, fontSize = 14.sp)
     }
 }
 
@@ -189,7 +191,15 @@ internal fun ComposerAttachmentStrip(showReplyInfo: Boolean) {
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         AttachmentTile(background = XSurface, borderColor = Color(0xFFCFD9DE))
-        AttachmentWireframeCard(background = if (showReplyInfo) Color(0xFFF7F9F9) else Color(0xFFE6DBCC), title = if (showReplyInfo) "Robert Scoble" else "Dog Meme", lines = if (showReplyInfo) listOf("Did someone turn the speed knob up on @Grok?") else listOf("图片预览"))
+        AttachmentWireframeCard(
+            background = if (showReplyInfo) Color(0xFFF7F9F9) else Color(0xFFE6DBCC),
+            title = if (showReplyInfo) "Robert Scoble" else "Dog Meme",
+            lines = if (showReplyInfo) {
+                listOf("Did someone turn the speed knob up on @Grok?")
+            } else {
+                listOf(stringResource(R.string.x_timeline_image_preview))
+            }
+        )
         AttachmentWireframeCard(background = XSurface, title = "leo", lines = listOf("The \$200/mo ChatGPT Pro plan will soon..."))
         AttachmentWireframeCard(background = Color(0xFF1C2128), title = "CODE", titleColor = Color(0xFF8B949E), lines = listOf("This code will let you recover your account..."))
     }
@@ -285,7 +295,12 @@ internal fun ReplyContextCard(settings: Settings, post: XPostEntity) {
             }
 
             Text(text = post.content, color = XText, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 6.dp))
-            Text(text = "回复给 ${post.authorHandle} 和 @grok", color = XSubText, fontSize = 15.sp, modifier = Modifier.padding(top = 10.dp))
+            Text(
+                text = stringResource(R.string.x_timeline_replying_to_format, post.authorHandle),
+                color = XSubText,
+                fontSize = 15.sp,
+                modifier = Modifier.padding(top = 10.dp)
+            )
         }
     }
 }

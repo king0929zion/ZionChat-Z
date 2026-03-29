@@ -193,7 +193,6 @@ class XTimelineService(
     private suspend fun ensureSeedData() {
         if (repository.countAll() > 0) return
 
-        val settings = settingsStore.settingsFlow.first()
         val now = System.currentTimeMillis()
 
         val scobleId = Uuid.random().toString()
@@ -266,23 +265,7 @@ class XTimelineService(
                     viewCount = 2_300_000,
                     createAt = now - 60L * 60L * 1000L,
                     updateAt = now - 60L * 60L * 1000L,
-                ),
-                XPostEntity(
-                    id = Uuid.random().toString(),
-                    rootPostId = Uuid.random().toString(),
-                    authorKind = USER_KIND,
-                    authorName = settings.displaySetting.userNickname.ifBlank { "你" },
-                    authorHandle = "@you",
-                    content = "这次把内置 X 应用和插件入口都重新做干净了，先把结构理顺，后面再继续补真实功能。",
-                    likeCount = 12,
-                    replyCount = 0,
-                    repostCount = 1,
-                    viewCount = 328,
-                    createAt = now - 25L * 60L * 1000L,
-                    updateAt = now - 25L * 60L * 1000L,
-                ).let { post ->
-                    post.copy(rootPostId = post.id)
-                }
+                )
             )
         )
     }

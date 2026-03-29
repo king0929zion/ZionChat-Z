@@ -96,6 +96,7 @@ import me.rerere.rikkahub.ui.pages.setting.SettingPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSearchPage
+import me.rerere.rikkahub.ui.pages.setting.SettingTwitterPluginPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTTSPage
 import me.rerere.rikkahub.ui.pages.translator.TranslatorPage
 import me.rerere.rikkahub.ui.pages.zphone.ZPhonePage
@@ -386,6 +387,10 @@ class RouteActivity : ComponentActivity() {
                                 SettingPluginsPage()
                             }
 
+                            entry<Screen.SettingTwitterPlugin> {
+                                SettingTwitterPluginPage()
+                            }
+
                             entry<Screen.SettingFiles> {
                                 SettingFilesPage()
                             }
@@ -554,6 +559,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object SettingPlugins : Screen
+
+    @Serializable
+    data object SettingTwitterPlugin : Screen
 
     @Serializable
     data object SettingFiles : Screen
