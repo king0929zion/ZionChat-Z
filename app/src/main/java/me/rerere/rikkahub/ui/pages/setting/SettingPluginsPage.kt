@@ -40,14 +40,14 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
             item {
                 CardGroup(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    title = { Text("Z-Phone / X") }
+                    title = { Text("已安装插件") }
                 ) {
                     item(
                         onClick = {
                             updateXTools(vm, settings) { copy(enabled = !enabled) }
                         },
                         leadingContent = { androidx.compose.material3.Icon(ZionAppIcons.Blocks, null) },
-                        supportingContent = { Text("统一管理 AI 是否可以调用内置的 X 时间线工具") },
+                        supportingContent = { Text("控制 AI 是否可以调用内置的 X 时间线工具") },
                         trailingContent = {
                             Switch(
                                 checked = xTools.enabled,
@@ -57,7 +57,7 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
                                 size = SwitchSize.Medium
                             )
                         },
-                        headlineContent = { Text("启用 X 插件") }
+                        headlineContent = { Text("X 插件") }
                     )
                 }
             }
@@ -65,11 +65,11 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
             item {
                 CardGroup(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    title = { Text("内置 X Tools") }
+                    title = { Text("X tools 权限") }
                 ) {
                     xToolToggleItem(
                         title = "读取时间线",
-                        description = "允许 AI 读取最新帖子，获取上下文",
+                        description = "允许 AI 读取最新帖子和回复，用于理解上下文",
                         checked = xTools.allowReadTimeline,
                         enabled = xTools.enabled,
                         onToggle = { checked ->
@@ -78,7 +78,7 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
                     )
                     xToolToggleItem(
                         title = "发布帖子",
-                        description = "允许 AI 主动在 X 时间线里发新帖",
+                        description = "允许 AI 在 X 页面直接发布新的帖子",
                         checked = xTools.allowPublishPost,
                         enabled = xTools.enabled,
                         onToggle = { checked ->

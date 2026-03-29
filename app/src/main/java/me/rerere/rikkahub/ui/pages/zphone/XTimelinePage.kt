@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dokar.sonner.ToastType
+import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.db.entity.XPostEntity
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
@@ -346,30 +349,39 @@ private fun XFeedHeader(
                 .height(53.dp)
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            UIAvatar(
-                name = settings.displaySetting.userNickname.ifBlank { "你" },
-                value = settings.displaySetting.userAvatar,
-                modifier = Modifier.size(32.dp)
-            )
+            Box(
+                modifier = Modifier.size(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                UIAvatar(
+                    name = settings.displaySetting.userNickname.ifBlank { "你" },
+                    value = settings.displaySetting.userAvatar,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = XCloneIcons.XLogo,
-                    contentDescription = null,
-                    tint = XText,
-                    modifier = Modifier.size(22.dp)
+                Image(
+                    painter = painterResource(R.drawable.x_logo_black),
+                    contentDescription = "X",
+                    modifier = Modifier.size(24.dp)
                 )
             }
-            Icon(
-                imageVector = XCloneIcons.More,
-                contentDescription = null,
-                tint = XSubText,
-                modifier = Modifier.size(20.dp)
-            )
+            Box(
+                modifier = Modifier.size(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = XCloneIcons.More,
+                    contentDescription = null,
+                    tint = XSubText,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
         Row(
             modifier = Modifier
@@ -382,7 +394,7 @@ private fun XFeedHeader(
                 Box(
                     modifier = Modifier
                         .weight(1f, fill = false)
-                        .defaultMinSize(minWidth = 120.dp)
+                        .defaultMinSize(minWidth = 112.dp)
                         .height(53.dp)
                         .clickable { onTopTabChange(index) },
                     contentAlignment = Alignment.Center
@@ -536,11 +548,19 @@ private fun QuoteCard(post: XPostEntity) {
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
+            Icon(
+                imageVector = XCloneIcons.Verified,
+                contentDescription = null,
+                tint = XBlue,
+                modifier = Modifier.size(14.dp)
+            )
             Text(
                 text = post.quoteHandle ?: "@quote",
                 color = XSubText,
                 fontSize = 14.sp,
             )
+            Text(text = "·", color = XSubText, fontSize = 14.sp)
+            Text(text = "7小时", color = XSubText, fontSize = 14.sp)
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
@@ -1296,10 +1316,14 @@ private fun XBottomNavBar(
 private fun PostAvatar(post: XPostEntity, size: androidx.compose.ui.unit.Dp = 40.dp) {
     val background = when (post.authorKind) {
         "system" -> Color(0xFF111214)
-        "bot" -> Color(0xFF1F2937)
+        "bot" -> Color(0xFFCBD5F5)
         else -> Color(0xFFE5E7EB)
     }
-    val foreground = if (background == Color(0xFFE5E7EB)) XText else Color.White
+    val foreground = when (post.authorKind) {
+        "bot" -> Color(0xFF1F2937)
+        "system" -> Color.White
+        else -> XText
+    }
     Box(
         modifier = Modifier
             .size(size)
@@ -1434,7 +1458,13 @@ private object XCloneIcons {
             fill = SolidColor(Color(0xFF1D9BF0)),
             pathFillType = PathFillType.NonZero
         ) {
-            addPathNodes("M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.74 2.746 1.867 3.447.016.15.025.3.025.453 0 2.21 1.71 4 3.918 4 .47 0 .92-.086 1.336-.25.52 1.334 1.826 2.25 3.337 2.25s2.816-.916 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.79 3.918-4 0-.153-.01-.303-.026-.453C21.76 15.247 22.5 13.96 22.5 12.5zm-11.23 4.25l-3.328-3.326.896-.897 2.433 2.43 5.432-5.43.896.896-6.328 6.327z")
+            addPathNodes("M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.74 2.746 1.867 3.447.016.15.025.3.025.453 0 2.21 1.71 4 3.918 4 .47 0 .92-.086 1.336-.25.52 1.334 1.826 2.25 3.337 2.25s2.816-.916 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.79 3.918-4 0-.153-.01-.303-.026-.453C21.76 15.247 22.5 13.96 22.5 12.5z")
+        }
+        path(
+            fill = SolidColor(Color.White),
+            pathFillType = PathFillType.NonZero
+        ) {
+            addPathNodes("M11.27 16.75l-3.328-3.326.896-.897 2.433 2.43 5.432-5.43.896.896-6.328 6.327z")
         }
     }.build()
     val ChevronDown = filledIcon(
