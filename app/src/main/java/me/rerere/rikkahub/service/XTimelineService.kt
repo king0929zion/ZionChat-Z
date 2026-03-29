@@ -165,6 +165,46 @@ class XTimelineService(
         }
     }
 
+    suspend fun getFeedSnapshot(limit: Int = 12): List<XPostEntity> = repository.getRecentFeed(limit)
+
+    suspend fun setLike(postId: String, liked: Boolean): XPostEntity? {
+        val post = repository.getById(postId) ?: return null
+        val shouldChange = post.likedByUser != liked
+        if (!shouldChange) return post
+        val updated = post.copy(
+            likedByUser = liked,
+            likeCount = (post.likeCount + if (liked) 1 else -1).coerceAtLeast(0),
+            updateAt = System.currentTimeMillis(),
+        )
+        repository.upsert(updated)
+        return updated
+    }
+
+    suspend fun setRepost(postId: String, reposted: Boolean): XPostEntity? {
+        val post = repository.getById(postId) ?: return null
+        val shouldChange = post.repostedByUser != reposted
+        if (!shouldChange) return post
+        val updated = post.copy(
+            repostedByUser = reposted,
+            repostCount = (post.repostCount + if (reposted) 1 else -1).coerceAtLeast(0),
+            updateAt = System.currentTimeMillis(),
+        )
+        repository.upsert(updated)
+        return updated
+    }
+
+    suspend fun setBookmark(postId: String, bookmarked: Boolean): XPostEntity? {
+        val post = repository.getById(postId) ?: return null
+        val shouldChange = post.bookmarkedByUser != bookmarked
+        if (!shouldChange) return post
+        val updated = post.copy(
+            bookmarkedByUser = bookmarked,
+            updateAt = System.currentTimeMillis(),
+        )
+        repository.upsert(updated)
+        return updated
+    }
+
     private suspend fun ensureSeedData() {
         if (seeded || repository.countAll() > 0) {
             seeded = true

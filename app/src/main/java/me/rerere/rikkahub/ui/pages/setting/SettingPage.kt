@@ -165,6 +165,12 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                         leadingContent = { Icon(painterResource(R.drawable.ic_mcp), null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.setting_page_mcp)) },
                     )
+                    item(
+                        onClick = { navController.navigate(Screen.SettingPlugins) },
+                        leadingContent = { Icon(ZionAppIcons.Blocks, null, tint = Color.Unspecified) },
+                        supportingContent = { Text("管理内置 X tools 是否向 AI 开放") },
+                        headlineContent = { Text("插件") },
+                    )
                 }
             }
 

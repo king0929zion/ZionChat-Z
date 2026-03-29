@@ -91,6 +91,7 @@ import me.rerere.rikkahub.ui.pages.setting.SettingDisplayPage
 import me.rerere.rikkahub.ui.pages.setting.SettingFilesPage
 import me.rerere.rikkahub.ui.pages.setting.SettingMcpPage
 import me.rerere.rikkahub.ui.pages.setting.SettingModelPage
+import me.rerere.rikkahub.ui.pages.setting.SettingPluginsPage
 import me.rerere.rikkahub.ui.pages.setting.SettingPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderPage
@@ -381,6 +382,10 @@ class RouteActivity : ComponentActivity() {
                                 SettingMcpPage()
                             }
 
+                            entry<Screen.SettingPlugins> {
+                                SettingPluginsPage()
+                            }
+
                             entry<Screen.SettingFiles> {
                                 SettingFilesPage()
                             }
@@ -546,6 +551,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object SettingMcp : Screen
+
+    @Serializable
+    data object SettingPlugins : Screen
 
     @Serializable
     data object SettingFiles : Screen

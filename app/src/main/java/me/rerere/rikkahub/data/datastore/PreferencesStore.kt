@@ -97,6 +97,7 @@ class SettingsStore(
 
         // MCP
         val MCP_SERVERS = stringPreferencesKey("mcp_servers")
+        val PLUGIN_SETTINGS = stringPreferencesKey("plugin_settings")
 
         // WebDAV
         val WEBDAV_CONFIG = stringPreferencesKey("webdav_config")
@@ -168,6 +169,9 @@ class SettingsStore(
                 mcpServers = preferences[MCP_SERVERS]?.let {
                     JsonInstant.decodeFromString(it)
                 } ?: emptyList(),
+                pluginSettings = preferences[PLUGIN_SETTINGS]?.let {
+                    JsonInstant.decodeFromString(it)
+                } ?: PluginSettings(),
                 webDavConfig = preferences[WEBDAV_CONFIG]?.let {
                     JsonInstant.decodeFromString(it)
                 } ?: WebDavConfig(),
@@ -232,6 +236,7 @@ class SettingsStore(
             preferences[SEARCH_SELECTED] = sanitizedSettings.searchServiceSelected.coerceIn(0, sanitizedSettings.searchServices.size - 1)
 
             preferences[MCP_SERVERS] = JsonInstant.encodeToString(sanitizedSettings.mcpServers)
+            preferences[PLUGIN_SETTINGS] = JsonInstant.encodeToString(sanitizedSettings.pluginSettings)
             preferences[WEBDAV_CONFIG] = JsonInstant.encodeToString(sanitizedSettings.webDavConfig)
             preferences[S3_CONFIG] = JsonInstant.encodeToString(sanitizedSettings.s3Config)
             preferences[TTS_PROVIDERS] = JsonInstant.encodeToString(sanitizedSettings.ttsProviders)
@@ -424,6 +429,7 @@ data class Settings(
     val searchCommonOptions: SearchCommonOptions = SearchCommonOptions(),
     val searchServiceSelected: Int = 0,
     val mcpServers: List<McpServerConfig> = emptyList(),
+    val pluginSettings: PluginSettings = PluginSettings(),
     val webDavConfig: WebDavConfig = WebDavConfig(),
     val s3Config: S3Config = S3Config(),
     val ttsProviders: List<TTSProviderSetting> = DEFAULT_TTS_PROVIDERS,
@@ -470,6 +476,22 @@ data class DisplaySetting(
     val enableAutoScroll: Boolean = true,
     val enableLatexRendering: Boolean = true,
     val enableBlurEffect: Boolean = false,
+)
+
+@Serializable
+data class PluginSettings(
+    val xTools: XToolPluginSettings = XToolPluginSettings(),
+)
+
+@Serializable
+data class XToolPluginSettings(
+    val enabled: Boolean = true,
+    val allowReadTimeline: Boolean = true,
+    val allowPublishPost: Boolean = true,
+    val allowReplyPost: Boolean = true,
+    val allowLikePost: Boolean = false,
+    val allowRepostPost: Boolean = false,
+    val allowBookmarkPost: Boolean = false,
 )
 
 @Serializable
