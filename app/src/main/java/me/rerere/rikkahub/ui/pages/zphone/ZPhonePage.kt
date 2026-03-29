@@ -54,7 +54,7 @@ import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.utils.navigateToChatPage
 
 private val DesktopTextColor = Color(0xFF191919)
-private val DesktopIconShape = RoundedCornerShape(24.dp)
+private val DesktopIconShape = RoundedCornerShape(22.dp)
 
 private data class ZPhoneApp(
     val label: String,
@@ -150,9 +150,8 @@ fun ZPhonePage() {
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(start = 26.dp, end = 26.dp, top = 18.dp, bottom = 28.dp)
+                .padding(start = 26.dp, end = 26.dp, top = 12.dp, bottom = 28.dp)
         ) {
-            Spacer(modifier = Modifier.height(18.dp))
             DesktopGrid(apps = apps)
         }
     }
@@ -162,7 +161,7 @@ fun ZPhonePage() {
 private fun DesktopGrid(apps: List<ZPhoneApp>) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(26.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         apps.chunked(4).forEachIndexed { rowIndex, rowItems ->
             Row(
@@ -217,7 +216,7 @@ private fun DesktopAppIcon(
     ) {
         Box(
             modifier = Modifier
-                .size(72.dp)
+                .size(74.dp)
                 .clip(DesktopIconShape)
                 .background(app.containerColor, DesktopIconShape)
                 .pressableScale(pressedScale = 0.88f, onClick = app.onClick),

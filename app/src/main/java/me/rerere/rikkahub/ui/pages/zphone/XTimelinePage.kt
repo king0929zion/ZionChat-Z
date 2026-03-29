@@ -40,7 +40,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,15 +58,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.graphics.vector.path
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dokar.sonner.ToastType
 import me.rerere.rikkahub.data.datastore.Settings
@@ -75,7 +70,6 @@ import me.rerere.rikkahub.data.db.entity.XPostEntity
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalToaster
-import me.rerere.rikkahub.utils.getActivity
 import org.koin.androidx.compose.koinViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -102,8 +96,6 @@ private val DetailTimeFormatter = DateTimeFormatter.ofPattern("yy年M月d日, HH
 
 @Composable
 fun XTimelinePage(vm: XTimelineVM = koinViewModel()) {
-    val context = LocalContext.current
-    val activity = remember(context) { context.getActivity() }
     val toaster = LocalToaster.current
 
     val settings by vm.settings.collectAsStateWithLifecycle()
@@ -121,17 +113,6 @@ fun XTimelinePage(vm: XTimelineVM = koinViewModel()) {
     var composeReplyText by rememberSaveable { mutableStateOf("") }
     var awaitingPostOpen by rememberSaveable { mutableStateOf(false) }
     var awaitingReplyClose by rememberSaveable { mutableStateOf(false) }
-
-    DisposableEffect(activity) {
-        val window = activity?.window
-        if (window != null) {
-            val controller = WindowCompat.getInsetsController(window, window.decorView)
-            controller.show(WindowInsetsCompat.Type.systemBars())
-            controller.isAppearanceLightStatusBars = true
-            controller.isAppearanceLightNavigationBars = true
-        }
-        onDispose { }
-    }
 
     LaunchedEffect(Unit) {
         vm.bootstrap()
@@ -466,20 +447,12 @@ private fun XPostCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        if (post.authorKind != "user") {
+                        if (post.authorKind == "system") {
                             Icon(
                                 imageVector = XCloneIcons.Verified,
                                 contentDescription = null,
                                 tint = XBlue,
                                 modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        if (post.authorKind == "bot") {
-                            Icon(
-                                imageVector = XCloneIcons.XLogo,
-                                contentDescription = null,
-                                tint = XText,
-                                modifier = Modifier.size(12.dp)
                             )
                         }
                         Text(
@@ -779,7 +752,7 @@ private fun XDetailPostCard(
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(text = post.authorName, color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        if (post.authorKind != "user") {
+                        if (post.authorKind == "system") {
                             Icon(
                                 imageVector = XCloneIcons.Verified,
                                 contentDescription = null,
@@ -1233,7 +1206,7 @@ private fun ReplyContextCard(post: XPostEntity) {
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(text = post.authorName, color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                if (post.authorKind != "user") {
+                if (post.authorKind == "system") {
                     Icon(
                         imageVector = XCloneIcons.Verified,
                         contentDescription = null,
@@ -1264,7 +1237,7 @@ private fun XFloatingComposeButton(
             .padding(end = 16.dp, bottom = 72.dp)
             .size(56.dp)
             .clip(CircleShape)
-            .background(if (aiPosting) XBlue.copy(alpha = 0.72f) else XBlue)
+            .background(XBlue)
             .pressableScale(pressedScale = 0.92f, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -1334,21 +1307,12 @@ private fun PostAvatar(post: XPostEntity, size: androidx.compose.ui.unit.Dp = 40
             .background(background),
         contentAlignment = Alignment.Center
     ) {
-        if (post.authorKind == "user") {
-            Text(
-                text = post.authorName.take(1).uppercase(),
-                color = foreground,
-                fontSize = (size.value * 0.42f).sp,
-                fontWeight = FontWeight.Bold,
-            )
-        } else {
-            Icon(
-                imageVector = if (post.authorKind == "system") XCloneIcons.XLogo else XCloneIcons.XLogo,
-                contentDescription = null,
-                tint = foreground,
-                modifier = Modifier.size(size * 0.48f)
-            )
-        }
+        Text(
+            text = post.authorName.take(1).uppercase(),
+            color = foreground,
+            fontSize = (size.value * 0.42f).sp,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
@@ -1467,10 +1431,11 @@ private object XCloneIcons {
         viewportHeight = 24f
     ).apply {
         path(
-            pathData = addPathNodes("M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.74 2.746 1.867 3.447.016.15.025.3.025.453 0 2.21 1.71 4 3.918 4 .47 0 .92-.086 1.336-.25.52 1.334 1.826 2.25 3.337 2.25s2.816-.916 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.79 3.918-4 0-.153-.01-.303-.026-.453C21.76 15.247 22.5 13.96 22.5 12.5zm-11.23 4.25l-3.328-3.326.896-.897 2.433 2.43 5.432-5.43.896.896-6.328 6.327z"),
             fill = SolidColor(Color(0xFF1D9BF0)),
             pathFillType = PathFillType.NonZero
-        )
+        ) {
+            addPathNodes("M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.74 2.746 1.867 3.447.016.15.025.3.025.453 0 2.21 1.71 4 3.918 4 .47 0 .92-.086 1.336-.25.52 1.334 1.826 2.25 3.337 2.25s2.816-.916 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.79 3.918-4 0-.153-.01-.303-.026-.453C21.76 15.247 22.5 13.96 22.5 12.5zm-11.23 4.25l-3.328-3.326.896-.897 2.433 2.43 5.432-5.43.896.896-6.328 6.327z")
+        }
     }.build()
     val ChevronDown = filledIcon(
         name = "chevron_down",
@@ -1489,10 +1454,11 @@ private object XCloneIcons {
         viewportHeight = 24f
     ).apply {
         path(
-            pathData = addPathNodes(pathData),
             fill = SolidColor(Color.Black),
             pathFillType = PathFillType.NonZero
-        )
+        ) {
+            addPathNodes(pathData)
+        }
     }.build()
 
     private fun strokedIcon(name: String, pathData: String) = ImageVector.Builder(
@@ -1503,13 +1469,14 @@ private object XCloneIcons {
         viewportHeight = 24f
     ).apply {
         path(
-            pathData = addPathNodes(pathData),
             fill = SolidColor(Color.Transparent),
             stroke = SolidColor(Color.Black),
             strokeLineWidth = 1.8f,
             strokeLineCap = StrokeCap.Round,
             strokeLineJoin = StrokeJoin.Round,
             pathFillType = PathFillType.NonZero
-        )
+        ) {
+            addPathNodes(pathData)
+        }
     }.build()
 }
