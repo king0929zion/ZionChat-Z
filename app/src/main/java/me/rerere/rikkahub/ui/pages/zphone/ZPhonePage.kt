@@ -57,6 +57,7 @@ private data class ZPhoneApp(
 fun ZPhonePage() {
     val navController = LocalNavController.current
     val toaster = LocalToaster.current
+    val wechatComingSoon = stringResource(R.string.zphone_wechat_coming_soon)
     val apps = listOf(
         ZPhoneApp(
             label = "ZionChat",
@@ -90,7 +91,7 @@ fun ZPhonePage() {
             imagePadding = 8.dp,
             imageContentScale = ContentScale.Fit,
             onClick = {
-                toaster.show(stringResource(R.string.zphone_wechat_coming_soon), type = ToastType.Info)
+                toaster.show(wechatComingSoon, type = ToastType.Info)
             }
         ),
         ZPhoneApp(
