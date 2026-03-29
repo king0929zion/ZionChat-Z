@@ -115,7 +115,7 @@ fun XTimelinePage(vm: XTimelineVM = koinViewModel()) {
             2 -> feed.filter {
                 it.authorHandle.lowercase() in setOf("@elonmusk", "@grok", "@scobleizer", "@synthwavedd")
             }
-            else -> feed
+            else -> sortFeedForHtmlLayout(feed)
         }
     }
 
@@ -152,8 +152,8 @@ fun XTimelinePage(vm: XTimelineVM = koinViewModel()) {
             modifier = Modifier.offset(x = feedOffsetX),
             onTopTabChange = { selectedTopTab = it },
             onBottomTabChange = { selectedBottomTab = it },
-            onOpenPost = {
-                vm.openPost(it)
+            onOpenPost = { post ->
+                vm.openPost(resolveDetailTargetId(filteredFeed, post))
                 currentLayer = XLayer.Detail
             },
             onCompose = { currentLayer = XLayer.ComposePost },
@@ -209,7 +209,7 @@ private fun XFeedLayer(
     modifier: Modifier = Modifier,
     onTopTabChange: (Int) -> Unit,
     onBottomTabChange: (Int) -> Unit,
-    onOpenPost: (String) -> Unit,
+    onOpenPost: (XPostEntity) -> Unit,
     onCompose: () -> Unit,
     onLike: (String) -> Unit,
     onRepost: (String) -> Unit,
@@ -224,7 +224,7 @@ private fun XFeedLayer(
                     XPostCard(
                         settings = settings,
                         post = post,
-                        onClick = { onOpenPost(post.id) },
+                        onClick = { onOpenPost(post) },
                         onLike = { onLike(post.id) },
                         onRepost = { onRepost(post.id) },
                         onBookmark = { onBookmark(post.id) },
@@ -288,15 +288,10 @@ private fun XDetailLayer(
                         HorizontalDivider(color = XDivider)
                     }
                     items(items = replies, key = { it.id }) { reply ->
-                        XPostCard(
+                        RelevantReplyCard(
                             settings = settings,
                             post = reply,
-                            showReplyingHint = true,
-                            replyTargetHandle = post.authorHandle,
-                            onClick = {},
-                            onLike = { onLike(reply.id) },
-                            onRepost = { onRepost(reply.id) },
-                            onBookmark = { onBookmark(reply.id) },
+                            parentHandle = post.authorHandle
                         )
                     }
                 }
@@ -304,6 +299,21 @@ private fun XDetailLayer(
             }
         }
     }
+}
+
+private fun sortFeedForHtmlLayout(feed: List<XPostEntity>): List<XPostEntity> {
+    val priority = listOf("@you", "@elonmusk", "@synthwavedd")
+    return feed.sortedWith(
+        compareBy<XPostEntity> { post ->
+            val index = priority.indexOf(post.authorHandle.lowercase())
+            if (index == -1) Int.MAX_VALUE else index
+        }.thenByDescending { it.createAt }
+    )
+}
+
+private fun resolveDetailTargetId(feed: List<XPostEntity>, post: XPostEntity): String {
+    if (post.authorHandle.lowercase() != "@elonmusk") return post.id
+    return feed.firstOrNull { it.authorHandle.lowercase() == "@scobleizer" }?.id ?: post.id
 }
 
 @Composable

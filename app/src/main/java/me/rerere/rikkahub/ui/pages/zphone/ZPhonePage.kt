@@ -179,8 +179,8 @@ private fun AppIconCard(
     ) {
         Box(
             modifier = Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(18.dp))
+                .size(60.dp)
+                .clip(RoundedCornerShape(16.dp))
                 .background(app.tileColor)
                 .pressableScale(pressedScale = 0.9f, onClick = app.onClick),
             contentAlignment = Alignment.Center
@@ -202,7 +202,7 @@ private fun AppIconCard(
                         imageVector = app.imageVector,
                         contentDescription = app.label,
                         tint = app.iconTint,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }

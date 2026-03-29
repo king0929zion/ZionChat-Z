@@ -43,7 +43,7 @@ class XTimelineService(
     suspend fun getFeedSnapshot(limit: Int = 12): List<XPostEntity> = repository.getRecentFeed(limit)
 
     suspend fun createUserPost(content: String, replyToId: String? = null): String? {
-        val normalized = sanitizeText(content, maxLength = 560)
+        val normalized = sanitizeText(content, maxLength = 280)
         if (normalized.isBlank()) return null
 
         val settings = settingsStore.settingsFlow.first()
@@ -59,7 +59,7 @@ class XTimelineService(
     }
 
     suspend fun createToolPost(content: String, replyToId: String? = null): String? {
-        val normalized = sanitizeText(content, maxLength = 560)
+        val normalized = sanitizeText(content, maxLength = 280)
         if (normalized.isBlank()) return null
 
         val settings = settingsStore.settingsFlow.first()
@@ -223,13 +223,13 @@ class XTimelineService(
                     authorKind = ASSISTANT_KIND,
                     authorName = "Grok",
                     authorHandle = "@grok",
-                    content = "Thanks! We've been optimizing hard at xAI and the speed-ups are starting to feel real in daily use. Keep the transcript tests coming.",
+                    content = "Thanks! We've been optimizing hard at xAI—speed improvements like this are rolling out fast. Glad the transcript readings feel snappier. What else are you testing?",
                     likeCount = 46,
                     replyCount = 0,
                     repostCount = 8,
                     viewCount = 1_200,
-                    createAt = now - 6L * 60L * 60L * 1000L,
-                    updateAt = now - 6L * 60L * 60L * 1000L,
+                    createAt = now - 7L * 60L * 60L * 1000L,
+                    updateAt = now - 7L * 60L * 60L * 1000L,
                 ),
                 XPostEntity(
                     id = elonId,

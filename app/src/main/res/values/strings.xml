@@ -895,6 +895,7 @@
   <string name="x_timeline_audience_everyone">Everyone</string>
   <string name="x_timeline_everyone_can_reply">Everyone can reply</string>
   <string name="x_timeline_image_preview">Image preview</string>
+  <string name="x_timeline_reply_to_prefix">Replying to </string>
   <string name="x_timeline_reply_to_format">Replying to %1$s</string>
   <string name="x_timeline_replying_to_format">Replying to %1$s and @grok</string>
   <string name="x_timeline_detail_title">Post</string>

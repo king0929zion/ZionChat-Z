@@ -24,9 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.db.entity.XPostEntity
@@ -47,8 +51,8 @@ internal fun XPostCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Top
     ) {
         PostAvatar(settings = settings, post = post, size = 40.dp)
@@ -61,17 +65,28 @@ internal fun XPostCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = post.authorName, color = XText, fontSize = 15.sp, maxLines = 1)
+                        Text(
+                            text = post.authorName,
+                            color = XText,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
                         if (isVerified(post)) {
                             Spacer(modifier = Modifier.width(4.dp))
-                            Icon(imageVector = XCloneIcons.Verified, contentDescription = null, tint = Color.Unspecified, modifier = Modifier.size(18.dp))
+                            Icon(
+                                imageVector = XCloneIcons.Verified,
+                                contentDescription = null,
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                         if (post.authorHandle == "@elonmusk") {
                             Spacer(modifier = Modifier.width(4.dp))
                             Image(
-                                painter = androidx.compose.ui.res.painterResource(R.drawable.x_logo_black),
+                                painter = painterResource(R.drawable.x_logo_black),
                                 contentDescription = "X",
-                                modifier = Modifier.size(13.dp)
+                                modifier = Modifier.size(14.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(6.dp))
@@ -100,11 +115,22 @@ internal fun XPostCard(
                         .padding(4.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(imageVector = XCloneIcons.More, contentDescription = null, tint = XSubText, modifier = Modifier.size(18.dp))
+                    Icon(
+                        imageVector = XCloneIcons.More,
+                        contentDescription = null,
+                        tint = XSubText,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
 
-            Text(text = post.content, color = XText, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 4.dp))
+            Text(
+                text = post.content,
+                color = XText,
+                fontSize = 15.sp,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
 
             if (!post.quoteContent.isNullOrBlank()) {
                 QuoteCard(post = post, modifier = Modifier.padding(top = 12.dp))
@@ -112,7 +138,7 @@ internal fun XPostCard(
 
             PostActionBar(
                 post = post,
-                modifier = Modifier.padding(top = 14.dp),
+                modifier = Modifier.padding(top = 12.dp),
                 onLike = onLike,
                 onRepost = onRepost,
                 onBookmark = onBookmark,
@@ -137,22 +163,38 @@ internal fun QuoteCard(
             .padding(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF111827)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = post.quoteAuthorName.orEmpty().take(1).ifBlank { "Q" }, color = Color.White, fontSize = 10.sp)
-            }
+            QuoteAvatar(post = post)
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = post.quoteAuthorName.orEmpty(), color = XText, fontSize = 15.sp)
+            Text(
+                text = post.quoteAuthorName.orEmpty(),
+                color = XText,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                imageVector = XCloneIcons.Verified,
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(18.dp)
+            )
             Spacer(modifier = Modifier.width(6.dp))
             Text(text = post.quoteHandle.orEmpty(), color = XSubText, fontSize = 15.sp)
+            quoteTimeLabel(post)?.let { time ->
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(text = "·", color = XSubText, fontSize = 15.sp)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(text = time, color = XSubText, fontSize = 15.sp)
+            }
         }
 
-        Text(text = post.quoteContent.orEmpty(), color = XText, fontSize = 15.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 8.dp))
+        Text(
+            text = post.quoteContent.orEmpty(),
+            color = XText,
+            fontSize = 15.sp,
+            lineHeight = 20.sp,
+            modifier = Modifier.padding(top = 8.dp)
+        )
 
         if (post.quotePreview == "wireframe") {
             Box(
@@ -168,13 +210,26 @@ internal fun QuoteCard(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .height(110.dp)
-                        .padding(horizontal = 18.dp, vertical = 14.dp)
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
                         .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                        .border(1.dp, XDivider, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                         .background(XSurface)
                 ) {
-                    Box(modifier = Modifier.width(96.dp).height(10.dp).clip(RoundedCornerShape(999.dp)).background(Color(0xFFE5E7EB)))
+                    Box(
+                        modifier = Modifier
+                            .width(96.dp)
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(Color(0xFFE5E7EB))
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Box(modifier = Modifier.width(128.dp).height(10.dp).clip(RoundedCornerShape(999.dp)).background(Color(0xFFE5E7EB)))
+                    Box(
+                        modifier = Modifier
+                            .width(128.dp)
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(Color(0xFFE5E7EB))
+                    )
                 }
             }
         }
@@ -194,10 +249,10 @@ internal fun PostActionBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ActionMetric(icon = XCloneIcons.Reply, count = compactCount(post.replyCount), tint = XSubText, onClick = {})
-        ActionMetric(icon = XCloneIcons.Repost, count = compactCount(post.repostCount), tint = if (post.repostedByUser) XGreen else XSubText, onClick = onRepost)
-        ActionMetric(icon = XCloneIcons.Like, count = compactCount(post.likeCount), tint = if (post.likedByUser) XPink else XSubText, onClick = onLike)
-        ActionMetric(icon = XCloneIcons.Stats, count = compactCount(post.viewCount), tint = XSubText, onClick = {})
+        ActionMetric(icon = XCloneIcons.Reply, count = timelineMetricCount(post.replyCount), tint = XSubText, onClick = {})
+        ActionMetric(icon = XCloneIcons.Repost, count = timelineMetricCount(post.repostCount), tint = if (post.repostedByUser) XGreen else XSubText, onClick = onRepost)
+        ActionMetric(icon = XCloneIcons.Like, count = timelineMetricCount(post.likeCount), tint = if (post.likedByUser) XPink else XSubText, onClick = onLike)
+        ActionMetric(icon = XCloneIcons.Stats, count = timelineMetricCount(post.viewCount), tint = XSubText, onClick = {})
         Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             MiniAction(icon = XCloneIcons.Bookmark, tint = if (post.bookmarkedByUser) XBlue else XSubText, onClick = onBookmark)
             MiniAction(icon = XCloneIcons.Share, tint = XSubText, onClick = {})
@@ -212,7 +267,10 @@ internal fun ActionMetric(
     tint: Color,
     onClick: () -> Unit,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
         Box(
             modifier = Modifier
                 .size(32.dp)
@@ -221,7 +279,12 @@ internal fun ActionMetric(
                 .padding(7.dp),
             contentAlignment = Alignment.Center
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(18.dp)
+            )
         }
         Text(text = count, color = tint, fontSize = 13.sp)
     }
@@ -241,6 +304,42 @@ internal fun MiniAction(
             .padding(7.dp),
         contentAlignment = Alignment.Center
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+@Composable
+private fun QuoteAvatar(post: XPostEntity) {
+    val isScoble = post.quoteAuthorName == "Robert Scoble"
+    if (isScoble) {
+        AsyncImage(
+            model = "https://images.unsplash.com/photo-1535295972055-1c762f4483e5?auto=format&fit=crop&w=50&q=80",
+            contentDescription = null,
+            modifier = Modifier
+                .size(20.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+        return
+    }
+
+    Box(
+        modifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = post.quoteAuthorName.orEmpty().take(1).ifBlank { "C" },
+            color = Color.White,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }

@@ -1,5 +1,6 @@
 package me.rerere.rikkahub.ui.pages.zphone
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,9 +31,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.rerere.rikkahub.R
@@ -45,7 +53,7 @@ internal fun FeedHeader(settings: Settings) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(XSurface)
+            .background(XSurface.copy(alpha = 0.92f))
             .windowInsetsPadding(WindowInsets.statusBars)
     ) {
         Row(
@@ -62,7 +70,7 @@ internal fun FeedHeader(settings: Settings) {
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = androidx.compose.ui.res.painterResource(R.drawable.x_logo_black),
+                    painter = painterResource(R.drawable.x_logo_black),
                     contentDescription = "X",
                     modifier = Modifier.size(22.dp)
                 )
@@ -72,7 +80,7 @@ internal fun FeedHeader(settings: Settings) {
                 modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
-                    .pressableScale(pressedScale = 0.95f, onClick = {}),
+                    .pressableScale(pressedScale = 0.96f, onClick = {}),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -96,20 +104,20 @@ internal fun FeedTopTabs(
         stringResource(R.string.x_timeline_tab_following),
         stringResource(R.string.x_timeline_tab_ai)
     )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
             .background(XSurface)
-            .border(1.dp, XDivider)
+            .horizontalScroll(rememberScrollState())
     ) {
         titles.forEachIndexed { index, title ->
             Column(
                 modifier = Modifier
-                    .defaultMinSize(minWidth = 132.dp)
+                    .defaultMinSize(minWidth = 128.dp)
                     .height(53.dp)
                     .clickable { onSelect(index) }
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -117,6 +125,7 @@ internal fun FeedTopTabs(
                     text = title,
                     color = if (selectedIndex == index) XText else XSubText,
                     fontSize = 15.sp,
+                    fontWeight = if (selectedIndex == index) FontWeight.Bold else FontWeight.Medium,
                     maxLines = 1
                 )
                 Spacer(modifier = Modifier.weight(1f))
@@ -130,6 +139,8 @@ internal fun FeedTopTabs(
             }
         }
     }
+
+    HorizontalDivider(color = XDivider)
 }
 
 @Composable
@@ -162,32 +173,44 @@ internal fun XBottomNavBar(
     modifier: Modifier = Modifier,
     onSelect: (Int) -> Unit,
 ) {
-    val icons = listOf(XCloneIcons.Home, XCloneIcons.Search, XCloneIcons.Spark, XCloneIcons.Bell, XCloneIcons.Mail)
-    Row(
+    val icons = listOf(
+        XCloneIcons.Home,
+        XCloneIcons.Search,
+        XCloneIcons.Spark,
+        XCloneIcons.Bell,
+        XCloneIcons.Mail
+    )
+
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(XSurface)
-            .border(1.dp, XDivider)
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .height(53.dp)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceAround
     ) {
-        icons.forEachIndexed { index, icon ->
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .clickable { onSelect(index) },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = if (index == selectedIndex) XText else XSubText,
-                    modifier = Modifier.size(24.dp)
-                )
+        HorizontalDivider(color = XDivider)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(53.dp)
+                .padding(horizontal = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            icons.forEachIndexed { index, icon ->
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .clickable { onSelect(index) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = XText,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
         }
     }
@@ -199,26 +222,35 @@ internal fun ReplyBar(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(XSurface)
-            .border(1.dp, XDivider)
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        CurrentUserAvatar(settings = settings, size = 32.dp)
-        Box(
+        HorizontalDivider(color = XDivider)
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .clip(RoundedCornerShape(999.dp))
-                .background(Color(0xFFF0F3F4))
-                .clickable(onClick = onClick)
-                .padding(horizontal = 14.dp, vertical = 11.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(text = stringResource(R.string.x_timeline_reply_placeholder), color = XSubText, fontSize = 15.sp)
+            CurrentUserAvatar(settings = settings, size = 32.dp)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(Color(0xFFF0F3F4))
+                    .clickable(onClick = onClick)
+                    .padding(horizontal = 14.dp, vertical = 11.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.x_timeline_reply_placeholder),
+                    color = XSubText,
+                    fontSize = 15.sp
+                )
+            }
         }
     }
 }
@@ -239,14 +271,27 @@ internal fun DetailPostContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 PostAvatar(settings = settings, post = post, size = 40.dp)
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = post.authorName, color = XText, fontSize = 15.sp)
+                        Text(
+                            text = post.authorName,
+                            color = XText,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                         if (isVerified(post)) {
                             Spacer(modifier = Modifier.width(4.dp))
-                            Icon(imageVector = XCloneIcons.Verified, contentDescription = null, tint = Color.Unspecified, modifier = Modifier.size(18.dp))
+                            Icon(
+                                imageVector = XCloneIcons.Verified,
+                                contentDescription = null,
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     }
                     Text(text = post.authorHandle, color = XSubText, fontSize = 15.sp)
@@ -255,38 +300,143 @@ internal fun DetailPostContent(
             XFollowChip()
         }
 
-        Text(text = post.content, color = XText, fontSize = 17.sp, lineHeight = 24.sp, modifier = Modifier.padding(horizontal = 16.dp))
         Text(
-            text = "${absoluteTime(post.createAt)} · ${compactCount(post.viewCount)} ${stringResource(R.string.x_timeline_views_suffix)}",
+            text = post.content,
+            color = XText,
+            fontSize = 17.sp,
+            lineHeight = 24.sp,
+            letterSpacing = (-0.1).sp,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        Text(
+            text = "${absoluteTime(post.createAt)} · ${timelineMetricCount(post.viewCount)} ${stringResource(R.string.x_timeline_views_suffix)}",
             color = XSubText,
             fontSize = 15.sp,
             modifier = Modifier.padding(start = 16.dp, top = 18.dp)
         )
+
         HorizontalDivider(color = XDivider, modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp))
 
-        Row(modifier = Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(22.dp)) {
-            DetailMetric(label = stringResource(R.string.x_timeline_metric_reposts), value = compactCount(post.repostCount))
-            DetailMetric(label = stringResource(R.string.x_timeline_metric_likes), value = compactCount(post.likeCount))
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            DetailMetric(label = stringResource(R.string.x_timeline_metric_reposts), value = detailMetricCount(post.repostCount))
+            DetailMetric(label = stringResource(R.string.x_timeline_metric_likes), value = detailMetricCount(post.likeCount))
             DetailMetric(
                 label = stringResource(R.string.x_timeline_metric_bookmarks),
-                value = if (post.bookmarkedByUser) {
-                    stringResource(R.string.x_timeline_bookmarked_value)
-                } else {
-                    stringResource(R.string.x_timeline_not_bookmarked_value)
-                }
+                value = detailMetricCount(if (post.bookmarkedByUser) 20 else 19)
             )
         }
 
         HorizontalDivider(color = XDivider, modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp))
-        PostActionBar(post = post, modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp), onLike = onLike, onRepost = onRepost, onBookmark = onBookmark)
-        HorizontalDivider(color = XDivider)
     }
+}
+
+@Composable
+internal fun RelevantReplyCard(
+    settings: Settings,
+    post: XPostEntity,
+    parentHandle: String,
+    modifier: Modifier = Modifier,
+) {
+    val isGrok = post.authorHandle.lowercase() == "@grok"
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        if (isGrok) {
+            GrokReplyAvatar()
+        } else {
+            PostAvatar(settings = settings, post = post, size = 40.dp)
+        }
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = post.authorName,
+                        color = XText,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (isGrok) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        GrokGoldBadge()
+                        Spacer(modifier = Modifier.width(6.dp))
+                        IntelligenceChip()
+                    } else if (isVerified(post)) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = XCloneIcons.Verified,
+                            contentDescription = null,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = post.authorHandle, color = XSubText, fontSize = 15.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = "·", color = XSubText, fontSize = 15.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = relativeTime(post.createAt), color = XSubText, fontSize = 15.sp)
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = {})
+                        .padding(4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = XCloneIcons.More,
+                        contentDescription = null,
+                        tint = XSubText,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            Text(
+                text = buildAnnotatedString {
+                    append(stringResource(R.string.x_timeline_reply_to_prefix))
+                    withStyle(style = SpanStyle(color = XBlue)) {
+                        append(parentHandle)
+                    }
+                },
+                color = XSubText,
+                fontSize = 15.sp,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+
+            Text(
+                text = detailReplyContent(post),
+                color = XText,
+                fontSize = 15.sp,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(top = 6.dp)
+            )
+        }
+    }
+
+    HorizontalDivider(color = XDivider)
 }
 
 @Composable
 internal fun DetailMetric(label: String, value: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = value, color = XText, fontSize = 15.sp)
+        Text(text = value, color = XText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.width(4.dp))
         Text(text = label, color = XSubText, fontSize = 15.sp)
     }
@@ -300,6 +450,71 @@ internal fun XFollowChip() {
             .background(XText)
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Text(text = stringResource(R.string.x_timeline_follow), color = Color.White, fontSize = 15.sp)
+        Text(
+            text = stringResource(R.string.x_timeline_follow),
+            color = Color.White,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun GrokReplyAvatar() {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = XCloneIcons.GrokMark,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(26.dp)
+        )
+    }
+}
+
+@Composable
+private fun GrokGoldBadge() {
+    Canvas(modifier = Modifier.size(18.dp)) {
+        val stroke = 1.8.dp.toPx()
+        drawRoundRect(
+            color = Color(0xFFFFD700),
+            cornerRadius = CornerRadius(4.dp.toPx())
+        )
+        drawLine(
+            color = Color.Black,
+            start = Offset(size.width * 0.28f, size.height * 0.56f),
+            end = Offset(size.width * 0.45f, size.height * 0.72f),
+            strokeWidth = stroke,
+            cap = StrokeCap.Round
+        )
+        drawLine(
+            color = Color.Black,
+            start = Offset(size.width * 0.45f, size.height * 0.72f),
+            end = Offset(size.width * 0.74f, size.height * 0.34f),
+            strokeWidth = stroke,
+            cap = StrokeCap.Round
+        )
+    }
+}
+
+@Composable
+private fun IntelligenceChip() {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color(0xFFEFF3F4))
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = "I",
+            color = XText,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }

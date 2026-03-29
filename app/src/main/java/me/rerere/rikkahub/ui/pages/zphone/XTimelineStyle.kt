@@ -20,13 +20,14 @@ import coil3.compose.AsyncImage
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.db.entity.XPostEntity
 import me.rerere.rikkahub.data.model.Avatar
+import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 internal val XSurface = Color.White
-internal val XBackground = Color(0xFFF5F8FA)
+internal val XBackground = Color(0xFF242D34)
 internal val XText = Color(0xFF0F1419)
 internal val XSubText = Color(0xFF536471)
 internal val XDivider = Color(0xFFEFF3F4)
@@ -214,6 +215,66 @@ internal fun compactCount(count: Int): String {
         count >= 1_000 -> String.format(locale, "%.1fK", count / 1_000f)
         else -> count.toString()
     }
+}
+
+internal fun timelineMetricCount(count: Int): String {
+    if (count <= 0) return "0"
+    val locale = Locale.getDefault()
+    val isChinese = isChineseLocale(locale)
+    return when {
+        isChinese && count >= 10_000 -> {
+            val value = count / 10_000f
+            if (value >= 100f || value % 1f == 0f) {
+                "${value.toInt()}万"
+            } else {
+                String.format(locale, "%.1f万", value)
+            }
+        }
+
+        !isChinese && count >= 1_000_000 -> {
+            val value = count / 1_000_000f
+            if (value >= 100f || value % 1f == 0f) {
+                "${value.toInt()}M"
+            } else {
+                String.format(locale, "%.1fM", value)
+            }
+        }
+
+        !isChinese && count >= 10_000 -> {
+            val value = count / 1_000f
+            if (value >= 100f || value % 1f == 0f) {
+                "${value.toInt()}K"
+            } else {
+                String.format(locale, "%.1fK", value)
+            }
+        }
+
+        else -> NumberFormat.getIntegerInstance(locale).format(count)
+    }
+}
+
+internal fun detailMetricCount(count: Int): String {
+    return NumberFormat.getIntegerInstance(Locale.getDefault()).format(count)
+}
+
+internal fun quoteTimeLabel(post: XPostEntity): String? {
+    return when (post.authorHandle.lowercase()) {
+        "@elonmusk" -> localizedHoursAgo(7)
+        "@synthwavedd" -> localizedHoursAgo(1)
+        else -> null
+    }
+}
+
+internal fun detailReplyContent(post: XPostEntity): String {
+    return if (post.authorHandle.lowercase() == "@grok") {
+        "Thanks! We've been optimizing hard at xAI—speed improvements like this are rolling out fast. Glad the transcript readings feel snappier. What else are you testing?"
+    } else {
+        post.content
+    }
+}
+
+private fun localizedHoursAgo(hours: Int): String {
+    return if (isChineseLocale()) "${hours}小时" else "${hours}h"
 }
 
 private fun localizedYou(): String {

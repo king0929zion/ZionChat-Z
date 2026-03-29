@@ -894,6 +894,7 @@
   <string name="x_timeline_audience_everyone">每个人</string>
   <string name="x_timeline_everyone_can_reply">所有人可以回复</string>
   <string name="x_timeline_image_preview">图片预览</string>
+  <string name="x_timeline_reply_to_prefix">回复给 </string>
   <string name="x_timeline_reply_to_format">回复给 %1$s</string>
   <string name="x_timeline_replying_to_format">回复给 %1$s 和 @grok</string>
   <string name="x_timeline_detail_title">发帖</string>
