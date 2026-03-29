@@ -297,10 +297,10 @@ class LocalTools(
         )
     }
 
-    val readZPhoneTimelineTool by lazy {
+    val readXTimelineTool by lazy {
         Tool(
-            name = "read_z_phone_timeline",
-            description = "Read the latest posts from the local Z-Phone X timeline. Returns post IDs, author info, text content, and interaction counts for AI context.",
+            name = "read_x_timeline",
+            description = "Read the latest posts from the local built-in X timeline. Returns post IDs, author info, text content, and interaction counts for AI context.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -337,16 +337,16 @@ class LocalTools(
         )
     }
 
-    val publishZPhonePostTool by lazy {
+    val publishXPostTool by lazy {
         Tool(
-            name = "publish_z_phone_post",
-            description = "Publish a new post to the local Z-Phone X timeline.",
+            name = "publish_x_post",
+            description = "Publish a new post to the local built-in X timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
                         put("content", buildJsonObject {
                             put("type", "string")
-                            put("description", "Text content to publish to the Z-Phone timeline")
+                            put("description", "Text content to publish to the local X timeline")
                         })
                     },
                     required = listOf("content")
@@ -362,10 +362,10 @@ class LocalTools(
         )
     }
 
-    val replyZPhonePostTool by lazy {
+    val replyXPostTool by lazy {
         Tool(
-            name = "reply_z_phone_post",
-            description = "Reply to an existing post in the local Z-Phone X timeline.",
+            name = "reply_x_post",
+            description = "Reply to an existing post in the local built-in X timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -393,10 +393,10 @@ class LocalTools(
         )
     }
 
-    val likeZPhonePostTool by lazy {
+    val likeXPostTool by lazy {
         Tool(
-            name = "like_z_phone_post",
-            description = "Like or unlike a post in the local Z-Phone X timeline.",
+            name = "like_x_post",
+            description = "Like or unlike a post in the local built-in X timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -422,10 +422,10 @@ class LocalTools(
         )
     }
 
-    val repostZPhonePostTool by lazy {
+    val repostXPostTool by lazy {
         Tool(
-            name = "repost_z_phone_post",
-            description = "Repost or undo repost for a post in the local Z-Phone X timeline.",
+            name = "repost_x_post",
+            description = "Repost or undo repost for a post in the local built-in X timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -451,10 +451,10 @@ class LocalTools(
         )
     }
 
-    val bookmarkZPhonePostTool by lazy {
+    val bookmarkXPostTool by lazy {
         Tool(
-            name = "bookmark_z_phone_post",
-            description = "Bookmark or remove bookmark for a post in the local Z-Phone X timeline.",
+            name = "bookmark_x_post",
+            description = "Bookmark or remove bookmark for a post in the local built-in X timeline.",
             parameters = {
                 InputSchema.Obj(
                     properties = buildJsonObject {
@@ -526,22 +526,22 @@ class LocalTools(
         val xTools = settingsStore.settingsFlow.value.pluginSettings.xTools
         if (xTools.enabled) {
             if (xTools.allowReadTimeline) {
-                tools.add(readZPhoneTimelineTool)
+                tools.add(readXTimelineTool)
             }
             if (xTools.allowPublishPost) {
-                tools.add(publishZPhonePostTool)
+                tools.add(publishXPostTool)
             }
             if (xTools.allowReplyPost) {
-                tools.add(replyZPhonePostTool)
+                tools.add(replyXPostTool)
             }
             if (xTools.allowLikePost) {
-                tools.add(likeZPhonePostTool)
+                tools.add(likeXPostTool)
             }
             if (xTools.allowRepostPost) {
-                tools.add(repostZPhonePostTool)
+                tools.add(repostXPostTool)
             }
             if (xTools.allowBookmarkPost) {
-                tools.add(bookmarkZPhonePostTool)
+                tools.add(bookmarkXPostTool)
             }
         }
         return tools

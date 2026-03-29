@@ -1,0 +1,209 @@
+package me.rerere.rikkahub.ui.pages.zphone
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import me.rerere.rikkahub.data.datastore.Settings
+import me.rerere.rikkahub.data.db.entity.XPostEntity
+import me.rerere.rikkahub.data.model.Avatar
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+internal val XSurface = Color.White
+internal val XBackground = Color(0xFFF5F8FA)
+internal val XText = Color(0xFF0F1419)
+internal val XSubText = Color(0xFF536471)
+internal val XDivider = Color(0xFFEFF3F4)
+internal val XBlue = Color(0xFF1D9BF0)
+internal val XGreen = Color(0xFF00BA7C)
+internal val XPink = Color(0xFFF91880)
+internal const val ComposerLimit = 280
+private val DetailTimeFormatter = DateTimeFormatter.ofPattern("yy年M月d日, HH:mm")
+
+internal data class AuthorVisual(
+    val avatarUrl: String? = null,
+    val background: Color,
+    val foreground: Color = Color.White,
+    val fallbackText: String,
+)
+
+@Composable
+internal fun CurrentUserAvatar(
+    settings: Settings,
+    size: Dp,
+) {
+    val avatar = settings.displaySetting.userAvatar
+    val name = settings.displaySetting.userNickname.ifBlank { "你" }
+
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(Color(0xFFE5E7EB)),
+        contentAlignment = Alignment.Center
+    ) {
+        when (avatar) {
+            is Avatar.Image -> {
+                AsyncImage(
+                    model = avatar.url,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            is Avatar.Emoji -> {
+                Text(
+                    text = avatar.content,
+                    fontSize = (size.value * 0.45f).sp
+                )
+            }
+
+            Avatar.Dummy -> {
+                Text(
+                    text = name.take(1),
+                    color = XText,
+                    fontSize = (size.value * 0.42f).sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun PostAvatar(
+    settings: Settings,
+    post: XPostEntity,
+    size: Dp,
+) {
+    if (post.authorHandle == "@you") {
+        CurrentUserAvatar(settings = settings, size = size)
+        return
+    }
+
+    val visual = remember(post.authorHandle, post.authorKind) {
+        authorVisual(post)
+    }
+
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(visual.background),
+        contentAlignment = Alignment.Center
+    ) {
+        if (visual.avatarUrl != null) {
+            AsyncImage(
+                model = visual.avatarUrl,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Text(
+                text = visual.fallbackText,
+                color = visual.foreground,
+                fontSize = (size.value * 0.42f).sp
+            )
+        }
+    }
+}
+
+internal fun authorVisual(post: XPostEntity): AuthorVisual {
+    return when (post.authorHandle.lowercase()) {
+        "@elonmusk" -> AuthorVisual(
+            avatarUrl = "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80",
+            background = Color(0xFF101418),
+            fallbackText = "E"
+        )
+
+        "@scobleizer" -> AuthorVisual(
+            avatarUrl = "https://images.unsplash.com/photo-1535295972055-1c762f4483e5?auto=format&fit=crop&w=200&q=80",
+            background = Color(0xFF101418),
+            fallbackText = "R"
+        )
+
+        "@synthwavedd" -> AuthorVisual(
+            avatarUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=200&q=80",
+            background = Color(0xFFE8EDF1),
+            foreground = XText,
+            fallbackText = "L"
+        )
+
+        "@grok" -> AuthorVisual(
+            background = Color.Black,
+            foreground = Color.White,
+            fallbackText = "G"
+        )
+
+        else -> {
+            val isAssistant = post.authorKind == "assistant"
+            AuthorVisual(
+                background = if (isAssistant) Color(0xFFCBD5F5) else Color(0xFFE5E7EB),
+                foreground = if (isAssistant) Color(0xFF1F2937) else XText,
+                fallbackText = post.authorName.take(1).uppercase()
+            )
+        }
+    }
+}
+
+internal fun isVerified(post: XPostEntity): Boolean {
+    return post.authorHandle in setOf("@elonmusk", "@scobleizer", "@synthwavedd", "@grok")
+}
+
+internal fun relativeTime(timestamp: Long): String {
+    val diffMinutes = ((System.currentTimeMillis() - timestamp) / 60_000L).coerceAtLeast(0L)
+    return when {
+        diffMinutes < 1L -> "刚刚"
+        diffMinutes < 60L -> "${diffMinutes}分钟"
+        diffMinutes < 60L * 24L -> "${diffMinutes / 60L}小时"
+        else -> "${diffMinutes / (60L * 24L)}天"
+    }
+}
+
+internal fun absoluteTime(timestamp: Long): String {
+    return DetailTimeFormatter.format(
+        Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault())
+    )
+}
+
+internal fun compactCount(count: Int): String {
+    if (count <= 0) return "0"
+    return when {
+        count >= 1_000_000 -> {
+            val value = count / 1_000_000f
+            if (value >= 100f || value % 1f == 0f) {
+                "${value.toInt()}M"
+            } else {
+                String.format("%.1fM", value)
+            }
+        }
+
+        count >= 10_000 -> {
+            val value = count / 10_000f
+            if (value >= 100f || value % 1f == 0f) {
+                "${value.toInt()}万"
+            } else {
+                String.format("%.1f万", value)
+            }
+        }
+
+        count >= 1_000 -> String.format("%.1fK", count / 1_000f)
+        else -> count.toString()
+    }
+}

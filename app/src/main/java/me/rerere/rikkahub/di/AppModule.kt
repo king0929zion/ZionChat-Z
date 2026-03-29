@@ -71,8 +71,6 @@ val appModule = module {
             appScope = get(),
             settingsStore = get(),
             repository = get(),
-            providerManager = get(),
-            memoryRepository = get(),
         )
     }
 

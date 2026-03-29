@@ -141,7 +141,7 @@ fun ChatDrawerContent(
                     )
                 }
                 SidebarMenuEntry(
-                    label = "Z-Phone",
+                    label = "ZiCode",
                     onClick = { navController.navigate(Screen.ZPhone) },
                 ) {
                     Icon(
