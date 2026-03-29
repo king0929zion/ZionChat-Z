@@ -1279,23 +1279,25 @@ object ZionAppIcons {
         viewportHeight = 24f
     ).apply {
         path(
-            pathData = addPathNodes("M10 22V7a1 1 0 0 0-1-1H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5a1 1 0 0 0-1-1H2"),
             fill = SolidColor(Color.Transparent),
             stroke = SolidColor(Color(0xFF1C1C1E)),
             strokeLineWidth = 2f,
             strokeLineCap = StrokeCap.Round,
             strokeLineJoin = StrokeJoin.Round,
             pathFillType = PathFillType.NonZero
-        )
+        ) {
+            addPathNodes("M10 22V7a1 1 0 0 0-1-1H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5a1 1 0 0 0-1-1H2")
+        }
         path(
-            pathData = addPathNodes("M14 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1z"),
             fill = SolidColor(Color.Transparent),
             stroke = SolidColor(Color(0xFF1C1C1E)),
             strokeLineWidth = 2f,
             strokeLineCap = StrokeCap.Round,
             strokeLineJoin = StrokeJoin.Round,
             pathFillType = PathFillType.NonZero
-        )
+        ) {
+            addPathNodes("M14 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1z")
+        }
     }.build()
 
 }
