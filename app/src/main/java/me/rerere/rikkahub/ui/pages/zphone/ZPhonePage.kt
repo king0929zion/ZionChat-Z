@@ -86,7 +86,6 @@ fun ZPhonePage() {
         if (window != null) {
             val controller = WindowCompat.getInsetsController(window, window.decorView)
             controller.show(WindowInsetsCompat.Type.systemBars())
-            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
             controller.isAppearanceLightStatusBars = true
             controller.isAppearanceLightNavigationBars = true
         }
