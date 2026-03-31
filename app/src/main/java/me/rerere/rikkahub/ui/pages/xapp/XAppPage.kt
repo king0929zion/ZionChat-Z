@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +18,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -38,10 +43,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -136,70 +144,64 @@ private fun FeedView(
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("为你推荐", "正在关注", "AI — Rumors & Insights")
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Header
-        FeedHeader(onBack = onBack)
-
-        // Tabs
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .background(Color.White),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            tabs.forEachIndexed { index, tab ->
-                TabItem(
-                    label = tab,
-                    isSelected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
-        }
-
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(XBorder)
-        )
-
-        // Feed content
-        LazyColumn(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .weight(1f)
+                .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            items(getTweets()) { tweet ->
-                TweetCard(
-                    tweet = tweet,
-                    onClick = { onNavigate(XView.Detail) }
-                )
+            // Header
+            FeedHeader(onBack = onBack)
+
+            // Tabs
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .background(Color.White),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                tabs.forEachIndexed { index, tab ->
+                    TabItem(
+                        label = tab,
+                        isSelected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(XBorder)
+            )
+
+            // Feed content
+            LazyColumn(
+                modifier = Modifier.weight(1f)
+            ) {
+                items(getTweets()) { tweet ->
+                    TweetCard(
+                        tweet = tweet,
+                        onClick = { onNavigate(XView.Detail) }
+                    )
+                }
+                item {
+                    // Bottom padding for FAB
+                    Spacer(modifier = Modifier.height(72.dp))
+                }
             }
         }
 
         // FAB
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(end = 16.dp, bottom = 72.dp),
-            contentAlignment = Alignment.BottomEnd
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 72.dp)
         ) {
-            IconButton(
-                onClick = { onNavigate(XView.ComposePost) },
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(XBlue)
-            ) {
-                Icon(
-                    imageVector = XIcons.Plus,
-                    contentDescription = "Compose",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+            FloatingActionButtonX(onClick = { onNavigate(XView.ComposePost) })
         }
 
         // Bottom nav
@@ -534,11 +536,46 @@ private fun ActionButton(
 }
 
 @Composable
+private fun FloatingActionButtonX(onClick: () -> Unit) {
+    var isPressed by remember { mutableStateOf(false) }
+    val scale = if (isPressed) 0.9f else 1f
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(CircleShape)
+            .background(XBlue)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        tryAwaitRelease()
+                        isPressed = false
+                        onClick()
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = XIcons.Plus,
+            contentDescription = "Compose",
+            tint = Color.White,
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
+
+@Composable
 private fun XBottomNav() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
+            .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
@@ -590,7 +627,11 @@ private fun DetailView(
     onNavigate: (XView) -> Unit,
     onBack: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
+    ) {
         // Header
         Row(
             modifier = Modifier
@@ -883,7 +924,11 @@ private fun ComposePostView(
     val progress = (text.length.toFloat() / maxChars).coerceIn(0f, 1f)
     val canPost = text.isNotEmpty() && text.length <= maxChars
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
+    ) {
         // Header
         Row(
             modifier = Modifier
@@ -1108,7 +1153,11 @@ private fun ComposeReplyView(
     val maxChars = 280
     val canReply = text.isNotEmpty() && text.length <= maxChars
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
+    ) {
         // Header
         Row(
             modifier = Modifier
