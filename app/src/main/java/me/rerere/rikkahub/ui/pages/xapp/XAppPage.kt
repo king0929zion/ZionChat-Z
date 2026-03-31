@@ -195,7 +195,7 @@ private fun FeedView(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 72.dp)
+                .padding(end = 16.dp, bottom = 80.dp)
         ) {
             FloatingActionButtonX(onClick = { onNavigate(XView.ComposePost) })
         }
@@ -494,11 +494,6 @@ private fun TweetActions(
             activeColor = XPink
         )
         ActionButton(
-            icon = XIcons.Bookmark,
-            count = "",
-            activeColor = XBlue
-        )
-        ActionButton(
             icon = XIcons.Share,
             count = views,
             activeColor = XBlue
@@ -670,7 +665,7 @@ private fun DetailView(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             // Author info
             Row(
