@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -51,6 +53,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -146,15 +149,13 @@ private fun FeedView(
     val tabs = listOf("为你推荐", "正在关注", "AI — Rumors & Insights")
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.statusBars)
-        ) {
-            // Header
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .imePadding()
+    ) {
             FeedHeader(onBack = onBack)
-
-            // Tabs
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -171,15 +172,12 @@ private fun FeedView(
                     )
                 }
             }
-
             Spacer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
                     .background(XBorder)
             )
-
-            // Feed content
             LazyColumn(
                 modifier = Modifier.weight(1f)
             ) {
@@ -190,13 +188,10 @@ private fun FeedView(
                     )
                 }
                 item {
-                    // Bottom padding for FAB
                     Spacer(modifier = Modifier.height(72.dp))
                 }
             }
         }
-
-        // FAB
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -204,9 +199,13 @@ private fun FeedView(
         ) {
             FloatingActionButtonX(onClick = { onNavigate(XView.ComposePost) })
         }
-
-        // Bottom nav
-        XBottomNav()
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+        ) {
+            XBottomNav()
+        }
     }
 }
 
@@ -371,6 +370,7 @@ private fun TweetCard(
                 )
 
                 tweet.quoteTweet?.let { quote ->
+                    Spacer(modifier = Modifier.height(12.dp))
                     QuoteTweetCard(quote = quote)
                 }
 
@@ -494,20 +494,15 @@ private fun TweetActions(
             activeColor = XPink
         )
         ActionButton(
+            icon = XIcons.Bookmark,
+            count = "",
+            activeColor = XBlue
+        )
+        ActionButton(
             icon = XIcons.Share,
             count = views,
             activeColor = XBlue
         )
-        Row {
-            IconButton(onClick = { }) {
-                Icon(
-                    imageVector = XIcons.Bookmark,
-                    contentDescription = "Bookmark",
-                    tint = XTextSecondary,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
     }
 }
 
@@ -528,12 +523,15 @@ private fun ActionButton(
             tint = if (isActive) activeColor else XTextSecondary,
             modifier = Modifier.size(18.dp)
         )
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = count,
-            fontSize = 13.sp,
-            color = if (isActive) activeColor else XTextSecondary
-        )
+        if (count.isNotEmpty()) {
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = count,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isActive) activeColor else XTextPrimary
+            )
+        }
     }
 }
 
@@ -573,6 +571,7 @@ private fun FloatingActionButtonX(onClick: () -> Unit) {
 
 @Composable
 private fun XBottomNav() {
+    var selectedTab by remember { mutableStateOf(0) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -581,46 +580,53 @@ private fun XBottomNav() {
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
-        IconButton(onClick = { }) {
-            Icon(
-                imageVector = XIcons.Home,
-                contentDescription = "Home",
-                tint = XTextPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        IconButton(onClick = { }) {
-            Icon(
-                imageVector = XIcons.Search,
-                contentDescription = "Search",
-                tint = XTextPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        IconButton(onClick = { }) {
-            Icon(
-                imageVector = XIcons.XLogo,
-                contentDescription = "Post",
-                tint = XTextPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        IconButton(onClick = { }) {
-            Icon(
-                imageVector = XIcons.Notifications,
-                contentDescription = "Notifications",
-                tint = XTextPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        IconButton(onClick = { }) {
-            Icon(
-                imageVector = XIcons.Messages,
-                contentDescription = "Messages",
-                tint = XTextPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        BottomNavItem(
+            icon = XIcons.Home,
+            selectedIcon = XIcons.HomeFilled,
+            isSelected = selectedTab == 0,
+            onClick = { selectedTab = 0 }
+        )
+        BottomNavItem(
+            icon = XIcons.Search,
+            selectedIcon = XIcons.SearchFilled,
+            isSelected = selectedTab == 1,
+            onClick = { selectedTab = 1 }
+        )
+        BottomNavItem(
+            icon = XIcons.Communities,
+            selectedIcon = XIcons.CommunitiesFilled,
+            isSelected = selectedTab == 2,
+            onClick = { selectedTab = 2 }
+        )
+        BottomNavItem(
+            icon = XIcons.Notifications,
+            selectedIcon = XIcons.NotificationsFilled,
+            isSelected = selectedTab == 3,
+            onClick = { selectedTab = 3 }
+        )
+        BottomNavItem(
+            icon = XIcons.Messages,
+            selectedIcon = XIcons.MessagesFilled,
+            isSelected = selectedTab == 4,
+            onClick = { selectedTab = 4 }
+        )
+    }
+}
+
+@Composable
+private fun BottomNavItem(
+    icon: ImageVector,
+    selectedIcon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = if (isSelected) selectedIcon else icon,
+            contentDescription = null,
+            tint = if (isSelected) XTextPrimary else XTextSecondary,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 
@@ -650,7 +656,7 @@ private fun DetailView(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(24.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = "发帖",
                 fontSize = 20.sp,
@@ -776,21 +782,45 @@ private fun DetailView(
                 modifier = Modifier.padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                Text(
-                    text = "15 转帖",
-                    fontSize = 15.sp,
-                    color = XTextSecondary
-                )
-                Text(
-                    text = "302 喜欢",
-                    fontSize = 15.sp,
-                    color = XTextSecondary
-                )
-                Text(
-                    text = "19 书签",
-                    fontSize = 15.sp,
-                    color = XTextSecondary
-                )
+                Row {
+                    Text(
+                        text = "15",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = XTextPrimary
+                    )
+                    Text(
+                        text = " 转帖",
+                        fontSize = 15.sp,
+                        color = XTextSecondary
+                    )
+                }
+                Row {
+                    Text(
+                        text = "302",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = XTextPrimary
+                    )
+                    Text(
+                        text = " 喜欢",
+                        fontSize = 15.sp,
+                        color = XTextSecondary
+                    )
+                }
+                Row {
+                    Text(
+                        text = "19",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = XTextPrimary
+                    )
+                    Text(
+                        text = " 书签",
+                        fontSize = 15.sp,
+                        color = XTextSecondary
+                    )
+                }
             }
 
             // Reply header
@@ -2089,6 +2119,198 @@ private object XIcons {
                 reflectiveCurveTo(22.1f, 10f, 21f, 10f)
                 reflectiveCurveTo(19f, 10.9f, 19f, 12f)
                 reflectiveCurveTo(19.9f, 14f, 21f, 14f)
+                close()
+            }
+        }.build()
+
+    val HomeFilled: ImageVector
+        get() = ImageVector.Builder(
+            name = "HomeFilled",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
+                moveTo(12f, 1.696f)
+                lineTo(0.622f, 8.807f)
+                lineTo(1.682f, 10.503f)
+                lineTo(3f, 9.679f)
+                verticalLineTo(19.5f)
+                curveTo(3f, 20.881f, 4.119f, 22f, 5.5f, 22f)
+                horizontalLineTo(18.5f)
+                curveTo(19.881f, 22f, 21f, 20.881f, 21f, 19.5f)
+                verticalLineTo(9.679f)
+                lineTo(22.318f, 10.503f)
+                lineTo(23.378f, 8.807f)
+                lineTo(12f, 1.696f)
+                close()
+            }
+        }.build()
+
+    val SearchFilled: ImageVector
+        get() = ImageVector.Builder(
+            name = "SearchFilled",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
+                moveTo(10.25f, 3.75f)
+                curveTo(6.66f, 3.75f, 3.75f, 6.66f, 3.75f, 10.25f)
+                reflectiveCurveTo(6.66f, 16.75f, 10.25f, 16.75f)
+                curveTo(12.045f, 16.75f, 13.669f, 16.024f, 14.846f, 14.846f)
+                curveTo(16.024f, 13.669f, 16.75f, 12.045f, 16.75f, 10.25f)
+                curveTo(16.75f, 6.66f, 13.84f, 3.75f, 10.25f, 3.75f)
+                close()
+                moveTo(1.75f, 10.25f)
+                curveTo(1.75f, 5.556f, 5.556f, 1.75f, 10.25f, 1.75f)
+                reflectiveCurveTo(18.75f, 5.556f, 18.75f, 10.25f)
+                curveTo(18.75f, 12.236f, 18.068f, 14.065f, 16.926f, 15.512f)
+                lineTo(21.707f, 20.293f)
+                lineTo(20.293f, 21.707f)
+                lineTo(15.512f, 16.926f)
+                curveTo(14.065f, 18.068f, 12.236f, 18.75f, 10.25f, 18.75f)
+                curveTo(5.556f, 18.75f, 1.75f, 14.944f, 1.75f, 10.25f)
+                close()
+            }
+        }.build()
+
+    val Communities: ImageVector
+        get() = ImageVector.Builder(
+            name = "Communities",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
+                moveTo(17f, 10.5f)
+                curveTo(17f, 9.96f, 17.33f, 9.5f, 17.83f, 9.32f)
+                curveTo(19.16f, 8.84f, 20f, 7.53f, 20f, 6f)
+                curveTo(20f, 3.79f, 18.21f, 2f, 16f, 2f)
+                reflectiveCurveTo(12f, 3.79f, 12f, 6f)
+                curveTo(12f, 7.53f, 12.84f, 8.84f, 14.17f, 9.32f)
+                curveTo(14.67f, 9.5f, 15f, 9.96f, 15f, 10.5f)
+                verticalLineTo(11f)
+                horizontalLineTo(13.5f)
+                curveTo(12.67f, 11f, 12f, 11.67f, 12f, 12.5f)
+                curveTo(12f, 13.33f, 12.67f, 14f, 13.5f, 14f)
+                horizontalLineTo(15f)
+                verticalLineTo(14.5f)
+                curveTo(15f, 15.04f, 14.67f, 15.5f, 14.17f, 15.68f)
+                curveTo(12.84f, 16.16f, 12f, 17.47f, 12f, 19f)
+                curveTo(12f, 21.21f, 13.79f, 23f, 16f, 23f)
+                reflectiveCurveTo(20f, 21.21f, 20f, 19f)
+                curveTo(20f, 17.47f, 19.16f, 16.16f, 17.83f, 15.68f)
+                curveTo(17.33f, 15.5f, 17f, 15.04f, 17f, 14.5f)
+                verticalLineTo(14f)
+                horizontalLineTo(18.5f)
+                curveTo(19.33f, 14f, 20f, 13.33f, 20f, 12.5f)
+                curveTo(20f, 11.67f, 19.33f, 11f, 18.5f, 11f)
+                horizontalLineTo(17f)
+                verticalLineTo(10.5f)
+                close()
+            }
+        }.build()
+
+    val CommunitiesFilled: ImageVector
+        get() = ImageVector.Builder(
+            name = "CommunitiesFilled",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
+                moveTo(17f, 10.5f)
+                curveTo(17f, 9.96f, 17.33f, 9.5f, 17.83f, 9.32f)
+                curveTo(19.16f, 8.84f, 20f, 7.53f, 20f, 6f)
+                curveTo(20f, 3.79f, 18.21f, 2f, 16f, 2f)
+                reflectiveCurveTo(12f, 3.79f, 12f, 6f)
+                curveTo(12f, 7.53f, 12.84f, 8.84f, 14.17f, 9.32f)
+                curveTo(14.67f, 9.5f, 15f, 9.96f, 15f, 10.5f)
+                verticalLineTo(11f)
+                horizontalLineTo(13.5f)
+                curveTo(12.67f, 11f, 12f, 11.67f, 12f, 12.5f)
+                curveTo(12f, 13.33f, 12.67f, 14f, 13.5f, 14f)
+                horizontalLineTo(15f)
+                verticalLineTo(14.5f)
+                curveTo(15f, 15.04f, 14.67f, 15.5f, 14.17f, 15.68f)
+                curveTo(12.84f, 16.16f, 12f, 17.47f, 12f, 19f)
+                curveTo(12f, 21.21f, 13.79f, 23f, 16f, 23f)
+                reflectiveCurveTo(20f, 21.21f, 20f, 19f)
+                curveTo(20f, 17.47f, 19.16f, 16.16f, 17.83f, 15.68f)
+                curveTo(17.33f, 15.5f, 17f, 15.04f, 17f, 14.5f)
+                verticalLineTo(14f)
+                horizontalLineTo(18.5f)
+                curveTo(19.33f, 14f, 20f, 13.33f, 20f, 12.5f)
+                curveTo(20f, 11.67f, 19.33f, 11f, 18.5f, 11f)
+                horizontalLineTo(17f)
+                verticalLineTo(10.5f)
+                close()
+            }
+        }.build()
+
+    val NotificationsFilled: ImageVector
+        get() = ImageVector.Builder(
+            name = "NotificationsFilled",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
+                moveTo(12f, 22f)
+                curveTo(13.868f, 22f, 15.395f, 20.568f, 15.49f, 18.736f)
+                lineTo(15.5f, 18.5f)
+                horizontalLineTo(8.5f)
+                lineTo(8.51f, 18.736f)
+                curveTo(8.605f, 20.568f, 10.132f, 22f, 12f, 22f)
+                close()
+                moveTo(21f, 16.5f)
+                verticalLineTo(15.368f)
+                lineTo(19f, 12.701f)
+                verticalLineTo(8.5f)
+                curveTo(19f, 4.91f, 16.09f, 2f, 12.5f, 2f)
+                horizontalLineTo(11.5f)
+                curveTo(7.91f, 2f, 5f, 4.91f, 5f, 8.5f)
+                verticalLineTo(12.701f)
+                lineTo(3f, 15.368f)
+                verticalLineTo(16.5f)
+                horizontalLineTo(21f)
+                close()
+            }
+        }.build()
+
+    val MessagesFilled: ImageVector
+        get() = ImageVector.Builder(
+            name = "MessagesFilled",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
+                moveTo(1.998f, 5.5f)
+                curveTo(1.998f, 4.119f, 3.117f, 3f, 4.498f, 3f)
+                horizontalLineTo(19.498f)
+                curveTo(20.879f, 3f, 21.998f, 4.119f, 21.998f, 5.5f)
+                verticalLineTo(18.5f)
+                curveTo(21.998f, 19.881f, 20.879f, 21f, 19.498f, 21f)
+                horizontalLineTo(4.498f)
+                curveTo(3.117f, 21f, 1.998f, 19.881f, 1.998f, 18.5f)
+                verticalLineTo(5.5f)
+                close()
+                moveTo(4.498f, 5f)
+                curveTo(4.222f, 5f, 3.998f, 5.224f, 3.998f, 5.5f)
+                verticalLineTo(6.941f)
+                lineTo(11.998f, 12.655f)
+                lineTo(19.998f, 6.941f)
+                verticalLineTo(5.5f)
+                curveTo(19.998f, 5.224f, 19.774f, 5f, 19.498f, 5f)
+                horizontalLineTo(4.498f)
                 close()
             }
         }.build()
