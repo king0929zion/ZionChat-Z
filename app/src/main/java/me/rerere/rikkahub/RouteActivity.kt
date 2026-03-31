@@ -97,6 +97,7 @@ import me.rerere.rikkahub.ui.pages.setting.SettingProviderPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSearchPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTTSPage
 import me.rerere.rikkahub.ui.pages.translator.TranslatorPage
+import me.rerere.rikkahub.ui.pages.xapp.XAppPage
 import me.rerere.rikkahub.ui.pages.zphone.ZPhonePage
 import me.rerere.rikkahub.ui.pages.webview.WebViewPage
 import me.rerere.rikkahub.ui.theme.LocalDarkMode
@@ -396,10 +397,14 @@ class RouteActivity : ComponentActivity() {
                                 SearchPage()
                             }
 
-                            entry<Screen.Stats> {
-                                StatsPage()
-                            }
-                        }
+            entry<Screen.Stats> {
+                StatsPage()
+            }
+
+            entry<Screen.XApp> {
+                XAppPage()
+            }
+        }
                     )
                     if (BuildConfig.DEBUG) {
                         Text(
@@ -556,4 +561,7 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Stats : Screen
+
+    @Serializable
+    data object XApp : Screen
 }

@@ -93,6 +93,15 @@ fun ZPhonePage() {
             tileColor = Color(0xFFF2F0EA),
             onClick = { navController.navigate(Screen.Setting) }
         ),
+        ZPhoneApp(
+            label = stringResource(R.string.zphone_app_x),
+            imageRes = R.drawable.zphone_x_logo,
+            tileColor = Color(0xFF000000),
+            iconTint = Color.White,
+            imagePadding = 8.dp,
+            imageContentScale = ContentScale.Fit,
+            onClick = { navController.navigate(Screen.XApp) }
+        ),
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
