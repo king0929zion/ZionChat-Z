@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
@@ -399,6 +400,7 @@ private fun QuoteTweetCard(quote: QuoteTweetData) {
             .clip(RoundedCornerShape(16.dp))
             .background(Color.White)
             .clickable { }
+            .border(1.dp, XBorder, RoundedCornerShape(16.dp))
             .padding(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -473,7 +475,7 @@ private fun TweetActions(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 12.dp),
+            .padding(top = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         ActionButton(
@@ -1540,6 +1542,17 @@ private object XIcons {
                 horizontalLineTo(9.934f)
                 curveTo(5.444f, 18.11f, 1.751f, 14.5f, 1.751f, 10f)
                 close()
+                moveTo(9.756f, 4f)
+                curveTo(6.439f, 4f, 3.751f, 6.69f, 3.751f, 10f)
+                curveTo(3.751f, 13.37f, 6.521f, 16.08f, 9.889f, 16.01f)
+                lineTo(10.24f, 16f)
+                horizontalLineTo(12.001f)
+                verticalLineTo(18.3f)
+                lineTo(17.088f, 15.49f)
+                curveTo(19.039f, 14.41f, 20.251f, 12.36f, 20.251f, 10.13f)
+                curveTo(20.251f, 6.74f, 17.507f, 4f, 14.122f, 4f)
+                horizontalLineTo(9.756f)
+                close()
             }
         }.build()
 
@@ -1606,41 +1619,17 @@ private object XIcons {
                 curveTo(20.238f, 10.19f, 20.157f, 8.53f, 19.605f, 7.41f)
                 curveTo(19.044f, 6.28f, 17.938f, 5.57f, 16.697f, 5.5f)
                 close()
-            }
-        }.build()
-
-    val Share: ImageVector
-        get() = ImageVector.Builder(
-            name = "Share",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
-                moveTo(8.75f, 21f)
-                verticalLineTo(3f)
-                horizontalLineTo(10.75f)
-                verticalLineTo(21f)
-                horizontalLineTo(8.75f)
-                close()
-                moveTo(18f, 21f)
-                verticalLineTo(8.5f)
-                horizontalLineTo(20f)
-                verticalLineTo(21f)
-                horizontalLineTo(18f)
-                close()
-                moveTo(4f, 21f)
-                lineTo(4.004f, 11f)
-                horizontalLineTo(6.004f)
-                lineTo(6f, 21f)
-                horizontalLineTo(4f)
-                close()
-                moveTo(13.248f, 21f)
-                verticalLineTo(14f)
-                horizontalLineTo(15.248f)
-                verticalLineTo(21f)
-                horizontalLineTo(13.248f)
+                moveTo(20.884f, 13.19f)
+                curveTo(19.533f, 15.67f, 16.883f, 18.31f, 12.505f, 20.86f)
+                lineTo(12.002f, 21.16f)
+                lineTo(11.498f, 20.86f)
+                curveTo(7.119f, 18.31f, 4.469f, 15.67f, 3.116f, 13.19f)
+                curveTo(1.756f, 10.69f, 1.706f, 8.33f, 2.602f, 6.52f)
+                curveTo(3.489f, 4.73f, 5.249f, 3.61f, 7.203f, 3.51f)
+                curveTo(8.854f, 3.42f, 10.571f, 4.07f, 12.001f, 5.52f)
+                curveTo(13.43f, 4.07f, 15.147f, 3.42f, 16.797f, 3.51f)
+                curveTo(18.751f, 3.61f, 20.511f, 4.73f, 21.398f, 6.52f)
+                curveTo(22.294f, 8.33f, 22.244f, 10.69f, 20.884f, 13.19f)
                 close()
             }
         }.build()
@@ -1662,6 +1651,71 @@ private object XIcons {
                 lineTo(12f, 17.23f)
                 lineTo(4f, 22.94f)
                 verticalLineTo(4.5f)
+                close()
+                moveTo(6.5f, 4f)
+                curveTo(6.224f, 4f, 6f, 4.22f, 6f, 4.5f)
+                verticalLineTo(19.06f)
+                lineTo(12f, 14.77f)
+                lineTo(18f, 19.06f)
+                verticalLineTo(4.5f)
+                curveTo(18f, 4.22f, 17.776f, 4f, 17.5f, 4f)
+                horizontalLineTo(6.5f)
+                close()
+            }
+        }.build()
+
+    val Share: ImageVector
+        get() = ImageVector.Builder(
+            name = "Share",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
+                moveTo(17f, 4f)
+                curveTo(15.9f, 4f, 15f, 4.9f, 15f, 6f)
+                curveTo(15f, 6.33f, 15.08f, 6.65f, 15.22f, 6.92f)
+                curveTo(15.56f, 7.56f, 16.23f, 8f, 17f, 8f)
+                curveTo(18.1f, 8f, 19f, 7.1f, 19f, 6f)
+                reflectiveCurveTo(18.1f, 4f, 17f, 4f)
+                close()
+                moveTo(13f, 6f)
+                curveTo(13f, 3.79f, 14.79f, 2f, 17f, 2f)
+                reflectiveCurveTo(21f, 3.79f, 21f, 6f)
+                reflectiveCurveTo(19.21f, 10f, 17f, 10f)
+                curveTo(15.83f, 10f, 14.78f, 9.5f, 14.05f, 8.7f)
+                lineTo(9.89f, 11.07f)
+                curveTo(9.96f, 11.37f, 10f, 11.68f, 10f, 12f)
+                reflectiveCurveTo(9.96f, 12.63f, 9.89f, 12.93f)
+                lineTo(14.05f, 15.3f)
+                curveTo(14.78f, 14.5f, 15.83f, 14f, 17f, 14f)
+                curveTo(19.21f, 14f, 21f, 15.79f, 21f, 18f)
+                reflectiveCurveTo(19.21f, 22f, 17f, 22f)
+                reflectiveCurveTo(13f, 20.21f, 13f, 18f)
+                curveTo(13f, 17.68f, 13.04f, 17.37f, 13.11f, 17.07f)
+                lineTo(8.95f, 14.7f)
+                curveTo(8.22f, 15.5f, 7.17f, 16f, 6f, 16f)
+                curveTo(3.79f, 16f, 2f, 14.21f, 2f, 12f)
+                reflectiveCurveTo(3.79f, 8f, 6f, 8f)
+                curveTo(7.17f, 8f, 8.22f, 8.5f, 8.95f, 9.3f)
+                lineTo(13.11f, 6.93f)
+                curveTo(13.04f, 6.63f, 13f, 6.32f, 13f, 6f)
+                close()
+                moveTo(6f, 10f)
+                curveTo(4.9f, 10f, 4f, 10.9f, 4f, 12f)
+                reflectiveCurveTo(4.9f, 14f, 6f, 14f)
+                curveTo(6.77f, 14f, 7.44f, 13.56f, 7.78f, 12.92f)
+                curveTo(7.92f, 12.65f, 8f, 12.33f, 8f, 12f)
+                reflectiveCurveTo(7.92f, 11.35f, 7.78f, 11.08f)
+                curveTo(7.44f, 10.44f, 6.77f, 10f, 6f, 10f)
+                close()
+                moveTo(17f, 16f)
+                curveTo(16.23f, 16f, 15.56f, 16.44f, 15.22f, 17.08f)
+                curveTo(15.08f, 17.35f, 15f, 17.67f, 15f, 18f)
+                curveTo(15f, 19.1f, 15.9f, 20f, 17f, 20f)
+                reflectiveCurveTo(19f, 19.1f, 19f, 18f)
+                reflectiveCurveTo(18.1f, 16f, 17f, 16f)
                 close()
             }
         }.build()
