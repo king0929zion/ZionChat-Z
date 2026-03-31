@@ -66,13 +66,6 @@ fun ZPhonePage() {
             onClick = { navigateToChatPage(navController) }
         ),
         ZPhoneApp(
-            label = "X",
-            imageRes = R.drawable.zphone_x_logo,
-            tileColor = Color.Black,
-            imagePadding = 12.dp,
-            onClick = { navController.navigate(Screen.XTimeline) }
-        ),
-        ZPhoneApp(
             label = stringResource(R.string.zphone_app_photos),
             imageVector = ZionAppIcons.Image,
             tileColor = Color(0xFFF6CCD2),

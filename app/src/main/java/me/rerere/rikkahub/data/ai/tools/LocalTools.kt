@@ -8,7 +8,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.add
-import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -18,10 +17,8 @@ import kotlinx.serialization.json.put
 import me.rerere.ai.core.InputSchema
 import me.rerere.ai.core.Tool
 import me.rerere.ai.ui.UIMessagePart
-import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.event.AppEvent
 import me.rerere.rikkahub.data.event.AppEventBus
-import me.rerere.rikkahub.service.XTimelineService
 import me.rerere.rikkahub.utils.readClipboardText
 import me.rerere.rikkahub.utils.writeClipboardText
 import java.time.ZonedDateTime
@@ -54,8 +51,6 @@ sealed class LocalToolOption {
 class LocalTools(
     private val context: Context,
     private val eventBus: AppEventBus,
-    private val xTimelineService: XTimelineService,
-    private val settingsStore: SettingsStore,
 ) {
     val javascriptTool by lazy {
         Tool(
@@ -297,215 +292,6 @@ class LocalTools(
         )
     }
 
-    val readXTimelineTool by lazy {
-        Tool(
-            name = "read_twitter_timeline",
-            description = "Read the latest posts from the local built-in Twitter timeline. Returns post IDs, author info, text content, and interaction counts for AI context.",
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("limit", buildJsonObject {
-                            put("type", "integer")
-                            put("description", "Optional number of latest posts to read, between 1 and 20")
-                        })
-                    }
-                )
-            },
-            execute = {
-                val limit = it.jsonObject["limit"]?.jsonPrimitive?.contentOrNull?.toIntOrNull()?.coerceIn(1, 20) ?: 8
-                val posts = xTimelineService.getFeedSnapshot(limit)
-                val payload = buildJsonObject {
-                    put("success", true)
-                    put("posts", buildJsonArray {
-                        posts.forEach { post ->
-                            add(buildJsonObject {
-                                put("id", post.id)
-                                put("author_name", post.authorName)
-                                put("author_handle", post.authorHandle)
-                                put("content", post.content)
-                                put("reply_count", post.replyCount)
-                                put("repost_count", post.repostCount)
-                                put("like_count", post.likeCount)
-                                put("view_count", post.viewCount)
-                                put("created_at", post.createAt)
-                            })
-                        }
-                    })
-                }
-                listOf(UIMessagePart.Text(payload.toString()))
-            }
-        )
-    }
-
-    val publishXPostTool by lazy {
-        Tool(
-            name = "publish_twitter_post",
-            description = "Publish a new post to the local built-in Twitter timeline.",
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("content", buildJsonObject {
-                            put("type", "string")
-                            put("description", "Text content to publish to the local X timeline")
-                        })
-                    },
-                    required = listOf("content")
-                )
-            },
-            execute = {
-                val content = it.jsonObject["content"]?.jsonPrimitive?.contentOrNull ?: error("content is required")
-                val postId = xTimelineService.createToolPost(content = content)
-                    ?: error("failed to publish post")
-                val post = xTimelineService.getPost(postId)
-                listOf(UIMessagePart.Text(buildPostPayload(postId, post).toString()))
-            }
-        )
-    }
-
-    val replyXPostTool by lazy {
-        Tool(
-            name = "reply_twitter_post",
-            description = "Reply to an existing post in the local built-in Twitter timeline.",
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("post_id", buildJsonObject {
-                            put("type", "string")
-                            put("description", "The target post ID to reply to")
-                        })
-                        put("content", buildJsonObject {
-                            put("type", "string")
-                            put("description", "Reply content")
-                        })
-                    },
-                    required = listOf("post_id", "content")
-                )
-            },
-            execute = {
-                val params = it.jsonObject
-                val postId = params["post_id"]?.jsonPrimitive?.contentOrNull ?: error("post_id is required")
-                val content = params["content"]?.jsonPrimitive?.contentOrNull ?: error("content is required")
-                val replyId = xTimelineService.createToolPost(content = content, replyToId = postId)
-                    ?: error("failed to publish reply")
-                val post = xTimelineService.getPost(replyId)
-                listOf(UIMessagePart.Text(buildPostPayload(replyId, post).toString()))
-            }
-        )
-    }
-
-    val likeXPostTool by lazy {
-        Tool(
-            name = "like_twitter_post",
-            description = "Like or unlike a post in the local built-in Twitter timeline.",
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("post_id", buildJsonObject {
-                            put("type", "string")
-                            put("description", "The target post ID")
-                        })
-                        put("liked", buildJsonObject {
-                            put("type", "boolean")
-                            put("description", "Whether the post should be liked. Defaults to true")
-                        })
-                    },
-                    required = listOf("post_id")
-                )
-            },
-            execute = {
-                val params = it.jsonObject
-                val postId = params["post_id"]?.jsonPrimitive?.contentOrNull ?: error("post_id is required")
-                val liked = params["liked"]?.jsonPrimitive?.booleanOrNull ?: true
-                val post = xTimelineService.setLike(postId, liked) ?: error("failed to update like state")
-                listOf(UIMessagePart.Text(buildInteractionPayload(post).toString()))
-            }
-        )
-    }
-
-    val repostXPostTool by lazy {
-        Tool(
-            name = "repost_twitter_post",
-            description = "Repost or undo repost for a post in the local built-in Twitter timeline.",
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("post_id", buildJsonObject {
-                            put("type", "string")
-                            put("description", "The target post ID")
-                        })
-                        put("reposted", buildJsonObject {
-                            put("type", "boolean")
-                            put("description", "Whether the post should be reposted. Defaults to true")
-                        })
-                    },
-                    required = listOf("post_id")
-                )
-            },
-            execute = {
-                val params = it.jsonObject
-                val postId = params["post_id"]?.jsonPrimitive?.contentOrNull ?: error("post_id is required")
-                val reposted = params["reposted"]?.jsonPrimitive?.booleanOrNull ?: true
-                val post = xTimelineService.setRepost(postId, reposted) ?: error("failed to update repost state")
-                listOf(UIMessagePart.Text(buildInteractionPayload(post).toString()))
-            }
-        )
-    }
-
-    val bookmarkXPostTool by lazy {
-        Tool(
-            name = "bookmark_twitter_post",
-            description = "Bookmark or remove bookmark for a post in the local built-in Twitter timeline.",
-            parameters = {
-                InputSchema.Obj(
-                    properties = buildJsonObject {
-                        put("post_id", buildJsonObject {
-                            put("type", "string")
-                            put("description", "The target post ID")
-                        })
-                        put("bookmarked", buildJsonObject {
-                            put("type", "boolean")
-                            put("description", "Whether the post should be bookmarked. Defaults to true")
-                        })
-                    },
-                    required = listOf("post_id")
-                )
-            },
-            execute = {
-                val params = it.jsonObject
-                val postId = params["post_id"]?.jsonPrimitive?.contentOrNull ?: error("post_id is required")
-                val bookmarked = params["bookmarked"]?.jsonPrimitive?.booleanOrNull ?: true
-                val post = xTimelineService.setBookmark(postId, bookmarked) ?: error("failed to update bookmark state")
-                listOf(UIMessagePart.Text(buildInteractionPayload(post).toString()))
-            }
-        )
-    }
-
-    private fun buildPostPayload(postId: String, post: me.rerere.rikkahub.data.db.entity.XPostEntity?) = buildJsonObject {
-        put("success", true)
-        put("post_id", postId)
-        if (post != null) {
-            put("author_name", post.authorName)
-            put("author_handle", post.authorHandle)
-            put("content", post.content)
-            put("reply_count", post.replyCount)
-            put("repost_count", post.repostCount)
-            put("like_count", post.likeCount)
-            put("view_count", post.viewCount)
-        }
-    }
-
-    private fun buildInteractionPayload(post: me.rerere.rikkahub.data.db.entity.XPostEntity) = buildJsonObject {
-        put("success", true)
-        put("post_id", post.id)
-        put("liked_by_user", post.likedByUser)
-        put("reposted_by_user", post.repostedByUser)
-        put("bookmarked_by_user", post.bookmarkedByUser)
-        put("reply_count", post.replyCount)
-        put("repost_count", post.repostCount)
-        put("like_count", post.likeCount)
-        put("view_count", post.viewCount)
-    }
-
     fun getTools(options: List<LocalToolOption>): List<Tool> {
         val tools = mutableListOf<Tool>()
         if (options.contains(LocalToolOption.JavascriptEngine)) {
@@ -523,28 +309,6 @@ class LocalTools(
         if (options.contains(LocalToolOption.AskUser)) {
             tools.add(askUserTool)
         }
-        val xTools = settingsStore.settingsFlow.value.pluginSettings.xTools
-        if (xTools.enabled) {
-            if (xTools.allowReadTimeline) {
-                tools.add(readXTimelineTool)
-            }
-            if (xTools.allowPublishPost) {
-                tools.add(publishXPostTool)
-            }
-            if (xTools.allowReplyPost) {
-                tools.add(replyXPostTool)
-            }
-            if (xTools.allowLikePost) {
-                tools.add(likeXPostTool)
-            }
-            if (xTools.allowRepostPost) {
-                tools.add(repostXPostTool)
-            }
-            if (xTools.allowBookmarkPost) {
-                tools.add(bookmarkXPostTool)
-            }
-        }
         return tools
     }
-
 }

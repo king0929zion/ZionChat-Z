@@ -11,7 +11,6 @@ import me.rerere.rikkahub.data.ai.AILoggingManager
 import me.rerere.rikkahub.data.ai.tools.LocalTools
 import me.rerere.rikkahub.data.event.AppEventBus
 import me.rerere.rikkahub.service.ChatService
-import me.rerere.rikkahub.service.XTimelineService
 import me.rerere.rikkahub.utils.EmojiData
 import me.rerere.rikkahub.utils.EmojiUtils
 import me.rerere.rikkahub.utils.JsonInstant
@@ -31,7 +30,7 @@ val appModule = module {
     }
 
     single {
-        LocalTools(get(), get(), get(), get())
+        LocalTools(get(), get())
     }
 
     single {
@@ -64,14 +63,6 @@ val appModule = module {
 
     single {
         AILoggingManager()
-    }
-
-    single {
-        XTimelineService(
-            appScope = get(),
-            settingsStore = get(),
-            repository = get(),
-        )
     }
 
     single {

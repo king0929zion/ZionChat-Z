@@ -91,16 +91,13 @@ import me.rerere.rikkahub.ui.pages.setting.SettingDisplayPage
 import me.rerere.rikkahub.ui.pages.setting.SettingFilesPage
 import me.rerere.rikkahub.ui.pages.setting.SettingMcpPage
 import me.rerere.rikkahub.ui.pages.setting.SettingModelPage
-import me.rerere.rikkahub.ui.pages.setting.SettingPluginsPage
 import me.rerere.rikkahub.ui.pages.setting.SettingPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSearchPage
-import me.rerere.rikkahub.ui.pages.setting.SettingTwitterPluginPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTTSPage
 import me.rerere.rikkahub.ui.pages.translator.TranslatorPage
 import me.rerere.rikkahub.ui.pages.zphone.ZPhonePage
-import me.rerere.rikkahub.ui.pages.zphone.XTimelinePage
 import me.rerere.rikkahub.ui.pages.webview.WebViewPage
 import me.rerere.rikkahub.ui.theme.LocalDarkMode
 import me.rerere.rikkahub.ui.theme.RikkahubTheme
@@ -339,10 +336,6 @@ class RouteActivity : ComponentActivity() {
                                 ZPhonePage()
                             }
 
-                            entry<Screen.XTimeline> {
-                                XTimelinePage()
-                            }
-
                             entry<Screen.WebView> { key ->
                                 WebViewPage(key.url, key.content)
                             }
@@ -381,14 +374,6 @@ class RouteActivity : ComponentActivity() {
 
                             entry<Screen.SettingMcp> {
                                 SettingMcpPage()
-                            }
-
-                            entry<Screen.SettingPlugins> {
-                                SettingPluginsPage()
-                            }
-
-                            entry<Screen.SettingTwitterPlugin> {
-                                SettingTwitterPluginPage()
                             }
 
                             entry<Screen.SettingFiles> {
@@ -525,9 +510,6 @@ sealed interface Screen : NavKey {
     data object ZPhone : Screen
 
     @Serializable
-    data object XTimeline : Screen
-
-    @Serializable
     data class WebView(val url: String = "", val content: String = "") : Screen
 
     @Serializable
@@ -556,12 +538,6 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object SettingMcp : Screen
-
-    @Serializable
-    data object SettingPlugins : Screen
-
-    @Serializable
-    data object SettingTwitterPlugin : Screen
 
     @Serializable
     data object SettingFiles : Screen
