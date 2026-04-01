@@ -116,7 +116,7 @@ fun XAppPage(vm: XAppVM = koinViewModel()) {
     val settingsStore: SettingsStore = koinInject()
     val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
     val timeline by vm.timeline.collectAsStateWithLifecycle()
-    val currentUser = remember(timeline) { vm.currentUser(timeline) }
+    val currentUser = remember(timeline) { runCatching { vm.currentUser(timeline) }.getOrNull() }
 
     var selectedTab by rememberSaveable { mutableStateOf(XFeedTab.FOR_YOU) }
     var selectedPostId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -125,11 +125,21 @@ fun XAppPage(vm: XAppVM = koinViewModel()) {
     var replyTargetId by rememberSaveable { mutableStateOf<String?>(null) }
     var quotePostId by rememberSaveable { mutableStateOf<String?>(null) }
 
-    val selectedPost = remember(timeline, selectedPostId) { vm.selectedPost(timeline, selectedPostId) }
-    val composerQuotePost = remember(timeline, quotePostId) { vm.selectedPost(timeline, quotePostId) }
-    val replyTargetPost = remember(timeline, replyTargetId) { vm.selectedPost(timeline, replyTargetId) }
-    val filteredPosts = remember(timeline, selectedTab) { vm.topLevelPosts(timeline, selectedTab) }
-    val detailReplies = remember(timeline, selectedPostId) { vm.repliesFor(timeline, selectedPostId) }
+    val selectedPost = remember(timeline, selectedPostId) {
+        runCatching { vm.selectedPost(timeline, selectedPostId) }.getOrNull()
+    }
+    val composerQuotePost = remember(timeline, quotePostId) {
+        runCatching { vm.selectedPost(timeline, quotePostId) }.getOrNull()
+    }
+    val replyTargetPost = remember(timeline, replyTargetId) {
+        runCatching { vm.selectedPost(timeline, replyTargetId) }.getOrNull()
+    }
+    val filteredPosts = remember(timeline, selectedTab) {
+        runCatching { vm.topLevelPosts(timeline, selectedTab) }.getOrElse { emptyList() }
+    }
+    val detailReplies = remember(timeline, selectedPostId) {
+        runCatching { vm.repliesFor(timeline, selectedPostId) }.getOrElse { emptyList() }
+    }
     val pane = when {
         composerVisible -> XPane.Composer
         selectedPostId != null -> XPane.Detail
@@ -137,8 +147,15 @@ fun XAppPage(vm: XAppVM = koinViewModel()) {
     }
 
     LaunchedEffect(selectedPostId, composerVisible) {
-        if (!composerVisible && selectedPostId != null) {
-            vm.recordView(selectedPostId!!)
+        val currentPostId = selectedPostId
+        if (!composerVisible && currentPostId != null) {
+            vm.recordView(currentPostId)
+        }
+    }
+
+    LaunchedEffect(selectedPostId, selectedPost, composerVisible) {
+        if (!composerVisible && selectedPostId != null && selectedPost == null) {
+            selectedPostId = null
         }
     }
 
@@ -248,10 +265,11 @@ fun XAppPage(vm: XAppVM = koinViewModel()) {
                     quotePost = composerQuotePost,
                     onClose = { closeComposer() },
                     onSubmit = { text ->
-                        if (composerMode == XComposerReply && replyTargetId != null) {
-                            vm.replyToPost(replyTargetId!!, text) {
+                        val currentReplyTargetId = replyTargetId
+                        if (composerMode == XComposerReply && currentReplyTargetId != null) {
+                            vm.replyToPost(currentReplyTargetId, text) {
                                 toaster.show("回复已发出", type = ToastType.Success)
-                                selectedPostId = replyTargetId
+                                selectedPostId = currentReplyTargetId
                                 closeComposer()
                             }
                         } else {
@@ -806,7 +824,7 @@ private fun XPostCard(
                     post.post.media.forEach { media ->
                         Card(
                             modifier = Modifier.weight(1f),
-                            colors = CardDefaults.cardColors(containerColor = Color(media.tintHex.toULong()))
+                            colors = CardDefaults.cardColors(containerColor = xColor(media.tintHex, XAccentSoft))
                         ) {
                             Column(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
@@ -1203,7 +1221,7 @@ private fun XAvatar(
         modifier = Modifier
             .size(size)
             .clip(CircleShape)
-            .background(Color(author.avatarColorHex.toULong())),
+            .background(xColor(author.avatarColorHex, XAccent)),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -1214,6 +1232,10 @@ private fun XAvatar(
             fontWeight = FontWeight.SemiBold,
         )
     }
+}
+
+private fun xColor(hex: Long, fallback: Color): Color {
+    return runCatching { Color(hex.toULong()) }.getOrElse { fallback }
 }
 
 @Composable

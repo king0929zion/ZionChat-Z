@@ -220,13 +220,16 @@ class XTimelineRepository(
                 }.getOrNull()
             }
         } ?: defaultState()
+        val sanitized = loaded.sanitize(defaultState())
 
-        _state.value = loaded
-        persist(loaded)
+        _state.value = sanitized
+        persist(sanitized)
     }
 
     private suspend fun updateState(transform: (XTimelineState) -> XTimelineState) {
-        val newState = transform(state.value).copy(lastUpdatedAt = System.currentTimeMillis())
+        val newState = transform(state.value)
+            .sanitize(defaultState())
+            .copy(lastUpdatedAt = System.currentTimeMillis())
         _state.value = newState
         persist(newState)
     }
@@ -372,18 +375,23 @@ fun XTimelineState.findAuthor(authorId: String): XAuthor? = authors.firstOrNull 
 
 fun XTimelineState.resolvePost(postId: String): XResolvedPost? {
     val post = posts.firstOrNull { it.id == postId } ?: return null
-    return resolvePost(post)
+    return resolvePost(post, visited = mutableSetOf())
 }
 
-fun XTimelineState.resolvePost(post: XPost): XResolvedPost {
-    val author = findAuthor(post.authorId)
-        ?: error("Missing author ${post.authorId}")
+private fun XTimelineState.resolvePost(
+    post: XPost,
+    visited: MutableSet<String>,
+): XResolvedPost? {
+    if (!visited.add(post.id)) return null
+
+    val author = findAuthor(post.authorId) ?: return null
     return XResolvedPost(
         post = post,
         author = author,
         quotedPost = post.quotePostId
+            ?.takeIf { it != post.id }
             ?.let { quoteId -> posts.firstOrNull { it.id == quoteId } }
-            ?.let(::resolvePost)
+            ?.let { quotePost -> resolvePost(quotePost, visited.toMutableSet()) }
     )
 }
 
@@ -391,12 +399,49 @@ fun XTimelineState.topLevelPosts(): List<XResolvedPost> {
     return posts
         .filter { it.replyToPostId == null }
         .sortedByDescending { it.createdAtMillis }
-        .map(::resolvePost)
+        .mapNotNull { post -> resolvePost(post.id) }
 }
 
 fun XTimelineState.repliesFor(postId: String): List<XResolvedPost> {
     return posts
         .filter { it.replyToPostId == postId }
         .sortedByDescending { it.createdAtMillis }
-        .map(::resolvePost)
+        .mapNotNull { post -> resolvePost(post.id) }
+}
+
+private fun XTimelineState.sanitize(fallback: XTimelineState): XTimelineState {
+    if (authors.isEmpty()) return fallback
+
+    val sanitizedAuthors = authors
+        .filter { it.id.isNotBlank() }
+        .distinctBy { it.id }
+
+    if (sanitizedAuthors.isEmpty()) return fallback
+
+    val authorIds = sanitizedAuthors.map { it.id }.toSet()
+    val candidatePosts = posts
+        .filter { post -> post.id.isNotBlank() && post.authorId in authorIds }
+        .distinctBy { it.id }
+    val validPostIds = candidatePosts.map { it.id }.toSet()
+
+    val sanitizedPosts = candidatePosts.map { post ->
+        post.copy(
+            replyToPostId = post.replyToPostId?.takeIf { it in validPostIds && it != post.id },
+            quotePostId = post.quotePostId?.takeIf { it in validPostIds && it != post.id },
+            likeCount = post.likeCount.coerceAtLeast(0),
+            replyCount = post.replyCount.coerceAtLeast(0),
+            repostCount = post.repostCount.coerceAtLeast(0),
+            bookmarkCount = post.bookmarkCount.coerceAtLeast(0),
+            viewCount = post.viewCount.coerceAtLeast(0),
+            tags = post.tags.filter { it.isNotBlank() }.distinct(),
+            media = post.media.distinctBy { it.id.ifBlank { "${post.id}:${it.label}" } }
+        )
+    }
+
+    val safeCurrentUserId = currentUserId.takeIf { it in authorIds } ?: sanitizedAuthors.first().id
+    return copy(
+        currentUserId = safeCurrentUserId,
+        authors = sanitizedAuthors,
+        posts = sanitizedPosts,
+    )
 }
