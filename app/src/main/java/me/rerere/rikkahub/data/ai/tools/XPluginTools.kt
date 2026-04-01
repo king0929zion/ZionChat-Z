@@ -237,7 +237,7 @@ class XPluginTools(
             ?: error("$key is required")
     }
 
-    private fun XResolvedPost.toJson() = buildJsonObject {
+    private fun XResolvedPost.toJson(): kotlinx.serialization.json.JsonObject = buildJsonObject {
         put("id", post.id)
         put("author_name", author.displayName)
         put("author_handle", author.handle)
@@ -259,7 +259,7 @@ class XPluginTools(
         put(
             "tags",
             buildJsonArray {
-                post.tags.forEach { add(it) }
+                post.tags.forEach { add(JsonPrimitive(it)) }
             }
         )
         quotedPost?.let { quoted ->
