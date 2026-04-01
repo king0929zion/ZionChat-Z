@@ -29,6 +29,7 @@ import me.rerere.rikkahub.data.datastore.migration.PreferenceStoreV2Migration
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Avatar
 import me.rerere.rikkahub.data.model.Tag
+import me.rerere.rikkahub.data.plugin.PluginSettings
 import me.rerere.rikkahub.data.sync.s3.S3Config
 import me.rerere.rikkahub.ui.theme.PresetThemes
 import me.rerere.rikkahub.utils.JsonInstant
@@ -116,6 +117,9 @@ class SettingsStore(
 
         // 赞助提醒
         val SPONSOR_ALERT_DISMISSED_AT = intPreferencesKey("sponsor_alert_dismissed_at")
+
+        // 插件
+        val PLUGIN_SETTINGS = stringPreferencesKey("plugin_settings")
     }
 
     private val dataStore = context.settingsStore
@@ -184,6 +188,9 @@ class SettingsStore(
                 } ?: BackupReminderConfig(),
                 launchCount = preferences[LAUNCH_COUNT] ?: 0,
                 sponsorAlertDismissedAt = preferences[SPONSOR_ALERT_DISMISSED_AT] ?: 0,
+                pluginSettings = preferences[PLUGIN_SETTINGS]?.let {
+                    JsonInstant.decodeFromString(it)
+                } ?: PluginSettings(),
             )
         }
         .map { settings -> settings.mergeBuiltInsAndSanitize() }
@@ -241,6 +248,7 @@ class SettingsStore(
             preferences[BACKUP_REMINDER_CONFIG] = JsonInstant.encodeToString(sanitizedSettings.backupReminderConfig)
             preferences[LAUNCH_COUNT] = sanitizedSettings.launchCount
             preferences[SPONSOR_ALERT_DISMISSED_AT] = sanitizedSettings.sponsorAlertDismissedAt
+            preferences[PLUGIN_SETTINGS] = JsonInstant.encodeToString(sanitizedSettings.pluginSettings)
         }
     }
 
@@ -431,6 +439,7 @@ data class Settings(
     val backupReminderConfig: BackupReminderConfig = BackupReminderConfig(),
     val launchCount: Int = 0,
     val sponsorAlertDismissedAt: Int = 0,
+    val pluginSettings: PluginSettings = PluginSettings(),
 ) {
     companion object {
         // 构造一个用于初始化的settings, 但它不能用于保存，防止使用初始值存储

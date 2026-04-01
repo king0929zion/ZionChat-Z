@@ -1,563 +1,1193 @@
 package me.rerere.rikkahub.ui.pages.xapp
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.foundation.border
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dokar.sonner.ToastType
+import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Book03
+import me.rerere.hugeicons.stroke.Favourite
+import me.rerere.hugeicons.stroke.Message02
+import me.rerere.hugeicons.stroke.QuillWrite01
+import me.rerere.hugeicons.stroke.Refresh03
+import me.rerere.hugeicons.stroke.Share01
 import me.rerere.rikkahub.R
+import me.rerere.rikkahub.Screen
+import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.x.XAuthor
+import me.rerere.rikkahub.data.x.XPostSource
+import me.rerere.rikkahub.data.x.XResolvedPost
+import me.rerere.rikkahub.data.x.XTimelineState
+import me.rerere.rikkahub.ui.components.ui.FooterTranslucentBackdrop
+import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
+import me.rerere.rikkahub.ui.components.ui.HeaderTranslucentBackdrop
+import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
-import com.dokar.sonner.ToastType
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
+import me.rerere.rikkahub.ui.theme.SourceSans3
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
+import kotlin.math.absoluteValue
 
-private val XBlue = Color(0xFF1D9BF0)
-private val XBlueLight = Color(0xFF8ECDF8)
-private val XTextPrimary = Color(0xFF0F1419)
-private val XTextSecondary = Color(0xFF536471)
-private val XBorder = Color(0xFFEFF3F4)
-private val XGreen = Color(0xFF00BA7C)
-private val XPink = Color(0xFFF91880)
-private val XRed = Color(0xFFF4212E)
-private val XYellow = Color(0xFFFFD400)
-private val XBackground = Color(0xFFF7F9F9)
+private val XPage = Color(0xFFFCFCFC)
+private val XSurface = Color(0xFFFFFFFF)
+private val XMuted = Color(0xFFF1F1F1)
+private val XSubtle = Color(0xFFF5F5F7)
+private val XBorder = Color(0xFFE5E5EA)
+private val XPrimary = Color(0xFF1C1C1E)
+private val XSecondary = Color(0xFF8E8E93)
+private val XAccent = Color(0xFF007AFF)
+private val XAccentSoft = Color(0xFFE8F4FD)
+private val XLike = Color(0xFFF91880)
+private val XRepost = Color(0xFF34C759)
+private const val XComposerReply = "reply"
+private const val XComposerPost = "post"
 
-private data class TweetData(
-    val avatarUrl: String,
-    val name: String,
-    val handle: String,
-    val time: String,
-    val content: String,
-    val isVerified: Boolean = true,
-    val replies: String = "0",
-    val retweets: String = "0",
-    val likes: String = "0",
-    val views: String = "0",
-    val quoteTweet: QuoteTweetData? = null,
-)
-
-private data class QuoteTweetData(
-    val avatarUrl: String,
-    val name: String,
-    val handle: String,
-    val time: String,
-    val content: String,
-    val isVerified: Boolean = true,
-    val hasImage: Boolean = false,
-)
-
-private sealed class XView {
-    object Feed : XView()
-    object Detail : XView()
-    object ComposePost : XView()
-    object ComposeReply : XView()
+private enum class XPane {
+    Feed,
+    Detail,
+    Composer,
 }
 
 @Composable
-fun XAppPage() {
+fun XAppPage(vm: XAppVM = koinViewModel()) {
     val navController = LocalNavController.current
     val toaster = LocalToaster.current
-    var currentView by remember { mutableStateOf<XView>(XView.Feed) }
+    val settingsStore: SettingsStore = koinInject()
+    val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
+    val timeline by vm.timeline.collectAsStateWithLifecycle()
+    val currentUser = remember(timeline) { vm.currentUser(timeline) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.White
-    ) {
-        when (currentView) {
-            XView.Feed -> FeedView(
-                onNavigate = { currentView = it },
-                onBack = { navController.popBackStack() }
-            )
-            XView.Detail -> DetailView(
-                onNavigate = { currentView = it },
-                onBack = { currentView = XView.Feed }
-            )
-            XView.ComposePost -> ComposePostView(
-                onBack = { currentView = XView.Feed },
-                toaster = toaster
-            )
-            XView.ComposeReply -> ComposeReplyView(
-                onBack = { currentView = XView.Detail },
-                toaster = toaster
-            )
+    var selectedTab by rememberSaveable { mutableStateOf(XFeedTab.FOR_YOU) }
+    var selectedPostId by rememberSaveable { mutableStateOf<String?>(null) }
+    var composerVisible by rememberSaveable { mutableStateOf(false) }
+    var composerMode by rememberSaveable { mutableStateOf(XComposerPost) }
+    var replyTargetId by rememberSaveable { mutableStateOf<String?>(null) }
+    var quotePostId by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val selectedPost = remember(timeline, selectedPostId) { vm.selectedPost(timeline, selectedPostId) }
+    val composerQuotePost = remember(timeline, quotePostId) { vm.selectedPost(timeline, quotePostId) }
+    val replyTargetPost = remember(timeline, replyTargetId) { vm.selectedPost(timeline, replyTargetId) }
+    val filteredPosts = remember(timeline, selectedTab) { vm.topLevelPosts(timeline, selectedTab) }
+    val detailReplies = remember(timeline, selectedPostId) { vm.repliesFor(timeline, selectedPostId) }
+    val pane = when {
+        composerVisible -> XPane.Composer
+        selectedPostId != null -> XPane.Detail
+        else -> XPane.Feed
+    }
+
+    LaunchedEffect(selectedPostId, composerVisible) {
+        if (!composerVisible && selectedPostId != null) {
+            vm.recordView(selectedPostId!!)
         }
     }
-}
 
-@Composable
-private fun FeedView(
-    onNavigate: (XView) -> Unit,
-    onBack: () -> Unit
-) {
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("为你推荐", "正在关注", "AI — Rumors & Insights")
-
-    Box(modifier = Modifier.fillMaxSize()) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .imePadding()
-    ) {
-            FeedHeader(onBack = onBack)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .background(Color.White),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    TabItem(
-                        label = tab,
-                        isSelected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-            }
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(XBorder)
-            )
-            LazyColumn(
-                modifier = Modifier.weight(1f)
-            ) {
-                items(getTweets()) { tweet ->
-                    TweetCard(
-                        tweet = tweet,
-                        onClick = { onNavigate(XView.Detail) }
-                    )
-                }
-                item {
-                    Spacer(modifier = Modifier.height(72.dp))
-                }
-            }
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 80.dp)
-        ) {
-            FloatingActionButtonX(onClick = { onNavigate(XView.ComposePost) })
-        }
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-        ) {
-            XBottomNav()
-        }
+    fun openComposerForPost(quoteId: String? = null) {
+        composerVisible = true
+        composerMode = XComposerPost
+        replyTargetId = null
+        quotePostId = quoteId
     }
-}
 
-@Composable
-private fun FeedHeader(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Profile avatar
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFE1E8ED))
-        ) {
-            AsyncImage(
-                model = "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=100&q=80",
-                contentDescription = "Profile",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        }
-
-        // X Logo
-        Icon(
-            imageVector = XIcons.XLogo,
-            contentDescription = "X",
-            tint = XTextPrimary,
-            modifier = Modifier.size(22.dp)
-        )
-
-        // Settings icon
-        Icon(
-            imageVector = XIcons.Settings,
-            contentDescription = "Settings",
-            tint = XTextSecondary,
-            modifier = Modifier.size(20.dp)
-        )
+    fun openComposerForReply(postId: String) {
+        selectedPostId = postId
+        composerVisible = true
+        composerMode = XComposerReply
+        replyTargetId = postId
+        quotePostId = null
     }
-}
 
-@Composable
-private fun TabItem(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = label,
-                fontSize = 15.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) XTextPrimary else XTextSecondary
-            )
-            if (isSelected) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Box(
-                    modifier = Modifier
-                        .width(56.dp)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(XBlue)
+    fun closeComposer() {
+        composerVisible = false
+        composerMode = XComposerPost
+        replyTargetId = null
+        quotePostId = null
+    }
+
+    Box(modifier = Modifier.fillMaxSize().background(XPage)) {
+        AnimatedContent(
+            targetState = pane,
+            transitionSpec = {
+                val forward = when {
+                    initialState == XPane.Feed && targetState != XPane.Feed -> true
+                    initialState == XPane.Detail && targetState == XPane.Composer -> true
+                    else -> false
+                }
+                if (forward) {
+                    slideInHorizontally(
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        initialOffsetX = { it / 4 }
+                    ) + fadeIn(animationSpec = tween(220)) togetherWith
+                        slideOutHorizontally(
+                            animationSpec = tween(260, easing = FastOutSlowInEasing),
+                            targetOffsetX = { -it / 8 }
+                        ) + fadeOut(animationSpec = tween(180))
+                } else {
+                    slideInHorizontally(
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        initialOffsetX = { -it / 8 }
+                    ) + scaleIn(
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        initialScale = 0.985f
+                    ) + fadeIn(animationSpec = tween(220)) togetherWith
+                        slideOutHorizontally(
+                            animationSpec = tween(260, easing = FastOutSlowInEasing),
+                            targetOffsetX = { it / 4 }
+                        ) + scaleOut(
+                            animationSpec = tween(260, easing = FastOutSlowInEasing),
+                            targetScale = 0.985f
+                        ) + fadeOut(animationSpec = tween(180))
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            label = "xPane"
+        ) { currentPane ->
+            when (currentPane) {
+                XPane.Feed -> XFeedPane(
+                    timeline = timeline,
+                    posts = filteredPosts,
+                    currentUser = currentUser,
+                    selectedTab = selectedTab,
+                    pluginEnabled = settings.pluginSettings.x.enabled,
+                    enabledToolCount = settings.pluginSettings.x.enabledToolCount(),
+                    onBack = { navController.popBackStack() },
+                    onOpenPlugin = { navController.navigate(Screen.SettingXPlugin) },
+                    onTabSelected = { selectedTab = it },
+                    onOpenPost = { selectedPostId = it },
+                    onCompose = { openComposerForPost() },
+                    onReply = { openComposerForReply(it) },
+                    onQuote = { openComposerForPost(it) },
+                    onLike = vm::toggleLike,
+                    onRepost = vm::toggleRepost,
+                    onBookmark = vm::toggleBookmark,
                 )
-            }
-        }
-    }
-}
 
-@Composable
-private fun TweetCard(
-    tweet: TweetData,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        Row {
-            // Avatar
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFE1E8ED))
-            ) {
-                AsyncImage(
-                    model = tweet.avatarUrl,
-                    contentDescription = tweet.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Content
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = tweet.name,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = XTextPrimary,
-                            maxLines = 1
-                        )
-                        if (tweet.isVerified) {
-                            Icon(
-                                imageVector = XIcons.Verified,
-                                contentDescription = "Verified",
-                                tint = XBlue,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        Text(
-                            text = " ${tweet.handle}",
-                            fontSize = 15.sp,
-                            color = XTextSecondary
-                        )
-                        Text(
-                            text = " · ${tweet.time}",
-                            fontSize = 15.sp,
-                            color = XTextSecondary
+                XPane.Detail -> {
+                    val post = selectedPost
+                    if (post != null) {
+                        XDetailPane(
+                            currentUser = currentUser,
+                            post = post,
+                            replies = detailReplies,
+                            onBack = { selectedPostId = null },
+                            onOpenPlugin = { navController.navigate(Screen.SettingXPlugin) },
+                            onReply = { openComposerForReply(post.post.id) },
+                            onQuote = { openComposerForPost(post.post.id) },
+                            onOpenPost = { selectedPostId = it },
+                            onLike = vm::toggleLike,
+                            onRepost = vm::toggleRepost,
+                            onBookmark = vm::toggleBookmark,
                         )
                     }
+                }
 
-                    Icon(
-                        imageVector = XIcons.MoreHoriz,
-                        contentDescription = "More",
-                        tint = XTextSecondary,
-                        modifier = Modifier.size(18.dp)
+                XPane.Composer -> XComposerPane(
+                    currentUser = currentUser,
+                    mode = composerMode,
+                    replyTarget = replyTargetPost,
+                    quotePost = composerQuotePost,
+                    onClose = { closeComposer() },
+                    onSubmit = { text ->
+                        if (composerMode == XComposerReply && replyTargetId != null) {
+                            vm.replyToPost(replyTargetId!!, text) {
+                                toaster.show("回复已发出", type = ToastType.Success)
+                                selectedPostId = replyTargetId
+                                closeComposer()
+                            }
+                        } else {
+                            vm.publishPost(text = text, quotePostId = quotePostId) { post ->
+                                toaster.show("帖子已发布", type = ToastType.Success)
+                                selectedPostId = post.id
+                                closeComposer()
+                            }
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun XFeedPane(
+    timeline: XTimelineState,
+    posts: List<XResolvedPost>,
+    currentUser: XAuthor?,
+    selectedTab: XFeedTab,
+    pluginEnabled: Boolean,
+    enabledToolCount: Int,
+    onBack: () -> Unit,
+    onOpenPlugin: () -> Unit,
+    onTabSelected: (XFeedTab) -> Unit,
+    onOpenPost: (String) -> Unit,
+    onCompose: () -> Unit,
+    onReply: (String) -> Unit,
+    onQuote: (String) -> Unit,
+    onLike: (String) -> Unit,
+    onRepost: (String) -> Unit,
+    onBookmark: (String) -> Unit,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = 142.dp, bottom = 116.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item("pluginBanner") {
+                XPluginBanner(
+                    pluginEnabled = pluginEnabled,
+                    enabledToolCount = enabledToolCount,
+                    onClick = onOpenPlugin
+                )
+            }
+            if (currentUser != null) {
+                item("meCard") {
+                    XMeCard(author = currentUser, timelineCount = timeline.posts.size)
+                }
+            }
+            if (posts.isEmpty()) {
+                item("empty") {
+                    XEmptyState(
+                        title = "这里还没有内容",
+                        subtitle = "切换一下分栏，或者先发一条新的帖子。",
+                        action = "发帖",
+                        onAction = onCompose
                     )
                 }
-
-                Text(
-                    text = tweet.content,
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    color = XTextPrimary,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-
-                tweet.quoteTweet?.let { quote ->
-                    Spacer(modifier = Modifier.height(12.dp))
-                    QuoteTweetCard(quote = quote)
+            } else {
+                items(posts, key = { it.post.id }) { post ->
+                    XPostCard(
+                        post = post,
+                        onOpen = { onOpenPost(post.post.id) },
+                        onReply = { onReply(post.post.id) },
+                        onQuote = { onQuote(post.post.id) },
+                        onLike = { onLike(post.post.id) },
+                        onRepost = { onRepost(post.post.id) },
+                        onBookmark = { onBookmark(post.post.id) },
+                    )
                 }
-
-                TweetActions(
-                    replies = tweet.replies,
-                    retweets = tweet.retweets,
-                    likes = tweet.likes,
-                    views = tweet.views
-                )
             }
         }
-    }
 
-    Spacer(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(XBorder)
-    )
+        Column(
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
+        ) {
+            XTopBar(
+                onBack = onBack,
+                onOpenPlugin = onOpenPlugin,
+                title = {
+                    Image(
+                        painter = painterResource(R.drawable.zphone_x_logo),
+                        contentDescription = "X",
+                        modifier = Modifier.size(20.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            )
+            XTabBar(selectedTab = selectedTab, onTabSelected = onTabSelected)
+        }
+
+        XFloatingComposer(
+            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 92.dp),
+            onClick = onCompose
+        )
+    }
 }
 
 @Composable
-private fun QuoteTweetCard(quote: QuoteTweetData) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .clickable { }
-            .border(1.dp, XBorder, RoundedCornerShape(16.dp))
-            .padding(12.dp)
+private fun XDetailPane(
+    currentUser: XAuthor?,
+    post: XResolvedPost,
+    replies: List<XResolvedPost>,
+    onBack: () -> Unit,
+    onOpenPlugin: () -> Unit,
+    onReply: () -> Unit,
+    onQuote: () -> Unit,
+    onOpenPost: (String) -> Unit,
+    onLike: (String) -> Unit,
+    onRepost: (String) -> Unit,
+    onBookmark: (String) -> Unit,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = 100.dp, bottom = 116.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item("detailHeader") {
+                XSectionHeader(
+                    title = "帖子详情",
+                    subtitle = "查看互动、回复和引用上下文"
+                )
+            }
+            item("mainPost") {
+                XPostCard(
+                    post = post,
+                    emphasized = true,
+                    onOpen = {},
+                    onReply = onReply,
+                    onQuote = onQuote,
+                    onLike = { onLike(post.post.id) },
+                    onRepost = { onRepost(post.post.id) },
+                    onBookmark = { onBookmark(post.post.id) },
+                )
+            }
+            item("repliesHeader") {
+                XSectionHeader(
+                    title = "回复 ${replies.size}",
+                    subtitle = if (currentUser != null) "以 ${currentUser.handle} 的身份继续参与讨论" else "继续参与讨论"
+                )
+            }
+            if (replies.isEmpty()) {
+                item("emptyReplies") {
+                    XEmptyState(
+                        title = "还没有回复",
+                        subtitle = "写下你的第一条回复，或者让 AI 在审批后代你完成。",
+                        action = "写回复",
+                        onAction = onReply
+                    )
+                }
+            } else {
+                items(replies, key = { it.post.id }) { reply ->
+                    XPostCard(
+                        post = reply,
+                        compact = true,
+                        onOpen = { onOpenPost(reply.post.id) },
+                        onReply = onReply,
+                        onQuote = onQuote,
+                        onLike = { onLike(reply.post.id) },
+                        onRepost = { onRepost(reply.post.id) },
+                        onBookmark = { onBookmark(reply.post.id) },
+                    )
+                }
+            }
+        }
+
+        XTopBar(
+            modifier = Modifier.align(Alignment.TopCenter),
+            onBack = onBack,
+            onOpenPlugin = onOpenPlugin,
+            title = {
+                Text(
+                    text = post.author.displayName,
+                    color = XPrimary,
+                    fontFamily = SourceSans3,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        )
+
+        XBottomReplyBar(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            currentUser = currentUser,
+            onReply = onReply
+        )
+    }
+}
+
+@Composable
+private fun XComposerPane(
+    currentUser: XAuthor?,
+    mode: String,
+    replyTarget: XResolvedPost?,
+    quotePost: XResolvedPost?,
+    onClose: () -> Unit,
+    onSubmit: (String) -> Unit,
+) {
+    var text by rememberSaveable(mode, replyTarget?.post?.id, quotePost?.post?.id) { mutableStateOf("") }
+
+    Column(modifier = Modifier.fillMaxSize().background(XPage)) {
+        XComposerTopBar(
+            canSubmit = text.trim().isNotEmpty(),
+            submitLabel = if (mode == XComposerReply) "回复" else "发布",
+            onBack = onClose,
+            onSubmit = { onSubmit(text.trim()) }
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .imePadding()
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (currentUser != null) {
+                XComposerIdentity(author = currentUser, mode = mode)
+            }
+            if (replyTarget != null) {
+                XContextPreview(title = "回复目标", post = replyTarget)
+            }
+            if (quotePost != null) {
+                XContextPreview(title = "引用帖子", post = quotePost)
+            }
+
+            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = XSurface)) {
+                TextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    modifier = Modifier.fillMaxWidth().height(280.dp),
+                    placeholder = {
+                        Text(
+                            text = if (mode == XComposerReply) "写下你的回复内容" else "分享一个新想法，或引用一条帖子继续展开",
+                            color = XSecondary
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
+                    maxLines = 10,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = XSurface,
+                        unfocusedContainerColor = XSurface,
+                        disabledContainerColor = XSurface,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
+                        cursorColor = XAccent
+                    )
+                )
+            }
+
+            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = XSubtle)) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "工具协同说明",
+                        color = XPrimary,
+                        fontFamily = SourceSans3,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        text = "这里的发帖和回复是原生交互。聊天里的 AI 若要执行同类动作，仍会经过单独审批，不会绕过你的确认。",
+                        color = XSecondary,
+                        fontFamily = SourceSans3,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun XTopBar(
+    onBack: () -> Unit,
+    onOpenPlugin: () -> Unit,
+    modifier: Modifier = Modifier,
+    title: @Composable () -> Unit,
+) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        HeaderTranslucentBackdrop(
+            modifier = Modifier.fillMaxWidth().height(92.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HeaderActionButton(
+                onClick = onBack,
+                icon = ZionAppIcons.Back,
+                contentDescription = "返回"
+            )
+            Box(contentAlignment = Alignment.Center) {
+                title()
+            }
+            HeaderActionButton(
+                onClick = onOpenPlugin,
+                icon = ZionAppIcons.Settings,
+                contentDescription = "X 插件设置"
+            )
+        }
+    }
+}
+
+@Composable
+private fun XTabBar(
+    selectedTab: XFeedTab,
+    onTabSelected: (XFeedTab) -> Unit,
+) {
+    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        HeaderTranslucentBackdrop(
+            modifier = Modifier.fillMaxWidth().height(62.dp),
+            containerColor = XPage,
+            containerAlpha = 0.9f,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 2.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(XSubtle)
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            XFeedTab.entries.forEach { tab ->
+                val selected = tab == selectedTab
+                val background by animateColorAsState(
+                    targetValue = if (selected) XSurface else Color.Transparent,
+                    animationSpec = tween(180, easing = FastOutSlowInEasing),
+                    label = "tabBackground"
+                )
+                val textColor by animateColorAsState(
+                    targetValue = if (selected) XPrimary else XSecondary,
+                    animationSpec = tween(180, easing = FastOutSlowInEasing),
+                    label = "tabColor"
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(background)
+                        .pressableScale(pressedScale = 0.98f) { onTabSelected(tab) }
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = tab.title,
+                        color = textColor,
+                        fontFamily = SourceSans3,
+                        fontSize = 14.sp,
+                        fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun XPluginBanner(
+    pluginEnabled: Boolean,
+    enabledToolCount: Int,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = if (pluginEnabled) XAccentSoft else XSubtle)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFE1E8ED))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pressableScale(pressedScale = 0.98f, onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                AsyncImage(
-                    model = quote.avatarUrl,
-                    contentDescription = quote.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                Text(
+                    text = if (pluginEnabled) "AI 已接入 X" else "启用 X 插件",
+                    color = XPrimary,
+                    fontFamily = SourceSans3,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = if (pluginEnabled) {
+                        "当前有 $enabledToolCount 个工具可主动调用，写入类动作会单独审批。"
+                    } else {
+                        "开启后，聊天里的 AI 可以读取时间线、查看帖子详情并触发互动动作。"
+                    },
+                    color = XSecondary,
+                    fontFamily = SourceSans3,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
                 )
             }
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = quote.name,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = XTextPrimary
-            )
-            if (quote.isVerified) {
-                Icon(
-                    imageVector = XIcons.Verified,
-                    contentDescription = "Verified",
-                    tint = XBlue,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-            Text(
-                text = " ${quote.handle}",
-                fontSize = 15.sp,
-                color = XTextSecondary
-            )
-            Text(
-                text = " · ${quote.time}",
-                fontSize = 15.sp,
-                color = XTextSecondary
-            )
-        }
-
-        Text(
-            text = quote.content,
-            fontSize = 15.sp,
-            lineHeight = 20.sp,
-            color = XTextPrimary,
-            modifier = Modifier.padding(top = 4.dp)
-        )
-
-        if (quote.hasImage) {
-            Spacer(modifier = Modifier.height(8.dp))
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFBDE3F3))
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(XSurface)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "配置",
+                    color = XPrimary,
+                    fontFamily = SourceSans3,
+                    fontSize = 13.sp,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun XMeCard(
+    author: XAuthor,
+    timelineCount: Int,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = XSurface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            XAvatar(author = author, size = 46.dp)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = author.displayName,
+                    color = XPrimary,
+                    fontFamily = SourceSans3,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = "${author.handle} · 本地时间线共 $timelineCount 条帖子",
+                    color = XSecondary,
+                    fontFamily = SourceSans3,
+                    fontSize = 14.sp,
+                )
+                Text(
+                    text = author.bio,
+                    color = XPrimary.copy(alpha = 0.82f),
+                    fontFamily = SourceSans3,
+                    fontSize = 14.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun XPostCard(
+    post: XResolvedPost,
+    compact: Boolean = false,
+    emphasized: Boolean = false,
+    onOpen: () -> Unit,
+    onReply: () -> Unit,
+    onQuote: () -> Unit,
+    onLike: () -> Unit,
+    onRepost: () -> Unit,
+    onBookmark: () -> Unit,
+) {
+    val horizontalPadding = if (compact) 14.dp else 16.dp
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = if (emphasized) XSurface else XSurface)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pressableScale(pressedScale = 0.985f, onClick = onOpen)
+                .padding(horizontal = horizontalPadding, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                XAvatar(author = post.author, size = if (compact) 40.dp else 44.dp)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = post.author.displayName,
+                            color = XPrimary,
+                            fontFamily = SourceSans3,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        if (post.author.verified) {
+                            XStatusChip(text = "认证", background = XAccentSoft, content = XAccent)
+                        }
+                        if (post.post.source == XPostSource.AI_ASSISTANT) {
+                            XStatusChip(text = "AI", background = XMuted, content = XPrimary)
+                        }
+                    }
+                    Text(
+                        text = "${post.author.handle} · ${relativeTime(post.post.createdAtMillis)}",
+                        color = XSecondary,
+                        fontFamily = SourceSans3,
+                        fontSize = 13.sp,
+                    )
+                }
+            }
+
+            Text(
+                text = post.post.body,
+                color = XPrimary,
+                fontFamily = SourceSans3,
+                fontSize = if (compact) 15.sp else 16.sp,
+                lineHeight = if (compact) 21.sp else 24.sp,
+            )
+
+            if (post.quotedPost != null) {
+                XQuoteCard(post = post.quotedPost)
+            }
+
+            if (post.post.media.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    post.post.media.forEach { media ->
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(containerColor = Color(media.tintHex.toULong()))
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = media.label,
+                                    color = XPrimary,
+                                    fontFamily = SourceSans3,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                                if (media.subtitle.isNotBlank()) {
+                                    Text(
+                                        text = media.subtitle,
+                                        color = XPrimary.copy(alpha = 0.72f),
+                                        fontFamily = SourceSans3,
+                                        fontSize = 13.sp,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = XBorder)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                XMetricAction(HugeIcons.Message02, countLabel(post.post.replyCount), XSecondary, onReply)
+                XMetricAction(
+                    HugeIcons.Refresh03,
+                    countLabel(post.post.repostCount),
+                    if (post.post.repostedByMe) XRepost else XSecondary,
+                    onRepost
+                )
+                XMetricAction(
+                    HugeIcons.Favourite,
+                    countLabel(post.post.likeCount),
+                    if (post.post.likedByMe) XLike else XSecondary,
+                    onLike
+                )
+                XMetricAction(
+                    HugeIcons.Book03,
+                    countLabel(post.post.bookmarkCount),
+                    if (post.post.bookmarkedByMe) XPrimary else XSecondary,
+                    onBookmark
+                )
+                XMetricAction(HugeIcons.Share01, countLabel(post.post.viewCount), XSecondary, onQuote)
+            }
+        }
+    }
+}
+
+@Composable
+private fun XQuoteCard(
+    post: XResolvedPost,
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = XSubtle)) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                XAvatar(author = post.author, size = 28.dp)
+                Text(
+                    text = "${post.author.displayName} ${post.author.handle}",
+                    color = XPrimary,
+                    fontFamily = SourceSans3,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            Text(
+                text = post.post.body,
+                color = XPrimary.copy(alpha = 0.88f),
+                fontFamily = SourceSans3,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
 
 @Composable
-private fun TweetActions(
-    replies: String,
-    retweets: String,
-    likes: String,
-    views: String
+private fun XMetricAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    tint: Color,
+    onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        ActionButton(
-            icon = XIcons.Reply,
-            count = replies,
-            activeColor = XBlue
-        )
-        ActionButton(
-            icon = XIcons.Retweet,
-            count = retweets,
-            activeColor = XGreen
-        )
-        ActionButton(
-            icon = XIcons.Like,
-            count = likes,
-            activeColor = XPink
-        )
-        ActionButton(
-            icon = XIcons.Share,
-            count = views,
-            activeColor = XBlue
-        )
-    }
-}
-
-@Composable
-private fun ActionButton(
-    icon: ImageVector,
-    count: String,
-    activeColor: Color
-) {
-    var isActive by remember { mutableStateOf(false) }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable { isActive = !isActive }
+            .clip(RoundedCornerShape(999.dp))
+            .pressableScale(pressedScale = 0.95f, onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = if (isActive) activeColor else XTextSecondary,
-            modifier = Modifier.size(18.dp)
+            tint = tint,
+            modifier = Modifier.size(16.dp)
         )
-        if (count.isNotEmpty()) {
-            Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = label,
+            color = tint,
+            fontFamily = SourceSans3,
+            fontSize = 12.sp,
+        )
+    }
+}
+
+@Composable
+private fun XBottomReplyBar(
+    currentUser: XAuthor?,
+    onReply: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        FooterTranslucentBackdrop(
+            modifier = Modifier.fillMaxWidth().height(100.dp),
+            containerColor = XPage
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .background(XSurface, RoundedCornerShape(24.dp))
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (currentUser != null) {
+                XAvatar(author = currentUser, size = 34.dp)
+            }
             Text(
-                text = count,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isActive) activeColor else XTextPrimary
+                text = "写回复",
+                color = XSecondary,
+                fontFamily = SourceSans3,
+                fontSize = 15.sp,
+                modifier = Modifier.weight(1f)
+            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(XPrimary)
+                    .pressableScale(pressedScale = 0.95f, onClick = onReply)
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "回复",
+                    color = Color.White,
+                    fontFamily = SourceSans3,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun XComposerTopBar(
+    canSubmit: Boolean,
+    submitLabel: String,
+    onBack: () -> Unit,
+    onSubmit: () -> Unit,
+) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        HeaderTranslucentBackdrop(
+            modifier = Modifier.fillMaxWidth().height(92.dp),
+            containerColor = XPage
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HeaderActionButton(onClick = onBack, icon = ZionAppIcons.Back, contentDescription = "返回")
+            Text(
+                text = if (submitLabel == "回复") "写回复" else "写帖子",
+                color = XPrimary,
+                fontFamily = SourceSans3,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(if (canSubmit) XPrimary else XMuted)
+                    .pressableScale(enabled = canSubmit, pressedScale = 0.95f, onClick = onSubmit)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text = submitLabel,
+                    color = if (canSubmit) Color.White else XSecondary,
+                    fontFamily = SourceSans3,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun XComposerIdentity(
+    author: XAuthor,
+    mode: String,
+) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = XSurface)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            XAvatar(author = author, size = 40.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = author.displayName,
+                    color = XPrimary,
+                    fontFamily = SourceSans3,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = if (mode == XComposerReply) "将以 ${author.handle} 的身份发送回复" else "将以 ${author.handle} 的身份发布帖子",
+                    color = XSecondary,
+                    fontFamily = SourceSans3,
+                    fontSize = 13.sp,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun XContextPreview(
+    title: String,
+    post: XResolvedPost,
+) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = XSubtle)) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(text = title, color = XSecondary, fontFamily = SourceSans3, fontSize = 13.sp)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                XAvatar(author = post.author, size = 28.dp)
+                Text(
+                    text = "${post.author.displayName} ${post.author.handle}",
+                    color = XPrimary,
+                    fontFamily = SourceSans3,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            Text(
+                text = post.post.body,
+                color = XPrimary.copy(alpha = 0.82f),
+                fontFamily = SourceSans3,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
 
 @Composable
-private fun FloatingActionButtonX(onClick: () -> Unit) {
-    var isPressed by remember { mutableStateOf(false) }
-    val scale = if (isPressed) 0.9f else 1f
-    Box(
-        modifier = Modifier
-            .size(56.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .clip(CircleShape)
-            .background(XBlue)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        isPressed = true
-                        tryAwaitRelease()
-                        isPressed = false
-                        onClick()
-                    }
+private fun XSectionHeader(
+    title: String,
+    subtitle: String,
+) {
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = title,
+            color = XPrimary,
+            fontFamily = SourceSans3,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = subtitle,
+            color = XSecondary,
+            fontFamily = SourceSans3,
+            fontSize = 14.sp,
+        )
+    }
+}
+
+@Composable
+private fun XEmptyState(
+    title: String,
+    subtitle: String,
+    action: String,
+    onAction: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = XSurface)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 22.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = title,
+                color = XPrimary,
+                fontFamily = SourceSans3,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = subtitle,
+                color = XSecondary,
+                fontFamily = SourceSans3,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(XPrimary)
+                    .pressableScale(pressedScale = 0.95f, onClick = onAction)
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = action,
+                    color = Color.White,
+                    fontFamily = SourceSans3,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
                 )
-            },
+            }
+        }
+    }
+}
+
+@Composable
+private fun XFloatingComposer(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(58.dp)
+            .clip(CircleShape)
+            .background(XPrimary)
+            .pressableScale(pressedScale = 0.94f, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = XIcons.Plus,
-            contentDescription = "Compose",
+            imageVector = HugeIcons.QuillWrite01,
+            contentDescription = "发帖",
             tint = Color.White,
             modifier = Modifier.size(24.dp)
         )
@@ -565,1780 +1195,75 @@ private fun FloatingActionButtonX(onClick: () -> Unit) {
 }
 
 @Composable
-private fun XBottomNav() {
-    var selectedTab by remember { mutableStateOf(0) }
-    Row(
+private fun XAvatar(
+    author: XAuthor,
+    size: androidx.compose.ui.unit.Dp,
+) {
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceAround
+            .size(size)
+            .clip(CircleShape)
+            .background(Color(author.avatarColorHex.toULong())),
+        contentAlignment = Alignment.Center
     ) {
-        BottomNavItem(
-            icon = XIcons.Home,
-            selectedIcon = XIcons.HomeFilled,
-            isSelected = selectedTab == 0,
-            onClick = { selectedTab = 0 }
-        )
-        BottomNavItem(
-            icon = XIcons.Search,
-            selectedIcon = XIcons.SearchFilled,
-            isSelected = selectedTab == 1,
-            onClick = { selectedTab = 1 }
-        )
-        BottomNavItem(
-            icon = XIcons.Communities,
-            selectedIcon = XIcons.CommunitiesFilled,
-            isSelected = selectedTab == 2,
-            onClick = { selectedTab = 2 }
-        )
-        BottomNavItem(
-            icon = XIcons.Notifications,
-            selectedIcon = XIcons.NotificationsFilled,
-            isSelected = selectedTab == 3,
-            onClick = { selectedTab = 3 }
-        )
-        BottomNavItem(
-            icon = XIcons.Messages,
-            selectedIcon = XIcons.MessagesFilled,
-            isSelected = selectedTab == 4,
-            onClick = { selectedTab = 4 }
+        Text(
+            text = author.initials,
+            color = Color.White,
+            fontFamily = SourceSans3,
+            fontSize = (size.value * 0.34f).sp,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
 
 @Composable
-private fun BottomNavItem(
-    icon: ImageVector,
-    selectedIcon: ImageVector,
-    isSelected: Boolean,
-    onClick: () -> Unit
+private fun XStatusChip(
+    text: String,
+    background: Color,
+    content: Color,
 ) {
-    IconButton(onClick = onClick) {
-        Icon(
-            imageVector = if (isSelected) selectedIcon else icon,
-            contentDescription = null,
-            tint = if (isSelected) XTextPrimary else XTextSecondary,
-            modifier = Modifier.size(24.dp)
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(background)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = text,
+            color = content,
+            fontFamily = SourceSans3,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
         )
     }
 }
 
-@Composable
-private fun DetailView(
-    onNavigate: (XView) -> Unit,
-    onBack: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = XIcons.ArrowBack,
-                    contentDescription = "Back",
-                    tint = XTextPrimary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = "发帖",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = XTextPrimary
-            )
-        }
-
-        // Content
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            // Author info
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFE1E8ED))
-                    ) {
-                        AsyncImage(
-                            model = "https://images.unsplash.com/photo-1535295972055-1c762f4483e5?auto=format&fit=crop&w=100&q=80",
-                            contentDescription = "Scobleizer",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Robert Scoble",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = XTextPrimary
-                            )
-                            Icon(
-                                imageVector = XIcons.Verified,
-                                contentDescription = "Verified",
-                                tint = XBlue,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        Text(
-                            text = "@Scobleizer",
-                            fontSize = 15.sp,
-                            color = XTextSecondary
-                        )
-                    }
-                }
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(XTextPrimary)
-                        .clickable { }
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = "订阅",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-            }
-
-            // Tweet content
-            Text(
-                text = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last time I asked it to do the same.",
-                fontSize = 17.sp,
-                lineHeight = 24.sp,
-                color = XTextPrimary,
-                modifier = Modifier.padding(top = 12.dp)
-            )
-
-            // Date and views
-            Row(
-                modifier = Modifier.padding(top = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "26年3月28日, 13:35",
-                    fontSize = 15.sp,
-                    color = XTextSecondary
-                )
-                Text(
-                    text = " · ",
-                    fontSize = 15.sp,
-                    color = XTextSecondary
-                )
-                Text(
-                    text = "571万",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = XTextPrimary
-                )
-                Text(
-                    text = " 查看",
-                    fontSize = 15.sp,
-                    color = XTextSecondary
-                )
-            }
-
-            // Divider
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(XBorder)
-                    .padding(vertical = 8.dp)
-            )
-
-            // Stats
-            Row(
-                modifier = Modifier.padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Row {
-                    Text(
-                        text = "15",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = XTextPrimary
-                    )
-                    Text(
-                        text = " 转帖",
-                        fontSize = 15.sp,
-                        color = XTextSecondary
-                    )
-                }
-                Row {
-                    Text(
-                        text = "302",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = XTextPrimary
-                    )
-                    Text(
-                        text = " 喜欢",
-                        fontSize = 15.sp,
-                        color = XTextSecondary
-                    )
-                }
-                Row {
-                    Text(
-                        text = "19",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = XTextPrimary
-                    )
-                    Text(
-                        text = " 书签",
-                        fontSize = 15.sp,
-                        color = XTextSecondary
-                    )
-                }
-            }
-
-            // Reply header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "最相关的回复",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = XTextPrimary
-                )
-            }
-
-            // Reply
-            Row {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black)
-                ) {
-                    Icon(
-                        imageVector = XIcons.GrokLogo,
-                        contentDescription = "Grok",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(26.dp)
-                            .align(Alignment.Center)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Grok",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = XTextPrimary
-                        )
-                        Icon(
-                            imageVector = XIcons.VerifiedGold,
-                            contentDescription = "Verified",
-                            tint = Color(0xFFFFD700),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .padding(start = 4.dp)
-                                .background(XBorder, RoundedCornerShape(4.dp))
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "XI",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = XTextPrimary
-                            )
-                        }
-                        Text(
-                            text = " @grok · 7小时",
-                            fontSize = 15.sp,
-                            color = XTextSecondary
-                        )
-                    }
-                    Text(
-                        text = "回复给 @Scobleizer 和 @grok",
-                        fontSize = 15.sp,
-                        color = XTextSecondary,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                    Text(
-                        text = "Thanks! We've been optimizing hard at xAI—speed improvements like this are rolling out fast. Glad the transcript readings feel snappier. What else are you testing?",
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp,
-                        color = XTextPrimary,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-        }
-
-        // Bottom input
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFE1E8ED))
-            ) {
-                AsyncImage(
-                    model = "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=100&q=80",
-                    contentDescription = "Me",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(XBackground)
-                    .clickable { onNavigate(XView.ComposeReply) }
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = "发布你的回复",
-                    fontSize = 15.sp,
-                    color = XTextSecondary
-                )
-            }
-        }
+private fun relativeTime(createdAtMillis: Long): String {
+    val diff = (System.currentTimeMillis() - createdAtMillis).coerceAtLeast(0L)
+    val minutes = diff / 60_000L
+    val hours = diff / 3_600_000L
+    val days = diff / 86_400_000L
+    return when {
+        minutes < 1 -> "刚刚"
+        minutes < 60 -> "${minutes} 分钟前"
+        hours < 24 -> "${hours} 小时前"
+        else -> "${days} 天前"
     }
 }
 
-@Composable
-private fun ComposePostView(
-    onBack: () -> Unit,
-    toaster: com.dokar.sonner.ToasterState
-) {
-    var text by remember { mutableStateOf("") }
-    val maxChars = 280
-    val progress = (text.length.toFloat() / maxChars).coerceIn(0f, 1f)
-    val canPost = text.isNotEmpty() && text.length <= maxChars
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = XIcons.Close,
-                    contentDescription = "Close",
-                    tint = XTextPrimary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text(
-                    text = "草稿",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = XBlue
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (canPost) XBlue else XBlueLight)
-                        .clickable(enabled = canPost) {
-                            if (canPost) {
-                                toaster.show("发帖成功", type = ToastType.Success)
-                                onBack()
-                            }
-                        }
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = "发帖",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-            }
-        }
-
-        // Compose area
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .padding(16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFE1E8ED))
-            ) {
-                AsyncImage(
-                    model = "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=100&q=80",
-                    contentDescription = "Me",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color.White)
-                        .clickable { }
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "每个人",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = XBlue
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                BasicTextField(
-                    value = text,
-                    onValueChange = { if (it.length <= maxChars) text = it },
-                    textStyle = TextStyle(
-                        fontSize = 20.sp,
-                        lineHeight = 24.sp,
-                        color = XTextPrimary
-                    ),
-                    cursorBrush = SolidColor(XBlue),
-                    modifier = Modifier.fillMaxWidth(),
-                    decorationBox = { innerTextField ->
-                        Box {
-                            if (text.isEmpty()) {
-                                Text(
-                                    text = "有什么新鲜事？",
-                                    fontSize = 20.sp,
-                                    color = XTextSecondary
-                                )
-                            }
-                            innerTextField()
-                        }
-                    }
-                )
-            }
-        }
-
-        // Image preview
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(88.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White)
-                    .clickable { },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = XIcons.Image,
-                    contentDescription = "Add image",
-                    tint = XBlue,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            repeat(3) { index ->
-                Box(
-                    modifier = Modifier
-                        .size(88.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            when (index) {
-                                0 -> Color(0xFFE6DBCC)
-                                1 -> Color.White
-                                else -> Color.White
-                            }
-                        )
-                )
-            }
-        }
-
-        // Toolbar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row {
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = XIcons.Image,
-                        contentDescription = "Image",
-                        tint = XBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = XIcons.Gif,
-                        contentDescription = "GIF",
-                        tint = XBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = XIcons.Poll,
-                        contentDescription = "Poll",
-                        tint = XBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = XIcons.Emoji,
-                        contentDescription = "Emoji",
-                        tint = XBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Progress ring
-                Box(
-                    modifier = Modifier.size(28.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "${text.length}",
-                        fontSize = 10.sp,
-                        color = if (text.length > maxChars) XRed else XTextSecondary
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = XIcons.Plus,
-                        contentDescription = "Add",
-                        tint = XBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
+private fun countLabel(value: Int): String {
+    return when {
+        value >= 1_000_000 -> "${((value / 100_000).toFloat() / 10f).trimZero()}M"
+        value >= 1_000 -> "${((value / 100).toFloat() / 10f).trimZero()}K"
+        else -> value.toString()
     }
 }
 
-@Composable
-private fun ComposeReplyView(
-    onBack: () -> Unit,
-    toaster: com.dokar.sonner.ToasterState
-) {
-    var text by remember { mutableStateOf("") }
-    val maxChars = 280
-    val canReply = text.isNotEmpty() && text.length <= maxChars
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.statusBars)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = XIcons.Close,
-                    contentDescription = "Close",
-                    tint = XTextPrimary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(if (canReply) XBlue else XBlueLight)
-                    .clickable(enabled = canReply) {
-                        if (canReply) {
-                            toaster.show("回复成功", type = ToastType.Success)
-                            onBack()
-                        }
-                    }
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = "回复",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-        }
-
-        // Original tweet context
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
-        ) {
-            Row {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFE1E8ED))
-                ) {
-                    AsyncImage(
-                        model = "https://images.unsplash.com/photo-1535295972055-1c762f4483e5?auto=format&fit=crop&w=100&q=80",
-                        contentDescription = "Scobleizer",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Robert Scoble",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = XTextPrimary
-                        )
-                        Icon(
-                            imageVector = XIcons.Verified,
-                            contentDescription = "Verified",
-                            tint = XBlue,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = " @Scobleizer · 8小时",
-                            fontSize = 15.sp,
-                            color = XTextSecondary
-                        )
-                    }
-                    Text(
-                        text = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last time I asked it to do the same.",
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp,
-                        color = XTextPrimary,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                    Text(
-                        text = "回复给 @Scobleizer 和 @grok",
-                        fontSize = 15.sp,
-                        color = XTextSecondary,
-                        modifier = Modifier.padding(top = 12.dp)
-                    )
-                }
-            }
-
-            // Reply input
-            Row(
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFE1E8ED))
-                ) {
-                    AsyncImage(
-                        model = "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=100&q=80",
-                        contentDescription = "Me",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                BasicTextField(
-                    value = text,
-                    onValueChange = { if (it.length <= maxChars) text = it },
-                    textStyle = TextStyle(
-                        fontSize = 20.sp,
-                        lineHeight = 24.sp,
-                        color = XTextPrimary
-                    ),
-                    cursorBrush = SolidColor(XBlue),
-                    modifier = Modifier.weight(1f),
-                    decorationBox = { innerTextField ->
-                        Box {
-                            if (text.isEmpty()) {
-                                Text(
-                                    text = "发布你的回复",
-                                    fontSize = 20.sp,
-                                    color = XTextSecondary
-                                )
-                            }
-                            innerTextField()
-                        }
-                    }
-                )
-            }
-        }
-
-        // Bottom toolbar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White)
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row {
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = XIcons.Image,
-                        contentDescription = "Image",
-                        tint = XBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = XIcons.Gif,
-                        contentDescription = "GIF",
-                        tint = XBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = XIcons.Poll,
-                        contentDescription = "Poll",
-                        tint = XBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = XIcons.Emoji,
-                        contentDescription = "Emoji",
-                        tint = XBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-            IconButton(onClick = { }) {
-                Icon(
-                    imageVector = XIcons.Plus,
-                    contentDescription = "Add",
-                    tint = XBlue,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
+private fun Float.trimZero(): String {
+    val rounded = ((this * 10).toInt() / 10f)
+    return if ((rounded % 1f).absoluteValue < 0.001f) {
+        rounded.toInt().toString()
+    } else {
+        rounded.toString()
     }
-}
-
-private fun getTweets(): List<TweetData> {
-    return listOf(
-        TweetData(
-            avatarUrl = "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=100&q=80",
-            name = "Elon Musk",
-            handle = "@elonmusk",
-            time = "2小时",
-            content = "Grok gets faster & smarter every week",
-            replies = "1,711",
-            retweets = "1,141",
-            likes = "1万",
-            views = "568万",
-            quoteTweet = QuoteTweetData(
-                avatarUrl = "https://images.unsplash.com/photo-1535295972055-1c762f4483e5?auto=format&fit=crop&w=50&q=80",
-                name = "Robert Scoble",
-                handle = "@Scobl...",
-                time = "7小时",
-                content = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last ...",
-                isVerified = true
-            )
-        ),
-        TweetData(
-            avatarUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=100&q=80",
-            name = "leo 🐾",
-            handle = "@synthwavedd",
-            time = "1小时",
-            content = "The \$200/mo ChatGPT Pro plan will soon no longer be unlimited\n\nI think we all knew this was coming, but still 👎",
-            replies = "856",
-            retweets = "432",
-            likes = "5,231",
-            views = "120万",
-            quoteTweet = QuoteTweetData(
-                avatarUrl = "",
-                name = "Chetaslua",
-                handle = "@chetaslua",
-                time = "1小时",
-                content = "🚨 Chatgpt 100\$ plan is coming soon\n\nOne bad news - now the 200\$ plan is not truly unlimited ( it's 20 times the plus uses)...",
-                isVerified = true,
-                hasImage = true
-            )
-        )
-    )
-}
-
-private object XIcons {
-    val XLogo: ImageVector
-        get() = ImageVector.Builder(
-            name = "XLogo",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(androidx.compose.ui.graphics.Color.Black)) {
-                moveTo(18.244f, 2.25f)
-                horizontalLineTo(21.552f)
-                lineTo(14.325f, 10.51f)
-                lineTo(22.827f, 21.75f)
-                horizontalLineTo(16.17f)
-                lineTo(10.956f, 14.933f)
-                lineTo(4.99f, 21.75f)
-                horizontalLineTo(1.68f)
-                lineTo(9.41f, 12.915f)
-                lineTo(1.254f, 2.25f)
-                horizontalLineTo(8.08f)
-                lineTo(12.793f, 8.481f)
-                close()
-            }
-        }.build()
-
-    val Verified: ImageVector
-        get() = ImageVector.Builder(
-            name = "Verified",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XBlue)) {
-                moveTo(22.5f, 12.5f)
-                curveTo(22.5f, 10.92f, 21.625f, 9.55f, 20.352f, 8.9f)
-                curveTo(20.506f, 8.465f, 20.59f, 7.995f, 20.59f, 7.495f)
-                curveTo(20.59f, 5.285f, 18.88f, 3.497f, 16.672f, 3.497f)
-                curveTo(16.202f, 3.497f, 15.752f, 3.581f, 15.336f, 3.746f)
-                curveTo(14.818f, 2.413f, 13.51f, 1.5f, 12f, 1.5f)
-                curveTo(10.49f, 1.5f, 9.184f, 2.417f, 8.663f, 3.75f)
-                curveTo(8.247f, 3.585f, 7.797f, 3.5f, 7.327f, 3.5f)
-                curveTo(5.117f, 3.5f, 3.409f, 5.29f, 3.409f, 7.5f)
-                curveTo(3.409f, 7.995f, 3.493f, 8.465f, 3.647f, 8.9f)
-                curveTo(2.374f, 9.55f, 1.499f, 10.92f, 1.499f, 12.5f)
-                curveTo(1.499f, 13.96f, 2.24f, 15.247f, 3.366f, 15.947f)
-                curveTo(3.382f, 16.097f, 3.391f, 16.247f, 3.391f, 16.4f)
-                curveTo(3.391f, 18.61f, 5.101f, 20.4f, 7.309f, 20.4f)
-                curveTo(7.779f, 20.4f, 8.229f, 20.314f, 8.645f, 20.15f)
-                curveTo(9.165f, 21.484f, 10.471f, 22.4f, 11.982f, 22.4f)
-                curveTo(13.493f, 22.4f, 14.799f, 21.484f, 15.32f, 20.15f)
-                curveTo(15.736f, 20.314f, 16.186f, 20.4f, 16.656f, 20.4f)
-                curveTo(18.866f, 20.4f, 20.576f, 18.61f, 20.576f, 16.4f)
-                curveTo(20.576f, 16.247f, 20.566f, 16.097f, 20.55f, 15.947f)
-                curveTo(21.677f, 15.247f, 22.417f, 13.96f, 22.417f, 12.5f)
-                close()
-                moveTo(11.269f, 16.75f)
-                lineTo(7.941f, 13.424f)
-                lineTo(8.837f, 12.527f)
-                lineTo(11.27f, 14.957f)
-                lineTo(16.702f, 9.527f)
-                lineTo(17.598f, 10.423f)
-                lineTo(11.269f, 16.75f)
-                close()
-            }
-        }.build()
-
-    val VerifiedGold: ImageVector
-        get() = ImageVector.Builder(
-            name = "VerifiedGold",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFD700))) {
-                moveTo(2f, 2f)
-                horizontalLineTo(22f)
-                verticalLineTo(22f)
-                horizontalLineTo(2f)
-                close()
-            }
-            path(
-                fill = androidx.compose.ui.graphics.SolidColor(androidx.compose.ui.graphics.Color.Black),
-                stroke = androidx.compose.ui.graphics.SolidColor(androidx.compose.ui.graphics.Color.Black),
-                strokeLineWidth = 2f
-            ) {
-                moveTo(16f, 8f)
-                lineTo(10f, 16f)
-                lineTo(7f, 13f)
-            }
-        }.build()
-
-    val MoreHoriz: ImageVector
-        get() = ImageVector.Builder(
-            name = "MoreHoriz",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
-                moveTo(3f, 12f)
-                curveTo(3f, 10.9f, 3.9f, 10f, 5f, 10f)
-                reflectiveCurveTo(7f, 10.9f, 7f, 12f)
-                reflectiveCurveTo(6.1f, 14f, 5f, 14f)
-                reflectiveCurveTo(3f, 13.1f, 3f, 12f)
-                close()
-                moveTo(12f, 14f)
-                curveTo(13.1f, 14f, 14f, 13.1f, 14f, 12f)
-                reflectiveCurveTo(13.1f, 10f, 12f, 10f)
-                reflectiveCurveTo(10f, 10.9f, 10f, 12f)
-                reflectiveCurveTo(10.9f, 14f, 12f, 14f)
-                close()
-                moveTo(19f, 14f)
-                curveTo(20.1f, 14f, 21f, 13.1f, 21f, 12f)
-                reflectiveCurveTo(20.1f, 10f, 19f, 10f)
-                reflectiveCurveTo(17f, 10.9f, 17f, 12f)
-                reflectiveCurveTo(17.9f, 14f, 19f, 14f)
-                close()
-            }
-        }.build()
-
-    val Reply: ImageVector
-        get() = ImageVector.Builder(
-            name = "Reply",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
-                moveTo(1.751f, 10f)
-                curveTo(1.751f, 5.58f, 5.335f, 2f, 9.756f, 2f)
-                horizontalLineTo(14.122f)
-                curveTo(18.612f, 2f, 22.251f, 5.64f, 22.251f, 10.13f)
-                curveTo(22.251f, 13.09f, 20.644f, 15.81f, 18.055f, 17.24f)
-                lineTo(10.001f, 21.7f)
-                verticalLineTo(18.01f)
-                horizontalLineTo(9.934f)
-                curveTo(5.444f, 18.11f, 1.751f, 14.5f, 1.751f, 10f)
-                close()
-                moveTo(9.756f, 4f)
-                curveTo(6.439f, 4f, 3.751f, 6.69f, 3.751f, 10f)
-                curveTo(3.751f, 13.37f, 6.521f, 16.08f, 9.889f, 16.01f)
-                lineTo(10.24f, 16f)
-                horizontalLineTo(12.001f)
-                verticalLineTo(18.3f)
-                lineTo(17.088f, 15.49f)
-                curveTo(19.039f, 14.41f, 20.251f, 12.36f, 20.251f, 10.13f)
-                curveTo(20.251f, 6.74f, 17.507f, 4f, 14.122f, 4f)
-                horizontalLineTo(9.756f)
-                close()
-            }
-        }.build()
-
-    val Retweet: ImageVector
-        get() = ImageVector.Builder(
-            name = "Retweet",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
-                moveTo(4.5f, 3.88f)
-                lineTo(8.932f, 8.02f)
-                lineTo(7.568f, 9.48f)
-                lineTo(5.5f, 7.55f)
-                verticalLineTo(16f)
-                curveTo(5.5f, 17.1f, 6.396f, 18f, 7.5f, 18f)
-                horizontalLineTo(13f)
-                verticalLineTo(20f)
-                horizontalLineTo(7.5f)
-                curveTo(5.291f, 20f, 3.5f, 18.21f, 3.5f, 16f)
-                verticalLineTo(7.55f)
-                lineTo(1.432f, 9.48f)
-                lineTo(0.068f, 8.02f)
-                lineTo(4.5f, 3.88f)
-                close()
-                moveTo(16.5f, 6f)
-                horizontalLineTo(11f)
-                verticalLineTo(4f)
-                horizontalLineTo(16.5f)
-                curveTo(18.709f, 4f, 20.5f, 5.79f, 20.5f, 8f)
-                verticalLineTo(16.45f)
-                lineTo(22.568f, 14.52f)
-                lineTo(23.932f, 15.98f)
-                lineTo(19.5f, 20.12f)
-                lineTo(15.068f, 15.98f)
-                lineTo(16.432f, 14.52f)
-                lineTo(18.5f, 16.45f)
-                verticalLineTo(8f)
-                curveTo(18.5f, 6.9f, 17.604f, 6f, 16.5f, 6f)
-                close()
-            }
-        }.build()
-
-    val Like: ImageVector
-        get() = ImageVector.Builder(
-            name = "Like",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
-                moveTo(16.697f, 5.5f)
-                curveTo(15.475f, 5.44f, 14.018f, 6.01f, 12.807f, 7.66f)
-                lineTo(12.002f, 8.75f)
-                lineTo(11.196f, 7.66f)
-                curveTo(9.984f, 6.01f, 8.526f, 5.44f, 7.304f, 5.5f)
-                curveTo(6.061f, 5.57f, 4.955f, 6.28f, 4.394f, 7.41f)
-                curveTo(3.842f, 8.53f, 3.761f, 10.19f, 4.873f, 12.23f)
-                curveTo(5.947f, 14.2f, 8.13f, 16.5f, 12.001f, 18.84f)
-                curveTo(15.871f, 16.5f, 18.053f, 14.2f, 19.127f, 12.23f)
-                curveTo(20.238f, 10.19f, 20.157f, 8.53f, 19.605f, 7.41f)
-                curveTo(19.044f, 6.28f, 17.938f, 5.57f, 16.697f, 5.5f)
-                close()
-                moveTo(20.884f, 13.19f)
-                curveTo(19.533f, 15.67f, 16.883f, 18.31f, 12.505f, 20.86f)
-                lineTo(12.002f, 21.16f)
-                lineTo(11.498f, 20.86f)
-                curveTo(7.119f, 18.31f, 4.469f, 15.67f, 3.116f, 13.19f)
-                curveTo(1.756f, 10.69f, 1.706f, 8.33f, 2.602f, 6.52f)
-                curveTo(3.489f, 4.73f, 5.249f, 3.61f, 7.203f, 3.51f)
-                curveTo(8.854f, 3.42f, 10.571f, 4.07f, 12.001f, 5.52f)
-                curveTo(13.43f, 4.07f, 15.147f, 3.42f, 16.797f, 3.51f)
-                curveTo(18.751f, 3.61f, 20.511f, 4.73f, 21.398f, 6.52f)
-                curveTo(22.294f, 8.33f, 22.244f, 10.69f, 20.884f, 13.19f)
-                close()
-            }
-        }.build()
-
-    val Bookmark: ImageVector
-        get() = ImageVector.Builder(
-            name = "Bookmark",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
-                moveTo(4f, 4.5f)
-                curveTo(4f, 3.12f, 5.119f, 2f, 6.5f, 2f)
-                horizontalLineTo(17.5f)
-                curveTo(18.881f, 2f, 20f, 3.12f, 20f, 4.5f)
-                verticalLineTo(22.94f)
-                lineTo(12f, 17.23f)
-                lineTo(4f, 22.94f)
-                verticalLineTo(4.5f)
-                close()
-                moveTo(6.5f, 4f)
-                curveTo(6.224f, 4f, 6f, 4.22f, 6f, 4.5f)
-                verticalLineTo(19.06f)
-                lineTo(12f, 14.77f)
-                lineTo(18f, 19.06f)
-                verticalLineTo(4.5f)
-                curveTo(18f, 4.22f, 17.776f, 4f, 17.5f, 4f)
-                horizontalLineTo(6.5f)
-                close()
-            }
-        }.build()
-
-    val Share: ImageVector
-        get() = ImageVector.Builder(
-            name = "Share",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
-                moveTo(17f, 4f)
-                curveTo(15.9f, 4f, 15f, 4.9f, 15f, 6f)
-                curveTo(15f, 6.33f, 15.08f, 6.65f, 15.22f, 6.92f)
-                curveTo(15.56f, 7.56f, 16.23f, 8f, 17f, 8f)
-                curveTo(18.1f, 8f, 19f, 7.1f, 19f, 6f)
-                reflectiveCurveTo(18.1f, 4f, 17f, 4f)
-                close()
-                moveTo(13f, 6f)
-                curveTo(13f, 3.79f, 14.79f, 2f, 17f, 2f)
-                reflectiveCurveTo(21f, 3.79f, 21f, 6f)
-                reflectiveCurveTo(19.21f, 10f, 17f, 10f)
-                curveTo(15.83f, 10f, 14.78f, 9.5f, 14.05f, 8.7f)
-                lineTo(9.89f, 11.07f)
-                curveTo(9.96f, 11.37f, 10f, 11.68f, 10f, 12f)
-                reflectiveCurveTo(9.96f, 12.63f, 9.89f, 12.93f)
-                lineTo(14.05f, 15.3f)
-                curveTo(14.78f, 14.5f, 15.83f, 14f, 17f, 14f)
-                curveTo(19.21f, 14f, 21f, 15.79f, 21f, 18f)
-                reflectiveCurveTo(19.21f, 22f, 17f, 22f)
-                reflectiveCurveTo(13f, 20.21f, 13f, 18f)
-                curveTo(13f, 17.68f, 13.04f, 17.37f, 13.11f, 17.07f)
-                lineTo(8.95f, 14.7f)
-                curveTo(8.22f, 15.5f, 7.17f, 16f, 6f, 16f)
-                curveTo(3.79f, 16f, 2f, 14.21f, 2f, 12f)
-                reflectiveCurveTo(3.79f, 8f, 6f, 8f)
-                curveTo(7.17f, 8f, 8.22f, 8.5f, 8.95f, 9.3f)
-                lineTo(13.11f, 6.93f)
-                curveTo(13.04f, 6.63f, 13f, 6.32f, 13f, 6f)
-                close()
-                moveTo(6f, 10f)
-                curveTo(4.9f, 10f, 4f, 10.9f, 4f, 12f)
-                reflectiveCurveTo(4.9f, 14f, 6f, 14f)
-                curveTo(6.77f, 14f, 7.44f, 13.56f, 7.78f, 12.92f)
-                curveTo(7.92f, 12.65f, 8f, 12.33f, 8f, 12f)
-                reflectiveCurveTo(7.92f, 11.35f, 7.78f, 11.08f)
-                curveTo(7.44f, 10.44f, 6.77f, 10f, 6f, 10f)
-                close()
-                moveTo(17f, 16f)
-                curveTo(16.23f, 16f, 15.56f, 16.44f, 15.22f, 17.08f)
-                curveTo(15.08f, 17.35f, 15f, 17.67f, 15f, 18f)
-                curveTo(15f, 19.1f, 15.9f, 20f, 17f, 20f)
-                reflectiveCurveTo(19f, 19.1f, 19f, 18f)
-                reflectiveCurveTo(18.1f, 16f, 17f, 16f)
-                close()
-            }
-        }.build()
-
-    val Home: ImageVector
-        get() = ImageVector.Builder(
-            name = "Home",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(12f, 1.696f)
-                lineTo(0.622f, 8.807f)
-                lineTo(1.682f, 10.503f)
-                lineTo(3f, 9.679f)
-                verticalLineTo(19.5f)
-                curveTo(3f, 20.881f, 4.119f, 22f, 5.5f, 22f)
-                horizontalLineTo(18.5f)
-                curveTo(19.881f, 22f, 21f, 20.881f, 21f, 19.5f)
-                verticalLineTo(9.679f)
-                lineTo(22.318f, 10.503f)
-                lineTo(23.378f, 8.807f)
-                lineTo(12f, 1.696f)
-                close()
-            }
-        }.build()
-
-    val Search: ImageVector
-        get() = ImageVector.Builder(
-            name = "Search",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(10.25f, 3.75f)
-                curveTo(6.66f, 3.75f, 3.75f, 6.66f, 3.75f, 10.25f)
-                reflectiveCurveTo(6.66f, 16.75f, 10.25f, 16.75f)
-                curveTo(12.045f, 16.75f, 13.669f, 16.024f, 14.846f, 14.846f)
-                curveTo(16.024f, 13.669f, 16.75f, 12.045f, 16.75f, 10.25f)
-                curveTo(16.75f, 6.66f, 13.84f, 3.75f, 10.25f, 3.75f)
-                close()
-                moveTo(1.75f, 10.25f)
-                curveTo(1.75f, 5.556f, 5.556f, 1.75f, 10.25f, 1.75f)
-                reflectiveCurveTo(18.75f, 5.556f, 18.75f, 10.25f)
-                curveTo(18.75f, 12.236f, 18.068f, 14.065f, 16.926f, 15.512f)
-                lineTo(21.707f, 20.293f)
-                lineTo(20.293f, 21.707f)
-                lineTo(15.512f, 16.926f)
-                curveTo(14.065f, 18.068f, 12.236f, 18.75f, 10.25f, 18.75f)
-                curveTo(5.556f, 18.75f, 1.75f, 14.944f, 1.75f, 10.25f)
-                close()
-            }
-        }.build()
-
-    val Notifications: ImageVector
-        get() = ImageVector.Builder(
-            name = "Notifications",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(12f, 22f)
-                curveTo(13.868f, 22f, 15.395f, 20.568f, 15.49f, 18.736f)
-                lineTo(15.5f, 18.5f)
-                horizontalLineTo(8.5f)
-                lineTo(8.51f, 18.736f)
-                curveTo(8.605f, 20.568f, 10.132f, 22f, 12f, 22f)
-                close()
-                moveTo(21f, 16.5f)
-                verticalLineTo(15.368f)
-                lineTo(19f, 12.701f)
-                verticalLineTo(8.5f)
-                curveTo(19f, 4.91f, 16.09f, 2f, 12.5f, 2f)
-                horizontalLineTo(11.5f)
-                curveTo(7.91f, 2f, 5f, 4.91f, 5f, 8.5f)
-                verticalLineTo(12.701f)
-                lineTo(3f, 15.368f)
-                verticalLineTo(16.5f)
-                horizontalLineTo(21f)
-                close()
-            }
-        }.build()
-
-    val Messages: ImageVector
-        get() = ImageVector.Builder(
-            name = "Messages",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(1.998f, 5.5f)
-                curveTo(1.998f, 4.119f, 3.117f, 3f, 4.498f, 3f)
-                horizontalLineTo(19.498f)
-                curveTo(20.879f, 3f, 21.998f, 4.119f, 21.998f, 5.5f)
-                verticalLineTo(18.5f)
-                curveTo(21.998f, 19.881f, 20.879f, 21f, 19.498f, 21f)
-                horizontalLineTo(4.498f)
-                curveTo(3.117f, 21f, 1.998f, 19.881f, 1.998f, 18.5f)
-                verticalLineTo(5.5f)
-                close()
-                moveTo(4.498f, 5f)
-                curveTo(4.222f, 5f, 3.998f, 5.224f, 3.998f, 5.5f)
-                verticalLineTo(6.941f)
-                lineTo(11.998f, 12.655f)
-                lineTo(19.998f, 6.941f)
-                verticalLineTo(5.5f)
-                curveTo(19.998f, 5.224f, 19.774f, 5f, 19.498f, 5f)
-                horizontalLineTo(4.498f)
-                close()
-            }
-        }.build()
-
-    val ArrowBack: ImageVector
-        get() = ImageVector.Builder(
-            name = "ArrowBack",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(7.414f, 13f)
-                lineTo(12.457f, 18.04f)
-                lineTo(11.043f, 19.46f)
-                lineTo(3.586f, 12f)
-                lineTo(11.043f, 4.54f)
-                lineTo(12.457f, 5.96f)
-                lineTo(7.414f, 11f)
-                horizontalLineTo(21f)
-                verticalLineTo(13f)
-                horizontalLineTo(7.414f)
-                close()
-            }
-        }.build()
-
-    val Close: ImageVector
-        get() = ImageVector.Builder(
-            name = "Close",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(10.59f, 12f)
-                lineTo(4.54f, 5.96f)
-                lineTo(5.96f, 4.54f)
-                lineTo(12f, 10.59f)
-                lineTo(18.04f, 4.54f)
-                lineTo(19.46f, 5.96f)
-                lineTo(13.41f, 12f)
-                lineTo(19.46f, 18.04f)
-                lineTo(18.04f, 19.46f)
-                lineTo(12f, 13.41f)
-                lineTo(5.96f, 19.46f)
-                lineTo(4.54f, 18.04f)
-                lineTo(10.59f, 12f)
-                close()
-            }
-        }.build()
-
-    val Plus: ImageVector
-        get() = ImageVector.Builder(
-            name = "Plus",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(
-                fill = androidx.compose.ui.graphics.SolidColor(Color.Unspecified),
-                stroke = androidx.compose.ui.graphics.SolidColor(Color.White),
-                strokeLineWidth = 1.5f
-            ) {
-                moveTo(12f, 4.5f)
-                verticalLineTo(19.5f)
-                moveTo(19.5f, 12f)
-                horizontalLineTo(4.5f)
-            }
-        }.build()
-
-    val Image: ImageVector
-        get() = ImageVector.Builder(
-            name = "Image",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XBlue)) {
-                moveTo(3f, 5.5f)
-                curveTo(3f, 4.119f, 4.119f, 3f, 5.5f, 3f)
-                horizontalLineTo(18.5f)
-                curveTo(19.881f, 3f, 21f, 4.119f, 21f, 5.5f)
-                verticalLineTo(18.5f)
-                curveTo(21f, 19.881f, 19.881f, 21f, 18.5f, 21f)
-                horizontalLineTo(5.5f)
-                curveTo(4.119f, 21f, 3f, 19.881f, 3f, 18.5f)
-                verticalLineTo(5.5f)
-                close()
-                moveTo(5.5f, 5f)
-                curveTo(5.224f, 5f, 5f, 5.224f, 5f, 5.5f)
-                verticalLineTo(14.586f)
-                lineTo(8f, 11.586f)
-                lineTo(11f, 14.586f)
-                lineTo(16f, 9.586f)
-                lineTo(19f, 12.586f)
-                verticalLineTo(5.5f)
-                curveTo(19f, 5.224f, 18.776f, 5f, 18.5f, 5f)
-                horizontalLineTo(5.5f)
-                close()
-                moveTo(19f, 15.414f)
-                lineTo(16f, 12.414f)
-                lineTo(11f, 17.414f)
-                lineTo(8f, 14.414f)
-                lineTo(5f, 17.414f)
-                verticalLineTo(18.5f)
-                curveTo(5f, 18.776f, 5.224f, 19f, 5.5f, 19f)
-                horizontalLineTo(18.5f)
-                curveTo(18.776f, 19f, 19f, 18.776f, 19f, 18.5f)
-                verticalLineTo(15.414f)
-                close()
-                moveTo(9.75f, 7f)
-                curveTo(8.784f, 7f, 8f, 7.784f, 8f, 8.75f)
-                reflectiveCurveTo(8.784f, 10.5f, 9.75f, 10.5f)
-                reflectiveCurveTo(11.5f, 9.716f, 11.5f, 8.75f)
-                reflectiveCurveTo(10.716f, 7f, 9.75f, 7f)
-                close()
-            }
-        }.build()
-
-    val Gif: ImageVector
-        get() = ImageVector.Builder(
-            name = "Gif",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XBlue)) {
-                moveTo(3f, 5.5f)
-                curveTo(3f, 4.119f, 4.119f, 3f, 5.5f, 3f)
-                horizontalLineTo(18.5f)
-                curveTo(19.881f, 3f, 21f, 4.119f, 21f, 5.5f)
-                verticalLineTo(18.5f)
-                curveTo(21f, 19.881f, 19.881f, 21f, 18.5f, 21f)
-                horizontalLineTo(5.5f)
-                curveTo(4.119f, 21f, 3f, 19.881f, 3f, 18.5f)
-                verticalLineTo(5.5f)
-                close()
-                moveTo(5.5f, 5f)
-                curveTo(5.224f, 5f, 5f, 5.224f, 5f, 5.5f)
-                verticalLineTo(18.5f)
-                curveTo(5f, 18.776f, 5.224f, 19f, 5.5f, 19f)
-                horizontalLineTo(18.5f)
-                curveTo(18.776f, 19f, 19f, 18.776f, 19f, 18.5f)
-                verticalLineTo(5.5f)
-                curveTo(19f, 5.224f, 18.776f, 5f, 18.5f, 5f)
-                horizontalLineTo(5.5f)
-                close()
-                moveTo(7.5f, 14f)
-                horizontalLineTo(9.75f)
-                verticalLineTo(11.75f)
-                horizontalLineTo(7.5f)
-                verticalLineTo(14f)
-                close()
-                moveTo(16f, 14f)
-                horizontalLineTo(14.5f)
-                verticalLineTo(9.5f)
-                horizontalLineTo(16f)
-                verticalLineTo(14f)
-                close()
-                moveTo(11.25f, 14f)
-                horizontalLineTo(9f)
-                verticalLineTo(9.5f)
-                horizontalLineTo(11.25f)
-                verticalLineTo(10.75f)
-                horizontalLineTo(10.5f)
-                verticalLineTo(12.75f)
-                horizontalLineTo(11.25f)
-                verticalLineTo(14f)
-                close()
-            }
-        }.build()
-
-    val Poll: ImageVector
-        get() = ImageVector.Builder(
-            name = "Poll",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XBlue)) {
-                moveTo(4f, 4f)
-                horizontalLineTo(20f)
-                verticalLineTo(6f)
-                horizontalLineTo(4f)
-                verticalLineTo(4f)
-                close()
-                moveTo(4f, 10f)
-                horizontalLineTo(20f)
-                verticalLineTo(12f)
-                horizontalLineTo(4f)
-                verticalLineTo(10f)
-                close()
-                moveTo(4f, 16f)
-                horizontalLineTo(20f)
-                verticalLineTo(18f)
-                horizontalLineTo(4f)
-                verticalLineTo(16f)
-                close()
-            }
-        }.build()
-
-    val Emoji: ImageVector
-        get() = ImageVector.Builder(
-            name = "Emoji",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XBlue)) {
-                moveTo(12f, 2f)
-                curveTo(8.13f, 2f, 5f, 5.13f, 5f, 9f)
-                curveTo(5f, 14.25f, 12f, 22f, 12f, 22f)
-                reflectiveCurveTo(19f, 14.25f, 19f, 9f)
-                curveTo(19f, 5.13f, 15.87f, 2f, 12f, 2f)
-                close()
-                moveTo(12f, 11.5f)
-                curveTo(10.62f, 11.5f, 9.5f, 10.38f, 9.5f, 9f)
-                reflectiveCurveTo(10.62f, 6.5f, 12f, 6.5f)
-                reflectiveCurveTo(14.5f, 7.62f, 14.5f, 9f)
-                reflectiveCurveTo(13.38f, 11.5f, 12f, 11.5f)
-                close()
-            }
-        }.build()
-
-    val Settings: ImageVector
-        get() = ImageVector.Builder(
-            name = "Settings",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
-                moveTo(3f, 12f)
-                curveTo(3f, 10.9f, 3.9f, 10f, 5f, 10f)
-                reflectiveCurveTo(7f, 10.9f, 7f, 12f)
-                reflectiveCurveTo(6.1f, 14f, 5f, 14f)
-                reflectiveCurveTo(3f, 13.1f, 3f, 12f)
-                close()
-                moveTo(12f, 14f)
-                curveTo(13.1f, 14f, 14f, 13.1f, 14f, 12f)
-                reflectiveCurveTo(13.1f, 10f, 12f, 10f)
-                reflectiveCurveTo(10f, 10.9f, 10f, 12f)
-                reflectiveCurveTo(10.9f, 14f, 12f, 14f)
-                close()
-                moveTo(21f, 14f)
-                curveTo(22.1f, 14f, 23f, 13.1f, 23f, 12f)
-                reflectiveCurveTo(22.1f, 10f, 21f, 10f)
-                reflectiveCurveTo(19f, 10.9f, 19f, 12f)
-                reflectiveCurveTo(19.9f, 14f, 21f, 14f)
-                close()
-            }
-        }.build()
-
-    val HomeFilled: ImageVector
-        get() = ImageVector.Builder(
-            name = "HomeFilled",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(12f, 1.696f)
-                lineTo(0.622f, 8.807f)
-                lineTo(1.682f, 10.503f)
-                lineTo(3f, 9.679f)
-                verticalLineTo(19.5f)
-                curveTo(3f, 20.881f, 4.119f, 22f, 5.5f, 22f)
-                horizontalLineTo(18.5f)
-                curveTo(19.881f, 22f, 21f, 20.881f, 21f, 19.5f)
-                verticalLineTo(9.679f)
-                lineTo(22.318f, 10.503f)
-                lineTo(23.378f, 8.807f)
-                lineTo(12f, 1.696f)
-                close()
-            }
-        }.build()
-
-    val SearchFilled: ImageVector
-        get() = ImageVector.Builder(
-            name = "SearchFilled",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(10.25f, 3.75f)
-                curveTo(6.66f, 3.75f, 3.75f, 6.66f, 3.75f, 10.25f)
-                reflectiveCurveTo(6.66f, 16.75f, 10.25f, 16.75f)
-                curveTo(12.045f, 16.75f, 13.669f, 16.024f, 14.846f, 14.846f)
-                curveTo(16.024f, 13.669f, 16.75f, 12.045f, 16.75f, 10.25f)
-                curveTo(16.75f, 6.66f, 13.84f, 3.75f, 10.25f, 3.75f)
-                close()
-                moveTo(1.75f, 10.25f)
-                curveTo(1.75f, 5.556f, 5.556f, 1.75f, 10.25f, 1.75f)
-                reflectiveCurveTo(18.75f, 5.556f, 18.75f, 10.25f)
-                curveTo(18.75f, 12.236f, 18.068f, 14.065f, 16.926f, 15.512f)
-                lineTo(21.707f, 20.293f)
-                lineTo(20.293f, 21.707f)
-                lineTo(15.512f, 16.926f)
-                curveTo(14.065f, 18.068f, 12.236f, 18.75f, 10.25f, 18.75f)
-                curveTo(5.556f, 18.75f, 1.75f, 14.944f, 1.75f, 10.25f)
-                close()
-            }
-        }.build()
-
-    val Communities: ImageVector
-        get() = ImageVector.Builder(
-            name = "Communities",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextSecondary)) {
-                moveTo(17f, 10.5f)
-                curveTo(17f, 9.96f, 17.33f, 9.5f, 17.83f, 9.32f)
-                curveTo(19.16f, 8.84f, 20f, 7.53f, 20f, 6f)
-                curveTo(20f, 3.79f, 18.21f, 2f, 16f, 2f)
-                reflectiveCurveTo(12f, 3.79f, 12f, 6f)
-                curveTo(12f, 7.53f, 12.84f, 8.84f, 14.17f, 9.32f)
-                curveTo(14.67f, 9.5f, 15f, 9.96f, 15f, 10.5f)
-                verticalLineTo(11f)
-                horizontalLineTo(13.5f)
-                curveTo(12.67f, 11f, 12f, 11.67f, 12f, 12.5f)
-                curveTo(12f, 13.33f, 12.67f, 14f, 13.5f, 14f)
-                horizontalLineTo(15f)
-                verticalLineTo(14.5f)
-                curveTo(15f, 15.04f, 14.67f, 15.5f, 14.17f, 15.68f)
-                curveTo(12.84f, 16.16f, 12f, 17.47f, 12f, 19f)
-                curveTo(12f, 21.21f, 13.79f, 23f, 16f, 23f)
-                reflectiveCurveTo(20f, 21.21f, 20f, 19f)
-                curveTo(20f, 17.47f, 19.16f, 16.16f, 17.83f, 15.68f)
-                curveTo(17.33f, 15.5f, 17f, 15.04f, 17f, 14.5f)
-                verticalLineTo(14f)
-                horizontalLineTo(18.5f)
-                curveTo(19.33f, 14f, 20f, 13.33f, 20f, 12.5f)
-                curveTo(20f, 11.67f, 19.33f, 11f, 18.5f, 11f)
-                horizontalLineTo(17f)
-                verticalLineTo(10.5f)
-                close()
-            }
-        }.build()
-
-    val CommunitiesFilled: ImageVector
-        get() = ImageVector.Builder(
-            name = "CommunitiesFilled",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(17f, 10.5f)
-                curveTo(17f, 9.96f, 17.33f, 9.5f, 17.83f, 9.32f)
-                curveTo(19.16f, 8.84f, 20f, 7.53f, 20f, 6f)
-                curveTo(20f, 3.79f, 18.21f, 2f, 16f, 2f)
-                reflectiveCurveTo(12f, 3.79f, 12f, 6f)
-                curveTo(12f, 7.53f, 12.84f, 8.84f, 14.17f, 9.32f)
-                curveTo(14.67f, 9.5f, 15f, 9.96f, 15f, 10.5f)
-                verticalLineTo(11f)
-                horizontalLineTo(13.5f)
-                curveTo(12.67f, 11f, 12f, 11.67f, 12f, 12.5f)
-                curveTo(12f, 13.33f, 12.67f, 14f, 13.5f, 14f)
-                horizontalLineTo(15f)
-                verticalLineTo(14.5f)
-                curveTo(15f, 15.04f, 14.67f, 15.5f, 14.17f, 15.68f)
-                curveTo(12.84f, 16.16f, 12f, 17.47f, 12f, 19f)
-                curveTo(12f, 21.21f, 13.79f, 23f, 16f, 23f)
-                reflectiveCurveTo(20f, 21.21f, 20f, 19f)
-                curveTo(20f, 17.47f, 19.16f, 16.16f, 17.83f, 15.68f)
-                curveTo(17.33f, 15.5f, 17f, 15.04f, 17f, 14.5f)
-                verticalLineTo(14f)
-                horizontalLineTo(18.5f)
-                curveTo(19.33f, 14f, 20f, 13.33f, 20f, 12.5f)
-                curveTo(20f, 11.67f, 19.33f, 11f, 18.5f, 11f)
-                horizontalLineTo(17f)
-                verticalLineTo(10.5f)
-                close()
-            }
-        }.build()
-
-    val NotificationsFilled: ImageVector
-        get() = ImageVector.Builder(
-            name = "NotificationsFilled",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(12f, 22f)
-                curveTo(13.868f, 22f, 15.395f, 20.568f, 15.49f, 18.736f)
-                lineTo(15.5f, 18.5f)
-                horizontalLineTo(8.5f)
-                lineTo(8.51f, 18.736f)
-                curveTo(8.605f, 20.568f, 10.132f, 22f, 12f, 22f)
-                close()
-                moveTo(21f, 16.5f)
-                verticalLineTo(15.368f)
-                lineTo(19f, 12.701f)
-                verticalLineTo(8.5f)
-                curveTo(19f, 4.91f, 16.09f, 2f, 12.5f, 2f)
-                horizontalLineTo(11.5f)
-                curveTo(7.91f, 2f, 5f, 4.91f, 5f, 8.5f)
-                verticalLineTo(12.701f)
-                lineTo(3f, 15.368f)
-                verticalLineTo(16.5f)
-                horizontalLineTo(21f)
-                close()
-            }
-        }.build()
-
-    val MessagesFilled: ImageVector
-        get() = ImageVector.Builder(
-            name = "MessagesFilled",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(XTextPrimary)) {
-                moveTo(1.998f, 5.5f)
-                curveTo(1.998f, 4.119f, 3.117f, 3f, 4.498f, 3f)
-                horizontalLineTo(19.498f)
-                curveTo(20.879f, 3f, 21.998f, 4.119f, 21.998f, 5.5f)
-                verticalLineTo(18.5f)
-                curveTo(21.998f, 19.881f, 20.879f, 21f, 19.498f, 21f)
-                horizontalLineTo(4.498f)
-                curveTo(3.117f, 21f, 1.998f, 19.881f, 1.998f, 18.5f)
-                verticalLineTo(5.5f)
-                close()
-                moveTo(4.498f, 5f)
-                curveTo(4.222f, 5f, 3.998f, 5.224f, 3.998f, 5.5f)
-                verticalLineTo(6.941f)
-                lineTo(11.998f, 12.655f)
-                lineTo(19.998f, 6.941f)
-                verticalLineTo(5.5f)
-                curveTo(19.998f, 5.224f, 19.774f, 5f, 19.498f, 5f)
-                horizontalLineTo(4.498f)
-                close()
-            }
-        }.build()
-
-    val GrokLogo: ImageVector
-        get() = ImageVector.Builder(
-            name = "GrokLogo",
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = androidx.compose.ui.graphics.SolidColor(Color.White)) {
-                moveTo(21f, 4f)
-                horizontalLineTo(3f)
-                verticalLineTo(22f)
-                horizontalLineTo(21f)
-                verticalLineTo(4f)
-                close()
-                moveTo(19f, 18f)
-                horizontalLineTo(5f)
-                verticalLineTo(6f)
-                horizontalLineTo(19f)
-                verticalLineTo(18f)
-                close()
-                moveTo(8f, 14f)
-                lineTo(12f, 10f)
-                lineTo(16f, 14f)
-                verticalLineTo(12f)
-                lineTo(12f, 8f)
-                lineTo(8f, 12f)
-                verticalLineTo(14f)
-                close()
-            }
-        }.build()
 }

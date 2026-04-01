@@ -168,6 +168,34 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                 }
             }
 
+            item("pluginSettings") {
+                CardGroup(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    title = { Text("插件与工具") },
+                ) {
+                    item(
+                        onClick = { navController.navigate(Screen.SettingPlugins) },
+                        leadingContent = { Icon(HugeIcons.McpServer, null) },
+                        trailingContent = {
+                            Text(
+                                text = "${settings.pluginSettings.enabledPluginCount()}",
+                                color = ZionTextPrimary
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                if (settings.pluginSettings.x.enabled) {
+                                    "管理 X 插件与 AI 主动调用工具"
+                                } else {
+                                    "插件当前已停用"
+                                }
+                            )
+                        },
+                        headlineContent = { Text("插件") },
+                    )
+                }
+            }
+
             item("dataSettings") {
                 val storageState by produceState(-1 to 0L) {
                     value = filesManager.countChatFiles()

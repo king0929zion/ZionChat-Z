@@ -52,6 +52,7 @@ import me.rerere.rikkahub.data.ai.GenerationChunk
 import me.rerere.rikkahub.data.ai.GenerationHandler
 import me.rerere.rikkahub.data.ai.mcp.McpManager
 import me.rerere.rikkahub.data.ai.tools.LocalTools
+import me.rerere.rikkahub.data.ai.tools.XPluginTools
 import me.rerere.rikkahub.data.ai.tools.createSearchTools
 import me.rerere.rikkahub.data.ai.transformers.Base64ImageToLocalFileTransformer
 import me.rerere.rikkahub.data.ai.transformers.DocumentAsPromptTransformer
@@ -116,6 +117,7 @@ class ChatService(
     private val templateTransformer: TemplateTransformer,
     private val providerManager: ProviderManager,
     private val localTools: LocalTools,
+    private val xPluginTools: XPluginTools,
     val mcpManager: McpManager,
     private val filesManager: FilesManager,
 ) {
@@ -446,7 +448,11 @@ class ChatService(
 
             // memory tool
             if (!model.abilities.contains(ModelAbility.TOOL)) {
-                if (settings.enableWebSearch || mcpManager.getAllAvailableTools().isNotEmpty()) {
+                if (
+                    settings.enableWebSearch ||
+                    settings.pluginSettings.hasAnyEnabledTools() ||
+                    mcpManager.getAllAvailableTools().isNotEmpty()
+                ) {
                     addError(
                         IllegalStateException(context.getString(R.string.tools_warning)),
                         conversationId,
@@ -483,6 +489,7 @@ class ChatService(
                         addAll(createSearchTools(settings))
                     }
                     addAll(localTools.getTools(settings.getCurrentAssistant().localTools))
+                    addAll(xPluginTools.getTools(settings.pluginSettings.x))
                     mcpManager.getAllAvailableTools().forEach { tool ->
                         add(
                             Tool(

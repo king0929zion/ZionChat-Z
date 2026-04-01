@@ -64,14 +64,19 @@ import me.rerere.common.http.jsonObjectOrNull
 import me.rerere.highlight.HighlightText
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.BubbleChatQuestion
+import me.rerere.hugeicons.stroke.Book03
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.Clipboard
 import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.Eraser
+import me.rerere.hugeicons.stroke.Favourite
 import me.rerere.hugeicons.stroke.GlobalSearch
+import me.rerere.hugeicons.stroke.Message02
 import me.rerere.hugeicons.stroke.QuillWrite01
 import me.rerere.hugeicons.stroke.Refresh01
+import me.rerere.hugeicons.stroke.Refresh03
 import me.rerere.hugeicons.stroke.Search01
+import me.rerere.hugeicons.stroke.Share01
 import me.rerere.hugeicons.stroke.Tick01
 import me.rerere.hugeicons.stroke.Time02
 import me.rerere.hugeicons.stroke.Tools
@@ -103,6 +108,13 @@ private object ToolNames {
     const val CLIPBOARD = "clipboard_tool"
     const val TTS = "text_to_speech"
     const val ASK_USER = "ask_user"
+    const val X_READ_TIMELINE = "read_x_home_timeline"
+    const val X_READ_POST_DETAIL = "read_x_post_detail"
+    const val X_PUBLISH_POST = "publish_x_post"
+    const val X_REPLY_POST = "reply_x_post"
+    const val X_LIKE_POST = "like_x_post"
+    const val X_REPOST_POST = "repost_x_post"
+    const val X_BOOKMARK_POST = "bookmark_x_post"
 }
 
 private object MemoryActions {
@@ -129,11 +141,28 @@ private fun getToolIcon(toolName: String, action: String?) = when (toolName) {
     ToolNames.CLIPBOARD -> HugeIcons.Clipboard
     ToolNames.TTS -> HugeIcons.VolumeHigh
     ToolNames.ASK_USER -> HugeIcons.BubbleChatQuestion
+    ToolNames.X_READ_TIMELINE -> HugeIcons.Search01
+    ToolNames.X_READ_POST_DETAIL -> HugeIcons.Message02
+    ToolNames.X_PUBLISH_POST -> HugeIcons.Share01
+    ToolNames.X_REPLY_POST -> HugeIcons.Message02
+    ToolNames.X_LIKE_POST -> HugeIcons.Favourite
+    ToolNames.X_REPOST_POST -> HugeIcons.Refresh03
+    ToolNames.X_BOOKMARK_POST -> HugeIcons.Book03
     else -> HugeIcons.Tools
 }
 
 private fun JsonElement?.getStringContent(key: String): String? =
     this?.jsonObjectOrNull?.get(key)?.jsonPrimitiveOrNull?.contentOrNull
+
+private fun isXToolName(toolName: String): Boolean = toolName in setOf(
+    ToolNames.X_READ_TIMELINE,
+    ToolNames.X_READ_POST_DETAIL,
+    ToolNames.X_PUBLISH_POST,
+    ToolNames.X_REPLY_POST,
+    ToolNames.X_LIKE_POST,
+    ToolNames.X_REPOST_POST,
+    ToolNames.X_BOOKMARK_POST,
+)
 
 @Composable
 fun ChainOfThoughtScope.ChatMessageToolStep(
@@ -196,6 +225,14 @@ fun ChainOfThoughtScope.ChatMessageToolStep(
             "Speaking: $preview"
         }
 
+        ToolNames.X_READ_TIMELINE -> "读取 X 时间线"
+        ToolNames.X_READ_POST_DETAIL -> "查看 X 帖子详情"
+        ToolNames.X_PUBLISH_POST -> "发布 X 帖子"
+        ToolNames.X_REPLY_POST -> "回复 X 帖子"
+        ToolNames.X_LIKE_POST -> "点赞 X 帖子"
+        ToolNames.X_REPOST_POST -> "转发 X 帖子"
+        ToolNames.X_BOOKMARK_POST -> "收藏 X 帖子"
+
         else -> stringResource(R.string.chat_message_tool_call_generic, tool.toolName)
     }
 
@@ -209,7 +246,7 @@ fun ChainOfThoughtScope.ChatMessageToolStep(
 
         ToolNames.SCRAPE_WEB -> arguments.getStringContent("url") != null
         ToolNames.TTS -> arguments.getStringContent("text") != null
-        else -> false
+        else -> isXToolName(tool.toolName) && content.getStringContent("summary") != null
     } || isDenied || images.isNotEmpty()
 
     ControlledChainOfThoughtStep(
@@ -353,6 +390,17 @@ fun ChainOfThoughtScope.ChatMessageToolStep(
                                     modifier = Modifier.size(14.dp),
                                 )
                             }
+                        }
+                    }
+                    if (isXToolName(tool.toolName)) {
+                        content.getStringContent("summary")?.let { summary ->
+                            Text(
+                                text = summary,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                     if (images.isNotEmpty()) {

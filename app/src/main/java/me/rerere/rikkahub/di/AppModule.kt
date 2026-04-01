@@ -9,6 +9,7 @@ import me.rerere.highlight.Highlighter
 import me.rerere.rikkahub.AppScope
 import me.rerere.rikkahub.data.ai.AILoggingManager
 import me.rerere.rikkahub.data.ai.tools.LocalTools
+import me.rerere.rikkahub.data.ai.tools.XPluginTools
 import me.rerere.rikkahub.data.event.AppEventBus
 import me.rerere.rikkahub.service.ChatService
 import me.rerere.rikkahub.utils.EmojiData
@@ -31,6 +32,10 @@ val appModule = module {
 
     single {
         LocalTools(get(), get())
+    }
+
+    single {
+        XPluginTools(get())
     }
 
     single {
@@ -76,6 +81,7 @@ val appModule = module {
             templateTransformer = get(),
             providerManager = get(),
             localTools = get(),
+            xPluginTools = get(),
             mcpManager = get(),
             filesManager = get()
         )
