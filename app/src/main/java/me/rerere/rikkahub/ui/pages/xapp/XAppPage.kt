@@ -54,8 +54,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -354,12 +352,7 @@ private fun XFeedPane(
                 onBack = onBack,
                 onOpenPlugin = onOpenPlugin,
                 title = {
-                    Image(
-                        painter = painterResource(R.drawable.zphone_x_logo),
-                        contentDescription = "X",
-                        modifier = Modifier.size(20.dp),
-                        contentScale = ContentScale.Fit
-                    )
+                    XWordmark()
                 }
             )
             XTabBar(selectedTab = selectedTab, onTabSelected = onTabSelected)
@@ -1208,6 +1201,25 @@ private fun XFloatingComposer(
             contentDescription = "发帖",
             tint = Color.White,
             modifier = Modifier.size(24.dp)
+        )
+    }
+}
+
+@Composable
+private fun XWordmark() {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color.Black)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "X",
+            color = Color.White,
+            fontFamily = SourceSans3,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
