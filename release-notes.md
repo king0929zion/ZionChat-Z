@@ -1,3 +1,7 @@
+## v0.0.69
+
+- 修复 `v0.0.68` 远端构建失败：更正重写版 X 页面里的 Compose 动画与 WindowInsets 导入，恢复 `statusBars` 和颜色动画相关引用，重新打通签名构建。
+
 ## v0.0.68
 
 - 按提供的 HTML 参考稿重写 `ZPhone -> X` 原生界面，不再沿用上一版的卡片化结构；现已重做 `feed / detail / compose-post / compose-reply` 四层视图、横向/纵向切换动画、顶部 tabs、底部导航、悬浮发帖按钮、详情回复栏与发帖/回复工具带。
