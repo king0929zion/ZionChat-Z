@@ -171,27 +171,24 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
             item("pluginSettings") {
                 CardGroup(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    title = { Text("插件与工具") },
+                    title = { Text(stringResource(R.string.setting_page_plugins_and_tools)) },
                 ) {
                     item(
                         onClick = { navController.navigate(Screen.SettingPlugins) },
-                        leadingContent = { Icon(HugeIcons.McpServer, null) },
+                        leadingContent = {
+                            Icon(
+                                ZionAppIcons.PluginSystem,
+                                null,
+                                tint = Color.Unspecified
+                            )
+                        },
                         trailingContent = {
                             Text(
                                 text = "${settings.pluginSettings.enabledPluginCount()}",
                                 color = ZionTextPrimary
                             )
                         },
-                        supportingContent = {
-                            Text(
-                                if (settings.pluginSettings.x.enabled) {
-                                    "管理 X 插件与 AI 主动调用工具"
-                                } else {
-                                    "插件当前已停用"
-                                }
-                            )
-                        },
-                        headlineContent = { Text("插件") },
+                        headlineContent = { Text(stringResource(R.string.plugins_page_title)) },
                     )
                 }
             }

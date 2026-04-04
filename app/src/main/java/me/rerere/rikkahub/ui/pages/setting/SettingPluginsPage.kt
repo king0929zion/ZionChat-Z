@@ -1,21 +1,21 @@
 package me.rerere.rikkahub.ui.pages.setting
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,20 +25,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.McpServer
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
-import me.rerere.rikkahub.ui.components.ui.CardGroup
+import me.rerere.rikkahub.data.plugin.XPluginTool
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.Switch
+import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
+import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
-import me.rerere.rikkahub.ui.theme.ZionAccentBlue
+import me.rerere.rikkahub.ui.theme.ZionGrayLight
 import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
@@ -50,9 +51,10 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
     val navController = LocalNavController.current
     val settings by vm.settings.collectAsStateWithLifecycle()
     val xConfig = settings.pluginSettings.x
+    val totalTools = XPluginTool.entries.size
 
     SettingsPage(
-        title = "插件",
+        title = stringResource(R.string.plugins_page_title),
         onBack = { navController.popBackStack() },
     ) {
         LazyColumn(
@@ -61,61 +63,133 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
                 top = PageTopBarContentTopPadding,
                 bottom = 16.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item("pluginOverview") {
                 PluginOverviewCard(
                     pluginCount = settings.pluginSettings.enabledPluginCount(),
                     enabledTools = xConfig.enabledToolCount(),
+                    totalTools = totalTools,
+                )
+            }
+
+            item("pluginSectionLabel") {
+                Text(
+                    text = stringResource(R.string.plugins_installed_title),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = ZionTextSecondary,
+                    fontFamily = SourceSans3,
+                    fontSize = 13.sp,
                 )
             }
 
             item("pluginList") {
-                CardGroup(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    title = { Text("已安装插件") },
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = ZionSurface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, ZionGrayLight),
                 ) {
-                    item(
-                        onClick = { navController.navigate(Screen.SettingXPlugin) },
-                        leadingContent = {
-                            PluginLogoTile()
-                        },
-                        supportingContent = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        PluginLogoTile()
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
                             Text(
-                                if (xConfig.enabled) {
-                                    "已启用 ${xConfig.enabledToolCount()} / 7 个工具，AI 可在对话中主动调用"
-                                } else {
-                                    "已停用，AI 不会读取或写入 X"
-                                }
+                                text = "X",
+                                color = ZionTextPrimary,
+                                fontFamily = SourceSans3,
+                                fontSize = 16.sp,
                             )
-                        },
-                        trailingContent = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Text(
-                                    text = if (xConfig.enabled) "开启" else "关闭",
-                                    color = if (xConfig.enabled) ZionTextPrimary else ZionTextSecondary,
-                                    fontFamily = SourceSans3,
-                                    fontSize = 13.sp,
-                                )
-                                Switch(
-                                    checked = xConfig.enabled,
-                                    onCheckedChange = { enabled ->
-                                        vm.updateSettings(
-                                            settings.copy(
-                                                pluginSettings = settings.pluginSettings.copy(
-                                                    x = xConfig.copy(enabled = enabled)
-                                                )
-                                            )
+                            Text(
+                                text = if (xConfig.enabled) {
+                                    stringResource(
+                                        R.string.plugins_x_enabled_summary,
+                                        xConfig.enabledToolCount(),
+                                        totalTools,
+                                    )
+                                } else {
+                                    stringResource(R.string.plugins_x_disabled_summary)
+                                },
+                                color = ZionTextSecondary,
+                                fontFamily = SourceSans3,
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp,
+                            )
+                        }
+
+                        Switch(
+                            checked = xConfig.enabled,
+                            onCheckedChange = { enabled ->
+                                vm.updateSettings(
+                                    settings.copy(
+                                        pluginSettings = settings.pluginSettings.copy(
+                                            x = xConfig.copy(enabled = enabled)
                                         )
-                                    }
+                                    )
                                 )
+                            },
+                            trackColor = ZionTextPrimary,
+                            trackColorUnchecked = ZionGrayLight,
+                        )
+                    }
+
+                    HorizontalDivider(color = ZionGrayLight)
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .pressableScale(pressedScale = 0.99f) {
+                                navController.navigate(Screen.SettingXPlugin)
                             }
-                        },
-                        headlineContent = { Text("X") },
-                    )
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.plugins_manage_x_title),
+                                color = ZionTextPrimary,
+                                fontFamily = SourceSans3,
+                                fontSize = 15.sp,
+                            )
+                            Text(
+                                text = stringResource(R.string.plugins_manage_x_desc),
+                                color = ZionTextSecondary,
+                                fontFamily = SourceSans3,
+                                fontSize = 13.sp,
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.plugins_open_button),
+                                color = ZionTextPrimary,
+                                fontFamily = SourceSans3,
+                                fontSize = 14.sp,
+                            )
+                            Icon(
+                                imageVector = ZionAppIcons.ChevronRight,
+                                contentDescription = null,
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -126,88 +200,93 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
 private fun PluginOverviewCard(
     pluginCount: Int,
     enabledTools: Int,
+    totalTools: Int,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         colors = CardDefaults.cardColors(containerColor = ZionSurface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, ZionGrayLight),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
-                            .background(ZionGrayLighter),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = HugeIcons.McpServer,
-                            contentDescription = null,
-                            tint = ZionTextPrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Column {
-                        Text(
-                            text = "工具插件",
-                            color = ZionTextPrimary,
-                            fontFamily = SourceSans3,
-                            fontSize = 18.sp,
-                        )
-                        Text(
-                            text = "把应用能力安全地暴露给 AI 使用",
-                            color = ZionTextSecondary,
-                            fontFamily = SourceSans3,
-                            fontSize = 14.sp,
-                        )
-                    }
-                }
-
                 Box(
                     modifier = Modifier
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(999.dp))
-                        .background(ZionAccentBlue.copy(alpha = 0.12f))
-                        .padding(horizontal = 12.dp, vertical = 7.dp)
+                        .size(40.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                        .background(ZionGrayLighter),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = ZionAppIcons.PluginSystem,
+                        contentDescription = null,
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
-                        text = "${pluginCount} 个已启用",
-                        color = ZionAccentBlue,
+                        text = stringResource(R.string.plugins_overview_title),
+                        color = ZionTextPrimary,
                         fontFamily = SourceSans3,
-                        fontSize = 13.sp,
+                        fontSize = 18.sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.plugins_overview_desc),
+                        color = ZionTextSecondary,
+                        fontFamily = SourceSans3,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            HorizontalDivider(color = ZionGrayLight)
 
-            Text(
-                text = "当前先接入 X 插件。启用后，聊天里的 AI 可以读取时间线、查看帖子详情，并在你批准后执行发帖、回复、点赞、转发与收藏。",
-                color = ZionTextSecondary,
-                fontFamily = SourceSans3,
-                fontSize = 15.sp,
-                lineHeight = 21.sp,
+            PluginStatRow(
+                label = stringResource(R.string.plugins_enabled_count_label),
+                value = pluginCount.toString(),
             )
-
-            Text(
-                text = "已开启 $enabledTools 个 X 工具",
-                color = ZionTextPrimary,
-                fontFamily = SourceSans3,
-                fontSize = 14.sp,
+            PluginStatRow(
+                label = stringResource(R.string.plugins_enabled_x_tools_label),
+                value = "$enabledTools/$totalTools",
             )
         }
+    }
+}
+
+@Composable
+private fun PluginStatRow(
+    label: String,
+    value: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            color = ZionTextSecondary,
+            fontFamily = SourceSans3,
+            fontSize = 14.sp,
+        )
+        Text(
+            text = value,
+            color = ZionTextPrimary,
+            fontFamily = SourceSans3,
+            fontSize = 15.sp,
+        )
     }
 }
 
@@ -217,12 +296,12 @@ internal fun PluginLogoTile(
 ) {
     Box(
         modifier = modifier
-            .size(28.dp)
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(9.dp))
+            .size(30.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
             .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        Image(
+        androidx.compose.foundation.Image(
             painter = painterResource(R.drawable.zphone_x_logo),
             contentDescription = "X",
             modifier = Modifier.size(16.dp)
