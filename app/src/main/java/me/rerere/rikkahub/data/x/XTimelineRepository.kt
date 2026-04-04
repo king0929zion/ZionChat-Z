@@ -13,6 +13,9 @@ import me.rerere.rikkahub.AppScope
 import java.io.File
 import kotlin.uuid.Uuid
 
+private const val CURRENT_TIMELINE_SEED_VERSION = 2
+private const val HOUR_MILLIS = 3_600_000L
+
 @Serializable
 data class XAuthor(
     val id: String,
@@ -22,6 +25,7 @@ data class XAuthor(
     val initials: String,
     val avatarColorHex: Long,
     val verified: Boolean = false,
+    val avatarUrl: String? = null,
 )
 
 @Serializable
@@ -30,6 +34,8 @@ data class XMedia(
     val label: String,
     val subtitle: String = "",
     val tintHex: Long,
+    val template: String = "plain",
+    val imageUrl: String? = null,
 )
 
 @Serializable
@@ -47,6 +53,7 @@ data class XPost(
     val createdAtMillis: Long,
     val replyToPostId: String? = null,
     val quotePostId: String? = null,
+    val detailFocusPostId: String? = null,
     val media: List<XMedia> = emptyList(),
     val source: XPostSource = XPostSource.USER,
     val likedByMe: Boolean = false,
@@ -58,6 +65,8 @@ data class XPost(
     val bookmarkCount: Int = 0,
     val viewCount: Int = 0,
     val tags: List<String> = emptyList(),
+    val feedTimeLabel: String? = null,
+    val detailTimeLabel: String? = null,
 )
 
 @Serializable
@@ -66,6 +75,7 @@ data class XTimelineState(
     val authors: List<XAuthor>,
     val posts: List<XPost>,
     val lastUpdatedAt: Long = System.currentTimeMillis(),
+    val seedVersion: Int = CURRENT_TIMELINE_SEED_VERSION,
 )
 
 data class XResolvedPost(
@@ -211,6 +221,7 @@ class XTimelineRepository(
     }
 
     private suspend fun loadFromDisk() {
+        val seed = defaultState()
         val loaded = withContext(Dispatchers.IO) {
             if (!storageFile.exists()) {
                 null
@@ -219,8 +230,11 @@ class XTimelineRepository(
                     json.decodeFromString<XTimelineState>(storageFile.readText())
                 }.getOrNull()
             }
-        } ?: defaultState()
-        val sanitized = loaded.sanitize(defaultState())
+        } ?: seed
+
+        val sanitized = loaded
+            .upgradeSeed(seed)
+            .sanitize(seed)
 
         _state.value = sanitized
         persist(sanitized)
@@ -240,133 +254,149 @@ class XTimelineRepository(
     }
 
     private fun defaultState(): XTimelineState {
+        val now = System.currentTimeMillis()
         val currentUser = XAuthor(
             id = "author-me",
             displayName = "Zion",
-            handle = "@zion_ai",
+            handle = "@zionchat",
             bio = "Building native AI tools and shipping fast.",
             initials = "Z",
             avatarColorHex = 0xFF1D9BF0,
-            verified = false,
+            avatarUrl = "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=200&q=80",
         )
         val authors = listOf(
             currentUser,
             XAuthor(
-                id = "author-openai",
-                displayName = "OpenAI",
-                handle = "@OpenAI",
-                bio = "Research and deployment company focused on safe AGI.",
-                initials = "OA",
+                id = "author-elon",
+                displayName = "Elon Musk",
+                handle = "@elonmusk",
+                bio = "Mars, rockets, Grok and late-night posts.",
+                initials = "EM",
+                avatarColorHex = 0xFF0F1419,
+                verified = true,
+                avatarUrl = "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80",
+            ),
+            XAuthor(
+                id = "author-robert",
+                displayName = "Robert Scoble",
+                handle = "@Scobleizer",
+                bio = "Following the edge of AI and product shifts.",
+                initials = "RS",
                 avatarColorHex = 0xFF111214,
+                verified = true,
+                avatarUrl = "https://images.unsplash.com/photo-1535295972055-1c762f4483e5?auto=format&fit=crop&w=200&q=80",
+            ),
+            XAuthor(
+                id = "author-leo",
+                displayName = "leo 🐾",
+                handle = "@synthwavedd",
+                bio = "Rumors, models and product leaks.",
+                initials = "L",
+                avatarColorHex = 0xFF8B5E3C,
+                verified = true,
+                avatarUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=200&q=80",
+            ),
+            XAuthor(
+                id = "author-chetas",
+                displayName = "Chetaslua",
+                handle = "@chetaslua",
+                bio = "Tracking model plans and pricing changes.",
+                initials = "C",
+                avatarColorHex = 0xFF000000,
                 verified = true,
             ),
             XAuthor(
                 id = "author-grok",
                 displayName = "Grok",
                 handle = "@grok",
-                bio = "Ask for live context, hot takes and fast synthesis.",
+                bio = "Live context and fast synthesis.",
                 initials = "G",
                 avatarColorHex = 0xFF0F1419,
-                verified = true,
+                avatarUrl = null,
             ),
-            XAuthor(
-                id = "author-design",
-                displayName = "Rin Design",
-                handle = "@rin_signal",
-                bio = "Interface systems, motion and product details.",
-                initials = "RD",
-                avatarColorHex = 0xFFFF9F0A,
-                verified = false,
+        )
+
+        val robertTranscriptPost = XPost(
+            id = "post-robert-transcript",
+            authorId = "author-robert",
+            body = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last time I asked it to do the same.",
+            createdAtMillis = now - 7 * HOUR_MILLIS,
+            likeCount = 302,
+            replyCount = 1,
+            repostCount = 15,
+            bookmarkCount = 19,
+            viewCount = 5_710_000,
+            tags = listOf("Thread"),
+            feedTimeLabel = "7小时",
+            detailTimeLabel = "26年3月28日, 13:35",
+        )
+        val chetasQuotePost = XPost(
+            id = "post-chetas-plan",
+            authorId = "author-chetas",
+            body = "🚨 Chatgpt 100$ plan is coming soon\n\nOne bad news - now the 200$ plan is not truly unlimited ( it's 20 times the plus uses)...",
+            createdAtMillis = now - HOUR_MILLIS,
+            media = listOf(
+                XMedia(
+                    id = "media-chetas-preview",
+                    label = "plan-preview",
+                    tintHex = 0xFFBDE3F3,
+                    template = "article_preview",
+                )
             ),
-            XAuthor(
-                id = "author-builder",
-                displayName = "Dev Notes",
-                handle = "@devnotes",
-                bio = "Shipping notes for multi-tool AI products.",
-                initials = "DN",
-                avatarColorHex = 0xFF34C759,
-                verified = false,
-            )
+            viewCount = 84_000,
+            tags = listOf("Quote"),
+            feedTimeLabel = "1小时",
         )
-        val now = System.currentTimeMillis()
-        val quotedPost = XPost(
-            id = "post-quoted-spec",
-            authorId = "author-design",
-            body = "A calm AI product UI should feel like one system: light surfaces, readable type, controlled accent usage, and motion that explains state.",
-            createdAtMillis = now - 3_600_000L * 9,
-            likeCount = 218,
-            replyCount = 21,
-            repostCount = 34,
-            bookmarkCount = 18,
-            viewCount = 8_200,
-            tags = listOf("For You", "AI Watch")
-        )
+
         val posts = listOf(
-            quotedPost,
             XPost(
-                id = "post-openai",
-                authorId = "author-openai",
-                body = "Tool calling feels much better when the UI shows intent, approval state and result summary in one place instead of hiding everything in raw JSON.",
-                createdAtMillis = now - 3_600_000L * 2,
-                quotePostId = quotedPost.id,
-                likeCount = 1_420,
-                replyCount = 83,
-                repostCount = 265,
-                bookmarkCount = 117,
-                viewCount = 148_300,
-                media = listOf(
-                    XMedia(
-                        id = "media-motion",
-                        label = "Motion Spec",
-                        subtitle = "120ms - 220ms / transform + opacity",
-                        tintHex = 0xFFE8F4FD
-                    )
-                ),
-                tags = listOf("For You", "Following", "AI Watch")
+                id = "post-elon-grok",
+                authorId = "author-elon",
+                body = "Grok gets faster & smarter every week",
+                createdAtMillis = now - 2 * HOUR_MILLIS,
+                quotePostId = robertTranscriptPost.id,
+                detailFocusPostId = robertTranscriptPost.id,
+                likeCount = 10_000,
+                replyCount = 1_711,
+                repostCount = 1_141,
+                viewCount = 5_680_000,
+                tags = listOf("For You", "Following", "AI Watch"),
+                feedTimeLabel = "2小时",
             ),
             XPost(
-                id = "post-grok-speed",
+                id = "post-leo-pro",
+                authorId = "author-leo",
+                body = "The \$200/mo ChatGPT Pro plan will soon no longer be unlimited\n\nI think we all knew this was coming, but still 👎",
+                createdAtMillis = now - HOUR_MILLIS,
+                quotePostId = chetasQuotePost.id,
+                likeCount = 2_480,
+                replyCount = 286,
+                repostCount = 146,
+                bookmarkCount = 63,
+                viewCount = 1_240_000,
+                tags = listOf("For You", "Following", "AI Watch"),
+                feedTimeLabel = "1小时",
+            ),
+            robertTranscriptPost,
+            chetasQuotePost,
+            XPost(
+                id = "post-grok-reply",
                 authorId = "author-grok",
-                body = "If your app has tools, make them visible to the user. Invisible automation feels like magic until it breaks; visible automation feels trustworthy.",
-                createdAtMillis = now - 3_600_000L * 4,
-                likeCount = 893,
-                replyCount = 44,
-                repostCount = 133,
-                bookmarkCount = 52,
-                viewCount = 96_500,
-                tags = listOf("For You", "AI Watch")
-            ),
-            XPost(
-                id = "post-builder",
-                authorId = "author-builder",
-                body = "Rebuilding the X module natively. No legacy carry-over, one shared state for feed, plugin settings and AI actions.",
-                createdAtMillis = now - 3_600_000L,
-                likeCount = 302,
-                replyCount = 19,
-                repostCount = 41,
-                bookmarkCount = 11,
-                viewCount = 32_400,
-                tags = listOf("For You", "Following")
-            ),
-            XPost(
-                id = "post-reply-one",
-                authorId = "author-design",
-                body = "The key is to animate state change, not decorate the whole page. Small transitions make the app feel alive without stealing focus.",
-                createdAtMillis = now - 1_800_000L,
-                replyToPostId = "post-builder",
-                likeCount = 71,
-                replyCount = 0,
-                repostCount = 5,
-                bookmarkCount = 3,
-                viewCount = 4_300,
-                tags = listOf("Replies")
+                body = "Thanks! We've been optimizing hard at xAI—speed improvements like this are rolling out fast. Glad the transcript readings feel snappier. What else are you testing?",
+                createdAtMillis = now - 7 * HOUR_MILLIS,
+                replyToPostId = robertTranscriptPost.id,
+                source = XPostSource.AI_ASSISTANT,
+                tags = listOf("Replies"),
+                feedTimeLabel = "7小时",
             )
         )
+
         return XTimelineState(
             currentUserId = currentUser.id,
             authors = authors,
             posts = posts,
             lastUpdatedAt = now,
+            seedVersion = CURRENT_TIMELINE_SEED_VERSION,
         )
     }
 }
@@ -409,6 +439,26 @@ fun XTimelineState.repliesFor(postId: String): List<XResolvedPost> {
         .mapNotNull { post -> resolvePost(post.id) }
 }
 
+private fun XTimelineState.upgradeSeed(seed: XTimelineState): XTimelineState {
+    if (seedVersion >= CURRENT_TIMELINE_SEED_VERSION) return this
+
+    val seededAuthorIds = seed.authors.map { it.id }.toSet()
+    val mergedAuthors = (seed.authors + authors.filterNot { it.id in seededAuthorIds })
+        .distinctBy { it.id }
+    val seededPostIds = seed.posts.map { it.id }.toSet()
+    val mergedPosts = (seed.posts + posts.filterNot { it.id in seededPostIds })
+        .distinctBy { it.id }
+        .sortedByDescending { it.createdAtMillis }
+
+    return copy(
+        currentUserId = currentUserId.takeIf { id -> mergedAuthors.any { it.id == id } } ?: seed.currentUserId,
+        authors = mergedAuthors,
+        posts = mergedPosts,
+        lastUpdatedAt = System.currentTimeMillis(),
+        seedVersion = CURRENT_TIMELINE_SEED_VERSION,
+    )
+}
+
 private fun XTimelineState.sanitize(fallback: XTimelineState): XTimelineState {
     if (authors.isEmpty()) return fallback
 
@@ -428,6 +478,7 @@ private fun XTimelineState.sanitize(fallback: XTimelineState): XTimelineState {
         post.copy(
             replyToPostId = post.replyToPostId?.takeIf { it in validPostIds && it != post.id },
             quotePostId = post.quotePostId?.takeIf { it in validPostIds && it != post.id },
+            detailFocusPostId = post.detailFocusPostId?.takeIf { it in validPostIds && it != post.id },
             likeCount = post.likeCount.coerceAtLeast(0),
             replyCount = post.replyCount.coerceAtLeast(0),
             repostCount = post.repostCount.coerceAtLeast(0),
@@ -443,5 +494,6 @@ private fun XTimelineState.sanitize(fallback: XTimelineState): XTimelineState {
         currentUserId = safeCurrentUserId,
         authors = sanitizedAuthors,
         posts = sanitizedPosts,
+        seedVersion = seedVersion.coerceAtLeast(1),
     )
 }

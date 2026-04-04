@@ -20,7 +20,7 @@ enum class XFeedTab(
 ) {
     FOR_YOU("为你推荐", "For You"),
     FOLLOWING("正在关注", "Following"),
-    AI_WATCH("AI 工具", "AI Watch"),
+    AI_WATCH("AI — Rumors & Insights", "AI Watch"),
 }
 
 class XAppVM(
