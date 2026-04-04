@@ -1179,7 +1179,12 @@ private fun XAvatar(
 }
 
 private fun xColor(hex: Long, fallback: Color): Color {
-    return runCatching { Color(hex.toULong()) }.getOrElse { fallback }
+    val argb = when {
+        hex < 0L -> return fallback
+        hex <= 0xFFFFFFL -> hex or 0xFF000000
+        else -> hex and 0xFFFFFFFFL
+    }
+    return runCatching { Color(argb) }.getOrElse { fallback }
 }
 
 @Composable
