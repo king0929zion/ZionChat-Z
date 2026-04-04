@@ -177,9 +177,9 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                         onClick = { navController.navigate(Screen.SettingPlugins) },
                         leadingContent = {
                             Icon(
-                                ZionAppIcons.PluginSystem,
+                                painterResource(R.drawable.ic_plugin_system),
                                 null,
-                                tint = Color.Unspecified
+                                tint = ZionTextPrimary
                             )
                         },
                         trailingContent = {
