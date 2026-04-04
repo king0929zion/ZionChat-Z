@@ -1,17 +1,8 @@
 package me.rerere.rikkahub.ui.pages.xapp
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,7 +30,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -61,23 +51,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dokar.sonner.ToastType
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.Book03
-import me.rerere.hugeicons.stroke.Favourite
-import me.rerere.hugeicons.stroke.Message02
-import me.rerere.hugeicons.stroke.QuillWrite01
-import me.rerere.hugeicons.stroke.Refresh03
-import me.rerere.hugeicons.stroke.Share01
-import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.x.XAuthor
 import me.rerere.rikkahub.data.x.XPostSource
 import me.rerere.rikkahub.data.x.XResolvedPost
 import me.rerere.rikkahub.data.x.XTimelineState
-import me.rerere.rikkahub.ui.components.ui.FooterTranslucentBackdrop
 import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
-import me.rerere.rikkahub.ui.components.ui.HeaderTranslucentBackdrop
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
@@ -180,106 +160,68 @@ fun XAppPage(vm: XAppVM = koinViewModel()) {
     }
 
     Box(modifier = Modifier.fillMaxSize().background(XPage)) {
-        AnimatedContent(
-            targetState = pane,
-            transitionSpec = {
-                val forward = when {
-                    initialState == XPane.Feed && targetState != XPane.Feed -> true
-                    initialState == XPane.Detail && targetState == XPane.Composer -> true
-                    else -> false
-                }
-                if (forward) {
-                    slideInHorizontally(
-                        animationSpec = tween(300, easing = FastOutSlowInEasing),
-                        initialOffsetX = { it / 4 }
-                    ) + fadeIn(animationSpec = tween(220)) togetherWith
-                        slideOutHorizontally(
-                            animationSpec = tween(260, easing = FastOutSlowInEasing),
-                            targetOffsetX = { -it / 8 }
-                        ) + fadeOut(animationSpec = tween(180))
-                } else {
-                    slideInHorizontally(
-                        animationSpec = tween(300, easing = FastOutSlowInEasing),
-                        initialOffsetX = { -it / 8 }
-                    ) + scaleIn(
-                        animationSpec = tween(300, easing = FastOutSlowInEasing),
-                        initialScale = 0.985f
-                    ) + fadeIn(animationSpec = tween(220)) togetherWith
-                        slideOutHorizontally(
-                            animationSpec = tween(260, easing = FastOutSlowInEasing),
-                            targetOffsetX = { it / 4 }
-                        ) + scaleOut(
-                            animationSpec = tween(260, easing = FastOutSlowInEasing),
-                            targetScale = 0.985f
-                        ) + fadeOut(animationSpec = tween(180))
-                }
-            },
-            modifier = Modifier.fillMaxSize(),
-            label = "xPane"
-        ) { currentPane ->
-            when (currentPane) {
-                XPane.Feed -> XFeedPane(
-                    timeline = timeline,
-                    posts = filteredPosts,
-                    currentUser = currentUser,
-                    selectedTab = selectedTab,
-                    pluginEnabled = settings.pluginSettings.x.enabled,
-                    enabledToolCount = settings.pluginSettings.x.enabledToolCount(),
-                    onBack = { navController.popBackStack() },
-                    onOpenPlugin = { navController.navigate(Screen.SettingXPlugin) },
-                    onTabSelected = { selectedTab = it },
-                    onOpenPost = { selectedPostId = it },
-                    onCompose = { openComposerForPost() },
-                    onReply = { openComposerForReply(it) },
-                    onQuote = { openComposerForPost(it) },
-                    onLike = vm::toggleLike,
-                    onRepost = vm::toggleRepost,
-                    onBookmark = vm::toggleBookmark,
-                )
+        when (pane) {
+            XPane.Feed -> XFeedPane(
+                timeline = timeline,
+                posts = filteredPosts,
+                currentUser = currentUser,
+                selectedTab = selectedTab,
+                pluginEnabled = settings.pluginSettings.x.enabled,
+                enabledToolCount = settings.pluginSettings.x.enabledToolCount(),
+                onBack = { navController.popBackStack() },
+                onOpenPlugin = { navController.navigate(Screen.SettingXPlugin) },
+                onTabSelected = { selectedTab = it },
+                onOpenPost = { selectedPostId = it },
+                onCompose = { openComposerForPost() },
+                onReply = { openComposerForReply(it) },
+                onQuote = { openComposerForPost(it) },
+                onLike = vm::toggleLike,
+                onRepost = vm::toggleRepost,
+                onBookmark = vm::toggleBookmark,
+            )
 
-                XPane.Detail -> {
-                    val post = selectedPost
-                    if (post != null) {
-                        XDetailPane(
-                            currentUser = currentUser,
-                            post = post,
-                            replies = detailReplies,
-                            onBack = { selectedPostId = null },
-                            onOpenPlugin = { navController.navigate(Screen.SettingXPlugin) },
-                            onReply = { openComposerForReply(post.post.id) },
-                            onQuote = { openComposerForPost(post.post.id) },
-                            onOpenPost = { selectedPostId = it },
-                            onLike = vm::toggleLike,
-                            onRepost = vm::toggleRepost,
-                            onBookmark = vm::toggleBookmark,
-                        )
-                    }
+            XPane.Detail -> {
+                val post = selectedPost
+                if (post != null) {
+                    XDetailPane(
+                        currentUser = currentUser,
+                        post = post,
+                        replies = detailReplies,
+                        onBack = { selectedPostId = null },
+                        onOpenPlugin = { navController.navigate(Screen.SettingXPlugin) },
+                        onReply = { openComposerForReply(post.post.id) },
+                        onQuote = { openComposerForPost(post.post.id) },
+                        onOpenPost = { selectedPostId = it },
+                        onLike = vm::toggleLike,
+                        onRepost = vm::toggleRepost,
+                        onBookmark = vm::toggleBookmark,
+                    )
                 }
-
-                XPane.Composer -> XComposerPane(
-                    currentUser = currentUser,
-                    mode = composerMode,
-                    replyTarget = replyTargetPost,
-                    quotePost = composerQuotePost,
-                    onClose = { closeComposer() },
-                    onSubmit = { text ->
-                        val currentReplyTargetId = replyTargetId
-                        if (composerMode == XComposerReply && currentReplyTargetId != null) {
-                            vm.replyToPost(currentReplyTargetId, text) {
-                                toaster.show("回复已发出", type = ToastType.Success)
-                                selectedPostId = currentReplyTargetId
-                                closeComposer()
-                            }
-                        } else {
-                            vm.publishPost(text = text, quotePostId = quotePostId) { post ->
-                                toaster.show("帖子已发布", type = ToastType.Success)
-                                selectedPostId = post.id
-                                closeComposer()
-                            }
-                        }
-                    },
-                )
             }
+
+            XPane.Composer -> XComposerPane(
+                currentUser = currentUser,
+                mode = composerMode,
+                replyTarget = replyTargetPost,
+                quotePost = composerQuotePost,
+                onClose = { closeComposer() },
+                onSubmit = { text ->
+                    val currentReplyTargetId = replyTargetId
+                    if (composerMode == XComposerReply && currentReplyTargetId != null) {
+                        vm.replyToPost(currentReplyTargetId, text) {
+                            toaster.show("回复已发出", type = ToastType.Success)
+                            selectedPostId = currentReplyTargetId
+                            closeComposer()
+                        }
+                    } else {
+                        vm.publishPost(text = text, quotePostId = quotePostId) { post ->
+                            toaster.show("帖子已发布", type = ToastType.Success)
+                            selectedPostId = post.id
+                            closeComposer()
+                        }
+                    }
+                },
+            )
         }
     }
 }
@@ -552,10 +494,7 @@ private fun XTopBar(
     modifier: Modifier = Modifier,
     title: @Composable () -> Unit,
 ) {
-    Box(modifier = modifier.fillMaxWidth()) {
-        HeaderTranslucentBackdrop(
-            modifier = Modifier.fillMaxWidth().height(92.dp)
-        )
+    Column(modifier = modifier.fillMaxWidth().background(XPage)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -578,6 +517,7 @@ private fun XTopBar(
                 contentDescription = "X 插件设置"
             )
         }
+        HorizontalDivider(color = XBorder)
     }
 }
 
@@ -586,16 +526,15 @@ private fun XTabBar(
     selectedTab: XFeedTab,
     onTabSelected: (XFeedTab) -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        HeaderTranslucentBackdrop(
-            modifier = Modifier.fillMaxWidth().height(62.dp),
-            containerColor = XPage,
-            containerAlpha = 0.9f,
-        )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(XPage)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 2.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(XSubtle)
                 .padding(4.dp),
@@ -850,26 +789,26 @@ private fun XPostCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                XMetricAction(HugeIcons.Message02, countLabel(post.post.replyCount), XSecondary, onReply)
+                XMetricAction("评", countLabel(post.post.replyCount), XSecondary, onReply)
                 XMetricAction(
-                    HugeIcons.Refresh03,
+                    "转",
                     countLabel(post.post.repostCount),
                     if (post.post.repostedByMe) XRepost else XSecondary,
                     onRepost
                 )
                 XMetricAction(
-                    HugeIcons.Favourite,
+                    "赞",
                     countLabel(post.post.likeCount),
                     if (post.post.likedByMe) XLike else XSecondary,
                     onLike
                 )
                 XMetricAction(
-                    HugeIcons.Book03,
+                    "藏",
                     countLabel(post.post.bookmarkCount),
                     if (post.post.bookmarkedByMe) XPrimary else XSecondary,
                     onBookmark
                 )
-                XMetricAction(HugeIcons.Share01, countLabel(post.post.viewCount), XSecondary, onQuote)
+                XMetricAction("引", countLabel(post.post.viewCount), XSecondary, onQuote)
             }
         }
     }
@@ -912,7 +851,7 @@ private fun XQuoteCard(
 
 @Composable
 private fun XMetricAction(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    prefix: String,
     label: String,
     tint: Color,
     onClick: () -> Unit,
@@ -925,14 +864,8 @@ private fun XMetricAction(
         horizontalArrangement = Arrangement.spacedBy(5.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = tint,
-            modifier = Modifier.size(16.dp)
-        )
         Text(
-            text = label,
+            text = "$prefix $label",
             color = tint,
             fontFamily = SourceSans3,
             fontSize = 12.sp,
@@ -946,11 +879,12 @@ private fun XBottomReplyBar(
     onReply: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxWidth()) {
-        FooterTranslucentBackdrop(
-            modifier = Modifier.fillMaxWidth().height(100.dp),
-            containerColor = XPage
-        )
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(XPage)
+    ) {
+        HorizontalDivider(color = XBorder)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -997,11 +931,7 @@ private fun XComposerTopBar(
     onBack: () -> Unit,
     onSubmit: () -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        HeaderTranslucentBackdrop(
-            modifier = Modifier.fillMaxWidth().height(92.dp),
-            containerColor = XPage
-        )
+    Column(modifier = Modifier.fillMaxWidth().background(XPage)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1034,6 +964,7 @@ private fun XComposerTopBar(
                 )
             }
         }
+        HorizontalDivider(color = XBorder)
     }
 }
 
@@ -1196,11 +1127,12 @@ private fun XFloatingComposer(
             .pressableScale(pressedScale = 0.94f, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = HugeIcons.QuillWrite01,
-            contentDescription = "发帖",
-            tint = Color.White,
-            modifier = Modifier.size(24.dp)
+        Text(
+            text = "写",
+            color = Color.White,
+            fontFamily = SourceSans3,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
