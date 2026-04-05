@@ -13,7 +13,7 @@ import me.rerere.rikkahub.AppScope
 import java.io.File
 import kotlin.uuid.Uuid
 
-private const val CURRENT_TIMELINE_SEED_VERSION = 2
+private const val CURRENT_TIMELINE_SEED_VERSION = 3
 private const val HOUR_MILLIS = 3_600_000L
 
 @Serializable
@@ -26,6 +26,9 @@ data class XAuthor(
     val avatarColorHex: Long,
     val verified: Boolean = false,
     val avatarUrl: String? = null,
+    val isBot: Boolean = false,
+    val botSummary: String = "",
+    val botTags: List<String> = emptyList(),
 )
 
 @Serializable
@@ -313,6 +316,9 @@ class XTimelineRepository(
                 initials = "G",
                 avatarColorHex = 0xFF0F1419,
                 avatarUrl = null,
+                isBot = true,
+                botSummary = "已接入 ZionChat Bot 系统，可继续在助手中心管理提示词、工具与记忆。",
+                botTags = listOf("Bot", "实时上下文", "工具调用"),
             ),
         )
 
@@ -376,6 +382,19 @@ class XTimelineRepository(
                 viewCount = 1_240_000,
                 tags = listOf("For You", "Following", "AI Watch"),
                 feedTimeLabel = "1小时",
+            ),
+            XPost(
+                id = "post-grok-bot-system",
+                authorId = "author-grok",
+                body = "Bot system is now wired into ZionChat.\n\nYou can continue in the assistant center to manage prompts, tools, memory and MCP for this bot.",
+                createdAtMillis = now - 30 * 60_000L,
+                source = XPostSource.AI_ASSISTANT,
+                likeCount = 864,
+                replyCount = 57,
+                repostCount = 34,
+                viewCount = 92_600,
+                tags = listOf("For You", "AI Watch"),
+                feedTimeLabel = "30分钟",
             ),
             robertTranscriptPost,
             chetasQuotePost,

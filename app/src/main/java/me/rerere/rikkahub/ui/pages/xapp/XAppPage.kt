@@ -39,6 +39,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -80,14 +82,20 @@ import com.dokar.sonner.ToastType
 import kotlinx.coroutines.delay
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
+import me.rerere.rikkahub.data.model.Avatar
 import me.rerere.rikkahub.data.x.XAuthor
 import me.rerere.rikkahub.data.x.XMedia
 import me.rerere.rikkahub.data.x.XPost
+import me.rerere.rikkahub.data.x.XPostSource
 import me.rerere.rikkahub.data.x.XResolvedPost
+import me.rerere.rikkahub.ui.components.ui.Tag
+import me.rerere.rikkahub.ui.components.ui.TagType
+import me.rerere.rikkahub.ui.components.ui.UIAvatar
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
+import me.rerere.rikkahub.ui.theme.CustomColors
 import org.koin.androidx.compose.koinViewModel
 import java.text.NumberFormat
 import java.time.Instant
@@ -265,6 +273,7 @@ fun XAppPage(vm: XAppVM = koinViewModel()) {
                 onOpenPost = ::openDetail,
                 onReplyToPost = ::openReply,
                 onQuotePost = ::openQuoteComposer,
+                onOpenBotSystem = { navController.navigate(Screen.Assistant) },
                 onLike = { vm.toggleLike(it.post.id) },
                 onRepost = { vm.toggleRepost(it.post.id) },
                 onCompose = { openQuoteComposer(null) },
@@ -279,6 +288,7 @@ fun XAppPage(vm: XAppVM = koinViewModel()) {
                     replies = detailReplies,
                     onBack = { detailPostId = null },
                     onOpenPost = { openDetail(it) },
+                    onOpenBotSystem = { navController.navigate(Screen.Assistant) },
                     onReply = { openReply(renderedDetailPost) },
                 )
             }
@@ -354,6 +364,7 @@ private fun XFeedLayer(
     onOpenPost: (XResolvedPost) -> Unit,
     onReplyToPost: (XResolvedPost) -> Unit,
     onQuotePost: (XResolvedPost?) -> Unit,
+    onOpenBotSystem: () -> Unit,
     onLike: (XResolvedPost) -> Unit,
     onRepost: (XResolvedPost) -> Unit,
     onCompose: () -> Unit,
@@ -401,6 +412,7 @@ private fun XFeedLayer(
                         onOpen = { onOpenPost(post) },
                         onReply = { onReplyToPost(post) },
                         onOpenQuote = { quoted -> onOpenPost(quoted) },
+                        onOpenBotSystem = onOpenBotSystem,
                         onLike = { onLike(post) },
                         onRepost = { onRepost(post) },
                         onShare = { onQuotePost(post) },
@@ -530,6 +542,7 @@ private fun XFeedPostCard(
     onOpen: () -> Unit,
     onReply: () -> Unit,
     onOpenQuote: (XResolvedPost) -> Unit,
+    onOpenBotSystem: () -> Unit,
     onLike: () -> Unit,
     onRepost: () -> Unit,
     onShare: () -> Unit,
@@ -566,6 +579,13 @@ private fun XFeedPostCard(
                     fontSize = 15.sp,
                     lineHeight = 20.sp,
                 )
+                if (post.isBotPost()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    XBotSystemCard(
+                        author = post.author,
+                        onClick = onOpenBotSystem,
+                    )
+                }
                 post.quotedPost?.let { quoted ->
                     Spacer(modifier = Modifier.height(12.dp))
                     XQuoteCard(
@@ -579,6 +599,7 @@ private fun XFeedPostCard(
                     onReply = onReply,
                     onRepost = onRepost,
                     onLike = onLike,
+                    onView = onOpen,
                     onShare = onShare,
                 )
             }
@@ -610,6 +631,16 @@ private fun XAuthorLine(
         }
         if (author.handle == "@elonmusk") {
             XMiniXBadge()
+        }
+        if (author.isBot) {
+            XTagPill(
+                text = "Bot",
+                background = XBlueSoft,
+                content = XBlue,
+                paddingHorizontal = 6.dp,
+                paddingVertical = 1.dp,
+                textSize = 10.sp,
+            )
         }
         if (showAiLabel) {
             XGoldBadge()
@@ -754,12 +785,97 @@ private fun XQuoteMediaPreview(media: XMedia) {
     }
 }
 
+private fun XResolvedPost.isBotPost(): Boolean {
+    return post.source == XPostSource.AI_ASSISTANT || author.isBot
+}
+
+private fun XAuthor.toBotAvatar(): Avatar {
+    return avatarUrl?.let(Avatar::Image) ?: Avatar.Dummy
+}
+
+@Composable
+private fun XBotSystemCard(
+    author: XAuthor,
+    onClick: () -> Unit,
+) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = CustomColors.listItemColors.containerColor
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            UIAvatar(
+                name = author.displayName,
+                value = author.toBotAvatar(),
+                modifier = Modifier.size(40.dp)
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = author.displayName,
+                        color = XText,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Tag(type = TagType.INFO) {
+                        Text("Bot")
+                    }
+                    Tag(type = TagType.SUCCESS) {
+                        Text("在线")
+                    }
+                }
+                Text(
+                    text = author.botSummary.ifBlank { "已接入 ZionChat Bot 系统。" },
+                    color = XSubText,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    author.botTags.take(3).forEach { tag ->
+                        Tag {
+                            Text(tag)
+                        }
+                    }
+                }
+            }
+            Text(
+                text = "Bot 系统",
+                color = XBlue,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+    }
+}
+
 @Composable
 private fun XActionRow(
     post: XPost,
     onReply: () -> Unit,
     onRepost: () -> Unit,
     onLike: () -> Unit,
+    onView: () -> Unit,
     onShare: () -> Unit,
 ) {
     Row(
@@ -789,6 +905,13 @@ private fun XActionRow(
             onClick = onLike,
         ) {
             XLikeIcon(tint = it)
+        }
+        XActionIconButton(
+            tint = XSubText,
+            count = formatMetric(post.viewCount),
+            onClick = onView,
+        ) {
+            XViewIcon(tint = it)
         }
         XActionIconButton(
             tint = XSubText,
@@ -946,6 +1069,7 @@ private fun XDetailLayer(
     replies: List<XResolvedPost>,
     onBack: () -> Unit,
     onOpenPost: (XResolvedPost) -> Unit,
+    onOpenBotSystem: () -> Unit,
     onReply: () -> Unit,
 ) {
     val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -964,7 +1088,10 @@ private fun XDetailLayer(
             )
         ) {
             item {
-                XDetailPostContent(post = post)
+                XDetailPostContent(
+                    post = post,
+                    onOpenBotSystem = onOpenBotSystem,
+                )
             }
             item {
                 HorizontalDivider(color = XBorder, modifier = Modifier.padding(horizontal = 16.dp))
@@ -992,6 +1119,7 @@ private fun XDetailLayer(
                 XDetailReplyCard(
                     reply = reply,
                     parentHandle = post.author.handle,
+                    onOpenBotSystem = onOpenBotSystem,
                     onOpen = { onOpenPost(reply) }
                 )
             }
@@ -1038,7 +1166,10 @@ private fun XDetailLayer(
 }
 
 @Composable
-private fun XDetailPostContent(post: XResolvedPost) {
+private fun XDetailPostContent(
+    post: XResolvedPost,
+    onOpenBotSystem: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1099,6 +1230,13 @@ private fun XDetailPostContent(post: XResolvedPost) {
             fontSize = 17.sp,
             lineHeight = 24.sp,
         )
+        if (post.isBotPost()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            XBotSystemCard(
+                author = post.author,
+                onClick = onOpenBotSystem,
+            )
+        }
         if (post.quotedPost != null) {
             Spacer(modifier = Modifier.height(14.dp))
             XQuoteCard(post = post.quotedPost, onOpen = {})
@@ -1157,6 +1295,7 @@ private fun XStatLabel(
 private fun XDetailReplyCard(
     reply: XResolvedPost,
     parentHandle: String,
+    onOpenBotSystem: () -> Unit,
     onOpen: () -> Unit,
 ) {
     Column(
@@ -1199,6 +1338,13 @@ private fun XDetailReplyCard(
                     fontSize = 15.sp,
                     lineHeight = 20.sp,
                 )
+                if (reply.isBotPost()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    XBotSystemCard(
+                        author = reply.author,
+                        onClick = onOpenBotSystem,
+                    )
+                }
             }
         }
     }
@@ -2140,6 +2286,19 @@ private fun XLikeIcon(
 ) {
     Icon(
         painter = painterResource(R.drawable.ic_x_action_like),
+        contentDescription = null,
+        tint = tint,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun XViewIcon(
+    tint: Color,
+    modifier: Modifier = Modifier.size(18.dp),
+) {
+    Icon(
+        painter = painterResource(R.drawable.ic_x_action_view),
         contentDescription = null,
         tint = tint,
         modifier = modifier
