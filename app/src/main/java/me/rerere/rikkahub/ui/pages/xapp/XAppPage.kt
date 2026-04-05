@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -64,6 +65,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -76,6 +78,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.dokar.sonner.ToastType
 import kotlinx.coroutines.delay
+import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.x.XAuthor
 import me.rerere.rikkahub.data.x.XMedia
@@ -91,6 +94,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.min
 
 private val XOuter = Color(0xFF242D34)
 private val XBlack = Color(0xFF000000)
@@ -263,7 +267,6 @@ fun XAppPage(vm: XAppVM = koinViewModel()) {
                 onQuotePost = ::openQuoteComposer,
                 onLike = { vm.toggleLike(it.post.id) },
                 onRepost = { vm.toggleRepost(it.post.id) },
-                onBookmark = { vm.toggleBookmark(it.post.id) },
                 onCompose = { openQuoteComposer(null) },
             )
         }
@@ -353,11 +356,26 @@ private fun XFeedLayer(
     onQuotePost: (XResolvedPost?) -> Unit,
     onLike: (XResolvedPost) -> Unit,
     onRepost: (XResolvedPost) -> Unit,
-    onBookmark: (XResolvedPost) -> Unit,
     onCompose: () -> Unit,
 ) {
     val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val listState = rememberLazyListState()
+    val density = LocalDensity.current
+    val topBarHeight = 53.dp
+    val tabsHeight = 53.dp
+    val topBarHeightPx = with(density) { topBarHeight.toPx() }
+    val collapseTargetPx = if (listState.firstVisibleItemIndex > 0) {
+        topBarHeightPx
+    } else {
+        min(listState.firstVisibleItemScrollOffset.toFloat(), topBarHeightPx)
+    }
+    val topBarCollapsePx by animateFloatAsState(
+        targetValue = collapseTargetPx,
+        animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+        label = "feedTopBarCollapse"
+    )
+    val topBarCollapseDp = with(density) { topBarCollapsePx.toDp() }
 
     Box(
         modifier = Modifier
@@ -370,9 +388,10 @@ private fun XFeedLayer(
                 .background(XWhite)
         ) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = topInset + 106.dp,
+                    top = topInset + tabsHeight + (topBarHeight - topBarCollapseDp),
                     bottom = bottomInset + 92.dp
                 )
             ) {
@@ -384,7 +403,6 @@ private fun XFeedLayer(
                         onOpenQuote = { quoted -> onOpenPost(quoted) },
                         onLike = { onLike(post) },
                         onRepost = { onRepost(post) },
-                        onBookmark = { onBookmark(post) },
                         onShare = { onQuotePost(post) },
                     )
                 }
@@ -394,7 +412,8 @@ private fun XFeedLayer(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .background(XWhite.copy(alpha = 0.96f))
+                    .graphicsLayer { translationY = -topBarCollapsePx }
+                    .background(XWhite)
             ) {
                 Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
                 XFeedTopBar(
@@ -513,7 +532,6 @@ private fun XFeedPostCard(
     onOpenQuote: (XResolvedPost) -> Unit,
     onLike: () -> Unit,
     onRepost: () -> Unit,
-    onBookmark: () -> Unit,
     onShare: () -> Unit,
 ) {
     Column(
@@ -561,7 +579,6 @@ private fun XFeedPostCard(
                     onReply = onReply,
                     onRepost = onRepost,
                     onLike = onLike,
-                    onBookmark = onBookmark,
                     onShare = onShare,
                 )
             }
@@ -743,7 +760,6 @@ private fun XActionRow(
     onReply: () -> Unit,
     onRepost: () -> Unit,
     onLike: () -> Unit,
-    onBookmark: () -> Unit,
     onShare: () -> Unit,
 ) {
     Row(
@@ -772,30 +788,7 @@ private fun XActionRow(
             background = if (post.likedByMe) XPinkSoft else Color.Transparent,
             onClick = onLike,
         ) {
-            Icon(
-                imageVector = ZionAppIcons.Favorite,
-                contentDescription = null,
-                tint = it,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        XActionIconButton(
-            tint = XSubText,
-            count = formatMetric(post.viewCount),
-            onClick = onReply,
-        ) {
-            Icon(
-                imageVector = ZionAppIcons.Stats,
-                contentDescription = null,
-                tint = it,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        XActionIconButton(
-            tint = if (post.bookmarkedByMe) XBlue else XSubText,
-            onClick = onBookmark,
-        ) {
-            XBookmarkIcon(tint = it)
+            XLikeIcon(tint = it)
         }
         XActionIconButton(
             tint = XSubText,
@@ -1088,12 +1081,12 @@ private fun XDetailPostContent(post: XResolvedPost) {
                     .clip(RoundedCornerShape(999.dp))
                     .background(XText)
                     .pressableScale(pressedScale = 0.95f, onClick = {})
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 14.dp, vertical = 6.dp)
             ) {
                 Text(
                     text = "订阅",
                     color = XWhite,
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
@@ -1112,23 +1105,10 @@ private fun XDetailPostContent(post: XResolvedPost) {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = displayDetailTime(post.post),
-                color = XSubText,
-                fontSize = 15.sp,
-            )
-            Text(text = "·", color = XSubText, fontSize = 15.sp)
-            Text(
-                text = formatMetric(post.post.viewCount),
-                color = XText,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "查看",
                 color = XSubText,
                 fontSize = 15.sp,
             )
@@ -1147,7 +1127,6 @@ private fun XDetailStats(post: XPost) {
     ) {
         XStatLabel(value = formatMetric(post.repostCount), label = "转帖")
         XStatLabel(value = formatMetric(post.likeCount), label = "喜欢")
-        XStatLabel(value = formatMetric(post.bookmarkCount), label = "书签")
     }
 }
 
@@ -2133,22 +2112,12 @@ private fun XReplyIcon(
     tint: Color,
     modifier: Modifier = Modifier.size(18.dp),
 ) {
-    Canvas(modifier = modifier) {
-        val stroke = size.minDimension * 0.1f
-        drawRoundRect(
-            color = tint,
-            topLeft = Offset(size.width * 0.12f, size.height * 0.12f),
-            size = Size(size.width * 0.7f, size.height * 0.5f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.minDimension * 0.18f),
-            style = Stroke(width = stroke)
-        )
-        val tail = Path().apply {
-            moveTo(size.width * 0.3f, size.height * 0.62f)
-            lineTo(size.width * 0.24f, size.height * 0.84f)
-            lineTo(size.width * 0.45f, size.height * 0.68f)
-        }
-        drawPath(tail, tint, style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
-    }
+    Icon(
+        painter = painterResource(R.drawable.ic_x_action_reply),
+        contentDescription = null,
+        tint = tint,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -2156,34 +2125,25 @@ private fun XRepostIcon(
     tint: Color,
     modifier: Modifier = Modifier.size(18.dp),
 ) {
-    Canvas(modifier = modifier) {
-        val stroke = size.minDimension * 0.1f
-        drawLine(tint, Offset(size.width * 0.12f, size.height * 0.35f), Offset(size.width * 0.72f, size.height * 0.35f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(tint, Offset(size.width * 0.56f, size.height * 0.2f), Offset(size.width * 0.72f, size.height * 0.35f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(tint, Offset(size.width * 0.56f, size.height * 0.5f), Offset(size.width * 0.72f, size.height * 0.35f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(tint, Offset(size.width * 0.88f, size.height * 0.65f), Offset(size.width * 0.28f, size.height * 0.65f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(tint, Offset(size.width * 0.44f, size.height * 0.5f), Offset(size.width * 0.28f, size.height * 0.65f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(tint, Offset(size.width * 0.44f, size.height * 0.8f), Offset(size.width * 0.28f, size.height * 0.65f), strokeWidth = stroke, cap = StrokeCap.Round)
-    }
+    Icon(
+        painter = painterResource(R.drawable.ic_x_action_repost),
+        contentDescription = null,
+        tint = tint,
+        modifier = modifier
+    )
 }
 
 @Composable
-private fun XBookmarkIcon(
+private fun XLikeIcon(
     tint: Color,
     modifier: Modifier = Modifier.size(18.dp),
 ) {
-    Canvas(modifier = modifier) {
-        val stroke = size.minDimension * 0.1f
-        val path = Path().apply {
-            moveTo(size.width * 0.25f, size.height * 0.12f)
-            lineTo(size.width * 0.75f, size.height * 0.12f)
-            lineTo(size.width * 0.75f, size.height * 0.88f)
-            lineTo(size.width * 0.5f, size.height * 0.68f)
-            lineTo(size.width * 0.25f, size.height * 0.88f)
-            close()
-        }
-        drawPath(path, tint, style = Stroke(width = stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
-    }
+    Icon(
+        painter = painterResource(R.drawable.ic_x_action_like),
+        contentDescription = null,
+        tint = tint,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -2191,19 +2151,12 @@ private fun XShareIcon(
     tint: Color,
     modifier: Modifier = Modifier.size(18.dp),
 ) {
-    Canvas(modifier = modifier) {
-        val stroke = size.minDimension * 0.1f
-        drawLine(tint, Offset(size.width * 0.5f, size.height * 0.72f), Offset(size.width * 0.5f, size.height * 0.18f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(tint, Offset(size.width * 0.32f, size.height * 0.36f), Offset(size.width * 0.5f, size.height * 0.18f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawLine(tint, Offset(size.width * 0.68f, size.height * 0.36f), Offset(size.width * 0.5f, size.height * 0.18f), strokeWidth = stroke, cap = StrokeCap.Round)
-        drawRoundRect(
-            color = tint,
-            topLeft = Offset(size.width * 0.2f, size.height * 0.6f),
-            size = Size(size.width * 0.6f, size.height * 0.18f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.minDimension * 0.08f),
-            style = Stroke(width = stroke)
-        )
-    }
+    Icon(
+        painter = painterResource(R.drawable.ic_x_action_share),
+        contentDescription = null,
+        tint = tint,
+        modifier = modifier
+    )
 }
 
 @Composable
