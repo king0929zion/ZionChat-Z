@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.king0929zion.zionchatz"
         minSdk = 26
         targetSdk = 36
-        versionCode = 85
-        versionName = "0.0.76"
+        versionCode = 86
+        versionName = "0.0.77"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

@@ -1,3 +1,7 @@
+## v0.0.77
+
+- 修复 `v0.0.76` 远端构建失败：移除 `XTimelineRepository` 中错误的 `toText` 导入，并把 Bots 详情页的 `KeyboardCapitalization` 改回 Compose 正确输入包，恢复 Android 签名构建。
+
 ## v0.0.76
 
 - 继续重做 `设置 -> Bots`：Bots 列表页收成更紧凑的项目原生设置卡片，单个 Bot 详情页改成单层三块结构，只保留头像与名字、默认模型、提示词三组核心配置，整体间距、圆角和灰阶与现有设置页统一。
