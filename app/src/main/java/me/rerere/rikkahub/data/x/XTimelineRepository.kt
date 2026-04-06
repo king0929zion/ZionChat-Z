@@ -5,16 +5,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import me.rerere.rikkahub.AppScope
+import me.rerere.rikkahub.data.datastore.Settings
+import me.rerere.rikkahub.data.datastore.findModelById
+import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.datastore.getBotAssistants
+import me.rerere.rikkahub.data.model.Assistant
+import me.rerere.rikkahub.data.model.Avatar
+import me.rerere.rikkahub.data.plugin.XBotInteractionMode
 import java.io.File
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 import kotlin.uuid.Uuid
 
-private const val CURRENT_TIMELINE_SEED_VERSION = 3
+private const val CURRENT_TIMELINE_SEED_VERSION = 4
 private const val HOUR_MILLIS = 3_600_000L
+private const val ASSISTANT_AUTHOR_PREFIX = "assistant-bot-"
+private val DEPRECATED_AUTHOR_IDS = setOf("author-grok")
+private val DEPRECATED_POST_IDS = setOf("post-grok-bot-system", "post-grok-reply")
 
 @Serializable
 data class XAuthor(
@@ -87,10 +100,25 @@ data class XResolvedPost(
     val quotedPost: XResolvedPost? = null,
 )
 
+private sealed interface PlannedBotAction {
+    data class Publish(
+        val authorId: String,
+        val text: String,
+        val quotePostId: String?,
+    ) : PlannedBotAction
+
+    data class Reply(
+        val authorId: String,
+        val postId: String,
+        val text: String,
+    ) : PlannedBotAction
+}
+
 class XTimelineRepository(
     context: Context,
     private val scope: AppScope,
     private val json: Json,
+    private val settingsStore: SettingsStore,
 ) {
     private val storageFile = File(context.filesDir, "x_timeline_state.json")
     private val _state = MutableStateFlow(defaultState())
@@ -99,6 +127,11 @@ class XTimelineRepository(
     init {
         scope.launch {
             loadFromDisk()
+        }
+        scope.launch {
+            settingsStore.settingsFlow.collectLatest { settings ->
+                syncBotAuthors(settings)
+            }
         }
     }
 
@@ -109,27 +142,37 @@ class XTimelineRepository(
         quotePostId: String? = null,
         media: List<XMedia> = emptyList(),
         source: XPostSource = XPostSource.USER,
+        authorId: String = state.value.currentUserId,
     ): XPost {
         val body = text.trim()
         require(body.isNotEmpty()) { "text is required" }
+        val resolvedAuthorId = authorId.takeIf { id -> state.value.findAuthor(id) != null } ?: state.value.currentUserId
+        val resolvedQuoteId = quotePostId?.takeIf(::postExists)
 
         val newPost = XPost(
             id = Uuid.random().toString(),
-            authorId = state.value.currentUserId,
+            authorId = resolvedAuthorId,
             body = body,
             createdAtMillis = System.currentTimeMillis(),
-            quotePostId = quotePostId?.takeIf(::postExists),
+            quotePostId = resolvedQuoteId,
             media = media,
             source = source,
             viewCount = 1,
-            tags = buildList {
-                add("For You")
-                add("Following")
-                if (source == XPostSource.AI_ASSISTANT) add("AI Watch")
-            }
+            tags = topLevelTagsForAuthor(resolvedAuthorId)
         )
         updateState { timeline ->
-            timeline.copy(posts = listOf(newPost) + timeline.posts)
+            timeline.copy(
+                posts = listOf(newPost) + timeline.posts.map { post ->
+                    if (post.id == resolvedQuoteId) {
+                        post.copy(repostCount = post.repostCount + 1)
+                    } else {
+                        post
+                    }
+                }
+            )
+        }
+        if (source == XPostSource.USER && resolvedAuthorId == state.value.currentUserId) {
+            maybeRunBotAutomation(triggerPostId = newPost.id)
         }
         return newPost
     }
@@ -138,14 +181,16 @@ class XTimelineRepository(
         postId: String,
         text: String,
         source: XPostSource = XPostSource.USER,
+        authorId: String = state.value.currentUserId,
     ): XPost {
         require(postExists(postId)) { "post not found: $postId" }
         val body = text.trim()
         require(body.isNotEmpty()) { "text is required" }
+        val resolvedAuthorId = authorId.takeIf { id -> state.value.findAuthor(id) != null } ?: state.value.currentUserId
 
         val reply = XPost(
             id = Uuid.random().toString(),
-            authorId = state.value.currentUserId,
+            authorId = resolvedAuthorId,
             body = body,
             createdAtMillis = System.currentTimeMillis(),
             replyToPostId = postId,
@@ -163,6 +208,9 @@ class XTimelineRepository(
                     }
                 }
             )
+        }
+        if (source == XPostSource.USER && resolvedAuthorId == state.value.currentUserId) {
+            maybeRunBotAutomation(triggerPostId = reply.id)
         }
         return reply
     }
@@ -195,6 +243,7 @@ class XTimelineRepository(
         mutatePost(postId) { post ->
             post.copy(viewCount = post.viewCount + 1)
         }
+        maybeRunBotAutomation()
     }
 
     fun getPost(postId: String): XPost? = state.value.posts.firstOrNull { it.id == postId }
@@ -206,6 +255,255 @@ class XTimelineRepository(
     fun repliesFor(postId: String): List<XResolvedPost> = state.value.repliesFor(postId)
 
     private fun postExists(postId: String): Boolean = getPost(postId) != null
+
+    private suspend fun syncBotAuthors(settings: Settings) {
+        val botAuthors = settings.getBotAssistants().map { assistant ->
+            assistant.toXAuthor()
+        }
+        updateState { timeline ->
+            timeline.copy(
+                authors = timeline.authors
+                    .filterNot { author -> author.id.startsWith(ASSISTANT_AUTHOR_PREFIX) }
+                    .filterNot { author -> author.id in DEPRECATED_AUTHOR_IDS } + botAuthors
+            )
+        }
+    }
+
+    private suspend fun maybeRunBotAutomation(triggerPostId: String? = null) {
+        val settings = settingsStore.settingsFlow.value
+        val config = settings.pluginSettings.x
+        val botAssistants = settings.getBotAssistants()
+        if (!config.enabled || !config.botAutomationEnabled || botAssistants.isEmpty()) return
+
+        val cooldownMillis = config.botActivityLevel.cooldownMinutes * 60_000L
+        val now = System.currentTimeMillis()
+        if (now - config.lastBotActivityAt < cooldownMillis) return
+
+        syncBotAuthors(settings)
+        val action = planBotAction(
+            timeline = state.value,
+            settings = settings,
+            botAssistants = botAssistants,
+            config = config,
+            triggerPostId = triggerPostId,
+        ) ?: return
+
+        when (action) {
+            is PlannedBotAction.Publish -> {
+                publishPost(
+                    text = action.text,
+                    quotePostId = action.quotePostId,
+                    source = XPostSource.SYSTEM,
+                    authorId = action.authorId,
+                )
+            }
+
+            is PlannedBotAction.Reply -> {
+                replyToPost(
+                    postId = action.postId,
+                    text = action.text,
+                    source = XPostSource.SYSTEM,
+                    authorId = action.authorId,
+                )
+            }
+        }
+
+        settingsStore.update { old ->
+            old.copy(
+                pluginSettings = old.pluginSettings.copy(
+                    x = old.pluginSettings.x.copy(lastBotActivityAt = now)
+                )
+            )
+        }
+    }
+
+    private fun planBotAction(
+        timeline: XTimelineState,
+        settings: Settings,
+        botAssistants: List<Assistant>,
+        config: me.rerere.rikkahub.data.plugin.XPluginConfig,
+        triggerPostId: String?,
+    ): PlannedBotAction? {
+        val random = Random(System.currentTimeMillis())
+        val botActors = botAssistants.mapNotNull { assistant ->
+            val authorId = assistant.toAuthorId()
+            if (timeline.findAuthor(authorId) == null) return@mapNotNull null
+            assistant to authorId
+        }
+        if (botActors.isEmpty()) return null
+
+        val interactionMode = config.botInteractionMode
+        val triggerPost = triggerPostId?.let(timeline::resolvePost)
+        if (config.botReplyToUserPosts && triggerPost != null && triggerPost.author.id == timeline.currentUserId) {
+            val (assistant, authorId) = botActors.random(random)
+            val actualMode = resolveInteractionMode(interactionMode, random)
+            val responseText = buildBotResponseText(
+                assistant = assistant,
+                targetPost = triggerPost.post,
+                settings = settings,
+                quoteStyle = actualMode == XBotInteractionMode.Quote
+            )
+            return when (actualMode) {
+                XBotInteractionMode.Reply -> PlannedBotAction.Reply(
+                    authorId = authorId,
+                    postId = triggerPost.post.id,
+                    text = responseText,
+                )
+
+                XBotInteractionMode.Quote,
+                XBotInteractionMode.Mixed -> PlannedBotAction.Publish(
+                    authorId = authorId,
+                    text = responseText,
+                    quotePostId = triggerPost.post.id,
+                )
+            }
+        }
+
+        val botTopLevelPosts = timeline.posts
+            .filter { post ->
+                post.replyToPostId == null &&
+                    post.authorId.startsWith(ASSISTANT_AUTHOR_PREFIX)
+            }
+        val shouldInteractWithBots = config.botInteractWithOtherBots &&
+            botTopLevelPosts.isNotEmpty() &&
+            (!config.botAutoPostEnabled || random.nextBoolean())
+
+        if (shouldInteractWithBots) {
+            val targetPost = botTopLevelPosts.random(random)
+            val availableActors = botActors.filterNot { (_, authorId) -> authorId == targetPost.authorId }
+            if (availableActors.isNotEmpty()) {
+                val (assistant, authorId) = availableActors.random(random)
+                val actualMode = resolveInteractionMode(interactionMode, random)
+                val responseText = buildBotResponseText(
+                    assistant = assistant,
+                    targetPost = targetPost,
+                    settings = settings,
+                    quoteStyle = actualMode == XBotInteractionMode.Quote
+                )
+                return when (actualMode) {
+                    XBotInteractionMode.Reply -> PlannedBotAction.Reply(
+                        authorId = authorId,
+                        postId = targetPost.id,
+                        text = responseText,
+                    )
+
+                    XBotInteractionMode.Quote,
+                    XBotInteractionMode.Mixed -> PlannedBotAction.Publish(
+                        authorId = authorId,
+                        text = responseText,
+                        quotePostId = targetPost.id,
+                    )
+                }
+            }
+        }
+
+        if (config.botAutoPostEnabled) {
+            val (assistant, authorId) = botActors.random(random)
+            return PlannedBotAction.Publish(
+                authorId = authorId,
+                text = buildBotPostText(assistant, settings),
+                quotePostId = null,
+            )
+        }
+
+        return null
+    }
+
+    private fun resolveInteractionMode(
+        configured: XBotInteractionMode,
+        random: Random,
+    ): XBotInteractionMode {
+        return when (configured) {
+            XBotInteractionMode.Mixed -> if (random.nextBoolean()) XBotInteractionMode.Reply else XBotInteractionMode.Quote
+            else -> configured
+        }
+    }
+
+    private fun buildBotPostText(
+        assistant: Assistant,
+        settings: Settings,
+    ): String {
+        val focus = assistant.systemPrompt.firstMeaningfulLine()
+        val modelName = settings.findModelById(assistant.chatModelId ?: settings.chatModelId)?.displayName
+        return when {
+            !focus.isNullOrBlank() && !modelName.isNullOrBlank() ->
+                "${focus.take(64)}\n\n先给一个明确判断，再补充一条可执行的观点。$modelName 这边我会继续跟。"
+
+            !focus.isNullOrBlank() ->
+                "${focus.take(64)}\n\n先给结论：这条值得继续跟，后面大概率还会有新变化。"
+
+            else ->
+                "先记一个判断：这条时间线还没走完，后面更值得看的是观点怎么分化。"
+        }
+    }
+
+    private fun buildBotResponseText(
+        assistant: Assistant,
+        targetPost: XPost,
+        settings: Settings,
+        quoteStyle: Boolean,
+    ): String {
+        val focus = assistant.systemPrompt.firstMeaningfulLine()
+        val modelName = settings.findModelById(assistant.chatModelId ?: settings.chatModelId)?.displayName
+        val opener = if (quoteStyle) "补一个角度：" else "这个点我会这样看："
+        val snippet = targetPost.body.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty().take(42)
+        return when {
+            !focus.isNullOrBlank() && !modelName.isNullOrBlank() ->
+                "$opener $snippet\n\n${focus.take(56)}。$modelName 更适合继续跟这个方向。"
+
+            !focus.isNullOrBlank() ->
+                "$opener $snippet\n\n${focus.take(56)}。"
+
+            else ->
+                "$opener $snippet\n\n先说结论，这条讨论还有继续展开的空间。"
+        }
+    }
+
+    private fun topLevelTagsForAuthor(authorId: String): List<String> {
+        return buildList {
+            add("For You")
+            if (authorId == state.value.currentUserId) {
+                add("Following")
+            } else {
+                add("AI Watch")
+            }
+        }
+    }
+
+    private fun Assistant.toAuthorId(): String = "$ASSISTANT_AUTHOR_PREFIX$id"
+
+    private fun Assistant.toXAuthor(): XAuthor {
+        val avatarUrl = (avatar as? Avatar.Image)?.url
+        val initials = when (avatar) {
+            is Avatar.Emoji -> avatar.content
+            else -> name.ifBlank { "Bot" }.trim().take(2).uppercase()
+        }
+        return XAuthor(
+            id = toAuthorId(),
+            displayName = name.ifBlank { "Untitled Bot" },
+            handle = "@${name.ifBlank { "bot" }.lowercase().replace(Regex("[^a-z0-9]+"), "").take(12).ifBlank { "bot${id.toString().take(4)}" }}",
+            bio = systemPrompt.firstMeaningfulLine().orEmpty(),
+            initials = initials,
+            avatarColorHex = botAvatarColor(name.ifBlank { id.toString() }),
+            avatarUrl = avatarUrl,
+            isBot = true,
+        )
+    }
+
+    private fun Assistant.firstMeaningfulLine(): String? = systemPrompt.firstMeaningfulLine()
+
+    private fun String.firstMeaningfulLine(): String? =
+        lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() }
+
+    private fun botAvatarColor(seed: String): Long {
+        val palette = listOf(
+            0xFF111214L,
+            0xFF1C1C1EL,
+            0xFF2C2C2EL,
+            0xFF3A3A3CL,
+        )
+        return palette[(seed.hashCode().absoluteValue) % palette.size]
+    }
 
     private suspend fun mutatePost(postId: String, update: (XPost) -> XPost): XPost {
         var updatedPost: XPost? = null
@@ -308,18 +606,6 @@ class XTimelineRepository(
                 avatarColorHex = 0xFF000000,
                 verified = true,
             ),
-            XAuthor(
-                id = "author-grok",
-                displayName = "Grok",
-                handle = "@grok",
-                bio = "Live context and fast synthesis.",
-                initials = "G",
-                avatarColorHex = 0xFF0F1419,
-                avatarUrl = null,
-                isBot = true,
-                botSummary = "已接入 ZionChat Bot 系统，可继续在助手中心管理提示词、工具与记忆。",
-                botTags = listOf("Bot", "实时上下文", "工具调用"),
-            ),
         )
 
         val robertTranscriptPost = XPost(
@@ -328,7 +614,7 @@ class XTimelineRepository(
             body = "Did someone turn the speed knob up on @Grok?\n\nJust did another transcript reading and, damn, it is way faster than last time I asked it to do the same.",
             createdAtMillis = now - 7 * HOUR_MILLIS,
             likeCount = 302,
-            replyCount = 1,
+            replyCount = 0,
             repostCount = 15,
             bookmarkCount = 19,
             viewCount = 5_710_000,
@@ -383,31 +669,8 @@ class XTimelineRepository(
                 tags = listOf("For You", "Following", "AI Watch"),
                 feedTimeLabel = "1小时",
             ),
-            XPost(
-                id = "post-grok-bot-system",
-                authorId = "author-grok",
-                body = "Bot system is now wired into ZionChat.\n\nYou can continue in the assistant center to manage prompts, tools, memory and MCP for this bot.",
-                createdAtMillis = now - 30 * 60_000L,
-                source = XPostSource.AI_ASSISTANT,
-                likeCount = 864,
-                replyCount = 57,
-                repostCount = 34,
-                viewCount = 92_600,
-                tags = listOf("For You", "AI Watch"),
-                feedTimeLabel = "30分钟",
-            ),
             robertTranscriptPost,
             chetasQuotePost,
-            XPost(
-                id = "post-grok-reply",
-                authorId = "author-grok",
-                body = "Thanks! We've been optimizing hard at xAI—speed improvements like this are rolling out fast. Glad the transcript readings feel snappier. What else are you testing?",
-                createdAtMillis = now - 7 * HOUR_MILLIS,
-                replyToPostId = robertTranscriptPost.id,
-                source = XPostSource.AI_ASSISTANT,
-                tags = listOf("Replies"),
-                feedTimeLabel = "7小时",
-            )
         )
 
         return XTimelineState(
@@ -462,10 +725,10 @@ private fun XTimelineState.upgradeSeed(seed: XTimelineState): XTimelineState {
     if (seedVersion >= CURRENT_TIMELINE_SEED_VERSION) return this
 
     val seededAuthorIds = seed.authors.map { it.id }.toSet()
-    val mergedAuthors = (seed.authors + authors.filterNot { it.id in seededAuthorIds })
+    val mergedAuthors = (seed.authors + authors.filterNot { it.id in seededAuthorIds || it.id in DEPRECATED_AUTHOR_IDS })
         .distinctBy { it.id }
     val seededPostIds = seed.posts.map { it.id }.toSet()
-    val mergedPosts = (seed.posts + posts.filterNot { it.id in seededPostIds })
+    val mergedPosts = (seed.posts + posts.filterNot { it.id in seededPostIds || it.id in DEPRECATED_POST_IDS })
         .distinctBy { it.id }
         .sortedByDescending { it.createdAtMillis }
 
@@ -482,14 +745,18 @@ private fun XTimelineState.sanitize(fallback: XTimelineState): XTimelineState {
     if (authors.isEmpty()) return fallback
 
     val sanitizedAuthors = authors
-        .filter { it.id.isNotBlank() }
+        .filter { it.id.isNotBlank() && it.id !in DEPRECATED_AUTHOR_IDS }
         .distinctBy { it.id }
 
     if (sanitizedAuthors.isEmpty()) return fallback
 
     val authorIds = sanitizedAuthors.map { it.id }.toSet()
     val candidatePosts = posts
-        .filter { post -> post.id.isNotBlank() && post.authorId in authorIds }
+        .filter { post ->
+            post.id.isNotBlank() &&
+                post.id !in DEPRECATED_POST_IDS &&
+                post.authorId in authorIds
+        }
         .distinctBy { it.id }
     val validPostIds = candidatePosts.map { it.id }.toSet()
 

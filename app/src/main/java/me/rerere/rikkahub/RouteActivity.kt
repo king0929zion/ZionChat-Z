@@ -296,27 +296,27 @@ class RouteActivity : ComponentActivity() {
                             }
 
                             entry<Screen.AssistantBasic> { key ->
-                                AssistantBasicPage(key.id)
+                                AssistantDetailPage(key.id)
                             }
 
                             entry<Screen.AssistantPrompt> { key ->
-                                AssistantPromptPage(key.id)
+                                AssistantDetailPage(key.id)
                             }
 
                             entry<Screen.AssistantMemory> { key ->
-                                AssistantMemoryPage(key.id)
+                                AssistantDetailPage(key.id)
                             }
 
                             entry<Screen.AssistantRequest> { key ->
-                                AssistantRequestPage(key.id)
+                                AssistantDetailPage(key.id)
                             }
 
                             entry<Screen.AssistantMcp> { key ->
-                                AssistantMcpPage(key.id)
+                                AssistantDetailPage(key.id)
                             }
 
                             entry<Screen.AssistantLocalTool> { key ->
-                                AssistantLocalToolPage(key.id)
+                                AssistantDetailPage(key.id)
                             }
 
                             entry<Screen.Translator> {

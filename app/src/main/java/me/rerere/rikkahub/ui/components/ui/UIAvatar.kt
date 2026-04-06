@@ -83,7 +83,7 @@ fun TextAvatar(
 fun UIAvatar(
     name: String,
     value: Avatar,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(32.dp),
     loading: Boolean = false,
     onUpdate: ((Avatar) -> Unit)? = null,
     onClick: (() -> Unit)? = null
@@ -105,7 +105,7 @@ fun UIAvatar(
         }
     }
 
-    Box(modifier = modifier.size(32.dp)) {
+    Box(modifier = modifier) {
         Surface(
             shape = rememberAvatarShape(loading),
             modifier = Modifier.fillMaxSize(),

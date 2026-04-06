@@ -21,6 +21,13 @@ data class XPluginConfig(
     val likePost: Boolean = true,
     val repostPost: Boolean = true,
     val bookmarkPost: Boolean = true,
+    val botAutomationEnabled: Boolean = false,
+    val botAutoPostEnabled: Boolean = false,
+    val botReplyToUserPosts: Boolean = true,
+    val botInteractWithOtherBots: Boolean = false,
+    val botInteractionMode: XBotInteractionMode = XBotInteractionMode.Mixed,
+    val botActivityLevel: XBotActivityLevel = XBotActivityLevel.Medium,
+    val lastBotActivityAt: Long = 0L,
 ) {
     fun enabledToolCount(): Int {
         if (!enabled) return 0
@@ -50,6 +57,22 @@ data class XPluginConfig(
         XPluginTool.RepostPost -> copy(repostPost = value)
         XPluginTool.BookmarkPost -> copy(bookmarkPost = value)
     }
+}
+
+@Serializable
+enum class XBotInteractionMode {
+    Reply,
+    Quote,
+    Mixed,
+}
+
+@Serializable
+enum class XBotActivityLevel(
+    val cooldownMinutes: Int,
+) {
+    Low(240),
+    Medium(120),
+    High(45),
 }
 
 enum class XPluginTool(

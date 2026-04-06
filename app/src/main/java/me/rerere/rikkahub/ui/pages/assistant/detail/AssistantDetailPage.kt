@@ -1,130 +1,149 @@
 package me.rerere.rikkahub.ui.pages.assistant.detail
 
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.BookOpen01
-import me.rerere.hugeicons.stroke.ArrowRight01
-import me.rerere.hugeicons.stroke.Code
-import me.rerere.hugeicons.stroke.Message02
-import me.rerere.hugeicons.stroke.Settings03
-import me.rerere.hugeicons.stroke.Wrench01
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import me.rerere.ai.provider.Model
+import me.rerere.ai.provider.ModelType
 import me.rerere.rikkahub.R
-import me.rerere.rikkahub.Screen
-import me.rerere.rikkahub.data.model.Assistant
-import me.rerere.rikkahub.ui.components.nav.BackButton
-import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
-import me.rerere.rikkahub.ui.components.ui.CardGroup
+import me.rerere.rikkahub.data.datastore.findModelById
+import me.rerere.rikkahub.ui.components.ai.ModelSelector
+import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
 import me.rerere.rikkahub.ui.context.LocalNavController
-import me.rerere.rikkahub.ui.hooks.heroAnimation
-import me.rerere.rikkahub.ui.icons.ZionAppIcons
-import me.rerere.rikkahub.ui.theme.CustomColors
-import me.rerere.rikkahub.utils.plus
+import me.rerere.rikkahub.ui.theme.SourceSans3
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutral
+import me.rerere.rikkahub.ui.theme.ZionAccentNeutralBorder
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
+import me.rerere.rikkahub.ui.theme.ZionTextPrimary
+import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AssistantDetailPage(id: String) {
     val vm: AssistantDetailVM = koinViewModel(
-        parameters = {
-            parametersOf(id)
-        }
+        parameters = { parametersOf(id) }
     )
-    val assistant by vm.assistant.collectAsStateWithLifecycle()
     val navController = LocalNavController.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val assistant by vm.assistant.collectAsStateWithLifecycle()
+    val providers by vm.providers.collectAsStateWithLifecycle()
+    val settings by vm.settings.collectAsStateWithLifecycle()
+    val inheritedModelName = settings.findModelById(settings.chatModelId)?.displayName
+    val untitledBotLabel = stringResource(R.string.assistant_page_default_assistant)
+    val displayName = assistant.name.ifBlank { untitledBotLabel }
 
-    Scaffold(
-        topBar = {
-            AutoPageTopBar(
-                title = assistant.name.ifBlank {
-                    stringResource(R.string.assistant_page_default_assistant)
-                }
-            )
-        },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = CustomColors.topBarColors.containerColor
-    ) { innerPadding ->
+    SettingsPage(
+        title = displayName,
+        onBack = { navController.popBackStack() }
+    ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = innerPadding + PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = PageTopBarContentTopPadding,
+                bottom = 32.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                AssistantHeader(
-                    assistant = assistant,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)
-                )
+            item("avatar") {
+                FieldSection(title = stringResource(R.string.assistant_page_avatar).uppercase()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        UIAvatar(
+                            name = displayName,
+                            value = assistant.avatar,
+                            onUpdate = { avatar ->
+                                vm.update(assistant.copy(avatar = avatar))
+                            },
+                            modifier = Modifier.size(88.dp)
+                        )
+                    }
+                }
             }
 
-            item {
-                CardGroup(
-                    modifier = Modifier.padding(horizontal = 8.dp),
+            item("name") {
+                FieldSection(title = stringResource(R.string.assistant_page_name).uppercase()) {
+                    OutlinedTextField(
+                        value = assistant.name,
+                        onValueChange = { vm.update(assistant.copy(name = it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = {
+                            Text(stringResource(R.string.assistant_page_default_assistant))
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(18.dp),
+                        colors = botTextFieldColors()
+                    )
+                }
+            }
+
+            item("model") {
+                FieldSection(
+                    title = stringResource(R.string.setting_model_page_chat_model).uppercase(),
+                    supporting = if (assistant.chatModelId == null && !inheritedModelName.isNullOrBlank()) {
+                        stringResource(R.string.assistant_page_inherited_model, inheritedModelName)
+                    } else {
+                        null
+                    }
                 ) {
-                    item(
-                        onClick = { navController.navigate(Screen.AssistantBasic(id)) },
-                        leadingContent = { Icon(HugeIcons.Settings03, null) },
-                        supportingContent = { Text(stringResource(R.string.assistant_detail_basic_desc)) },
-                        headlineContent = { Text(stringResource(R.string.assistant_page_tab_basic)) },
-                        trailingContent = { Icon(HugeIcons.ArrowRight01, null) },
-                    )
-                    item(
-                        onClick = { navController.navigate(Screen.AssistantPrompt(id)) },
-                        leadingContent = { Icon(HugeIcons.Message02, null) },
-                        supportingContent = { Text(stringResource(R.string.assistant_detail_prompt_desc)) },
-                        headlineContent = { Text(stringResource(R.string.assistant_page_tab_prompt)) },
-                        trailingContent = { Icon(HugeIcons.ArrowRight01, null) },
-                    )
-                    item(
-                        onClick = { navController.navigate(Screen.AssistantMemory(id)) },
-                        leadingContent = { Icon(ZionAppIcons.Memory, null, tint = Color.Unspecified) },
-                        supportingContent = { Text(stringResource(R.string.assistant_detail_memory_desc)) },
-                        headlineContent = { Text(stringResource(R.string.assistant_page_tab_memory)) },
-                        trailingContent = { Icon(HugeIcons.ArrowRight01, null) },
-                    )
-                    item(
-                        onClick = { navController.navigate(Screen.AssistantRequest(id)) },
-                        leadingContent = { Icon(HugeIcons.Code, null) },
-                        supportingContent = { Text(stringResource(R.string.assistant_detail_request_desc)) },
-                        headlineContent = { Text(stringResource(R.string.assistant_page_tab_request)) },
-                        trailingContent = { Icon(HugeIcons.ArrowRight01, null) },
-                    )
-                    item(
-                        onClick = { navController.navigate(Screen.AssistantMcp(id)) },
-                        leadingContent = { Icon(HugeIcons.Wrench01, null) },
-                        supportingContent = { Text(stringResource(R.string.assistant_detail_mcp_desc)) },
-                        headlineContent = { Text(stringResource(R.string.assistant_page_tab_mcp)) },
-                        trailingContent = { Icon(HugeIcons.ArrowRight01, null) },
-                    )
-                    item(
-                        onClick = { navController.navigate(Screen.AssistantLocalTool(id)) },
-                        leadingContent = { Icon(HugeIcons.BookOpen01, null) },
-                        supportingContent = { Text(stringResource(R.string.assistant_detail_local_tools_desc)) },
-                        headlineContent = { Text(stringResource(R.string.assistant_page_tab_local_tools)) },
-                        trailingContent = { Icon(HugeIcons.ArrowRight01, null) },
+                    ModelSelector(
+                        modelId = assistant.chatModelId ?: settings.chatModelId,
+                        providers = providers,
+                        type = ModelType.CHAT,
+                        allowClear = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { model ->
+                        vm.update(
+                            assistant.copy(
+                                chatModelId = model.asAssistantModelId()
+                            )
+                        )
+                    }
+                }
+            }
+
+            item("prompt") {
+                FieldSection(title = stringResource(R.string.setting_model_page_prompt).uppercase()) {
+                    OutlinedTextField(
+                        value = assistant.systemPrompt,
+                        onValueChange = { vm.update(assistant.copy(systemPrompt = it)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 220.dp),
+                        placeholder = {
+                            Text(stringResource(R.string.assistant_page_prompt_placeholder))
+                        },
+                        minLines = 8,
+                        maxLines = 12,
+                        shape = RoundedCornerShape(18.dp),
+                        colors = botTextFieldColors()
                     )
                 }
             }
@@ -133,39 +152,67 @@ fun AssistantDetailPage(id: String) {
 }
 
 @Composable
-private fun AssistantHeader(
-    assistant: Assistant,
-    modifier: Modifier = Modifier
+private fun FieldSection(
+    title: String,
+    supporting: String? = null,
+    content: @Composable () -> Unit,
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    androidx.compose.foundation.layout.Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        UIAvatar(
-            value = assistant.avatar,
-            name = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
-            onUpdate = null,
-            modifier = Modifier
-                .size(100.dp)
-                .heroAnimation("assistant_${assistant.id}")
-        )
-
         Text(
-            text = assistant.name.ifBlank { stringResource(R.string.assistant_page_default_assistant) },
-            style = MaterialTheme.typography.headlineSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            text = title,
+            fontFamily = SourceSans3,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = ZionTextSecondary,
+            modifier = Modifier.padding(start = 8.dp)
         )
-
-        if (assistant.systemPrompt.isNotBlank()) {
+        supporting?.let {
             Text(
-                text = assistant.systemPrompt.take(100) + if (assistant.systemPrompt.length > 100) "..." else "",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                text = it,
+                fontFamily = SourceSans3,
+                fontSize = 13.sp,
+                color = ZionTextSecondary,
+                modifier = Modifier.padding(start = 8.dp)
             )
         }
+        BotSectionCard(content = content)
     }
+}
+
+@Composable
+private fun BotSectionCard(
+    content: @Composable () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun botTextFieldColors() = TextFieldDefaults.colors(
+    focusedContainerColor = ZionGrayLighter,
+    unfocusedContainerColor = ZionGrayLighter,
+    focusedIndicatorColor = ZionAccentNeutral,
+    unfocusedIndicatorColor = ZionAccentNeutralBorder,
+    focusedTextColor = ZionTextPrimary,
+    unfocusedTextColor = ZionTextPrimary,
+    cursorColor = ZionTextPrimary,
+    focusedPlaceholderColor = ZionTextSecondary,
+    unfocusedPlaceholderColor = ZionTextSecondary
+)
+
+private fun Model.asAssistantModelId() = id.takeIf {
+    modelId.isNotBlank() || displayName.isNotBlank()
 }

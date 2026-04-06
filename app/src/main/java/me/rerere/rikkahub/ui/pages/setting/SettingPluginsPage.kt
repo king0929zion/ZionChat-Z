@@ -26,7 +26,6 @@ import me.rerere.rikkahub.data.plugin.XPluginTool
 import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
-import me.rerere.rikkahub.ui.components.ui.Switch
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import org.koin.androidx.compose.koinViewModel
@@ -115,7 +114,7 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
                             )
                         },
                         trailingContent = {
-                            Switch(
+                            PluginSystemSwitch(
                                 checked = xConfig.enabled,
                                 onCheckedChange = { enabled ->
                                     vm.updateSettings(
