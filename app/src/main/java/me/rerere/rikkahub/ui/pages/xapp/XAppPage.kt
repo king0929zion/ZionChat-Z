@@ -54,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -424,19 +425,28 @@ private fun XFeedLayer(
                     .background(XWhite)
             ) {
                 Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
-                Column(
-                    modifier = Modifier.graphicsLayer { translationY = -topBarCollapsePx }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(topBarVisibleHeightDp)
+                        .clipToBounds()
                 ) {
-                    XFeedTopBar(
-                        currentUser = currentUser,
-                        onBack = onBack,
-                        onOpenMore = onOpenMore,
-                    )
-                    XFeedTabs(
-                        selectedTab = selectedTab,
-                        onSelectTab = onSelectTab,
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer { translationY = -topBarCollapsePx }
+                    ) {
+                        XFeedTopBar(
+                            currentUser = currentUser,
+                            onBack = onBack,
+                            onOpenMore = onOpenMore,
+                        )
+                    }
                 }
+                XFeedTabs(
+                    selectedTab = selectedTab,
+                    onSelectTab = onSelectTab,
+                )
             }
 
             XFloatingComposeButton(
