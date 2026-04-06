@@ -57,6 +57,7 @@
   <string name="assistant_page_default_assistant">未命名 Bot</string>
   <string name="assistant_page_empty_title">还没有 Bots</string>
   <string name="assistant_page_empty_desc">先创建一个 Bot，再设置它的头像、默认模型和提示词。</string>
+  <string name="assistant_page_model_summary">Model: %1$s</string>
   <string name="assistant_page_inherited_model">当前使用全局默认模型：%1$s</string>
   <string name="assistant_page_delete">删除</string>
   <string name="assistant_page_delete_body">删除 Body</string>

@@ -57,6 +57,7 @@
   <string name="assistant_page_default_assistant">Untitled Bot</string>
   <string name="assistant_page_empty_title">No bots yet</string>
   <string name="assistant_page_empty_desc">Create a bot first, then set its avatar, default model, and prompt.</string>
+  <string name="assistant_page_model_summary">Model: %1$s</string>
   <string name="assistant_page_inherited_model">Using the global default model: %1$s</string>
   <string name="assistant_page_delete">Delete</string>
   <string name="assistant_page_delete_body">Delete Body</string>
