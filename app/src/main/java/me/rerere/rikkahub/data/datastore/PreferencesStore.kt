@@ -544,7 +544,7 @@ fun Settings.getPersonalizationAssistant(): Assistant {
 
 fun Settings.getBotAssistants(): List<Assistant> {
     return this.assistants
-        .filterNot { it.id == DEFAULT_ASSISTANT_ID }
+        .filterNot { it.id in DEFAULT_ASSISTANTS_IDS }
         .map { it.normalizeMemoryBehavior() }
 }
 

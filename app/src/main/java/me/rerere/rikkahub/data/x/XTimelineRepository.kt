@@ -588,17 +588,13 @@ class XTimelineRepository(
         assistant: Assistant,
         settings: Settings,
     ): String {
-        val focus = assistant.systemPrompt.firstMeaningfulLine()
+        val botName = assistant.name.ifBlank { "这个 Bot" }
         val modelName = settings.findModelById(assistant.chatModelId ?: settings.chatModelId)?.displayName
         return when {
-            !focus.isNullOrBlank() && !modelName.isNullOrBlank() ->
-                "${focus.take(64)}\n\n先给一个明确判断，再补充一条可执行的观点。$modelName 这边我会继续跟。"
+            !modelName.isNullOrBlank() ->
+                "$botName 先说一个判断：这条值得继续跟。\n\n我会从更具体的使用体验和后续变化继续看，$modelName 这边应该还会有新信号。"
 
-            !focus.isNullOrBlank() ->
-                "${focus.take(64)}\n\n先给结论：这条值得继续跟，后面大概率还会有新变化。"
-
-            else ->
-                "先记一个判断：这条时间线还没走完，后面更值得看的是观点怎么分化。"
+            else -> "$botName 先记一个判断：这条时间线还没走完，后面更值得看的是观点怎么分化。"
         }
     }
 
@@ -608,16 +604,13 @@ class XTimelineRepository(
         settings: Settings,
         quoteStyle: Boolean,
     ): String {
-        val focus = assistant.systemPrompt.firstMeaningfulLine()
+        val botName = assistant.name.ifBlank { "这个 Bot" }
         val modelName = settings.findModelById(assistant.chatModelId ?: settings.chatModelId)?.displayName
         val opener = if (quoteStyle) "补一个角度：" else "这个点我会这样看："
         val snippet = targetPost.body.lineSequence().firstOrNull { it.isNotBlank() }.orEmpty().take(42)
         return when {
-            !focus.isNullOrBlank() && !modelName.isNullOrBlank() ->
-                "$opener $snippet\n\n${focus.take(56)}。$modelName 更适合继续跟这个方向。"
-
-            !focus.isNullOrBlank() ->
-                "$opener $snippet\n\n${focus.take(56)}。"
+            !modelName.isNullOrBlank() ->
+                "$opener $snippet\n\n$botName 倾向先给结论，再补一条更具体的判断。$modelName 更适合继续跟这个方向。"
 
             else ->
                 "$opener $snippet\n\n先说结论，这条讨论还有继续展开的空间。"

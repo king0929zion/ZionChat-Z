@@ -160,6 +160,7 @@ fun ModelSelector(
 fun ChatModelPickerSheet(
     selectedModelId: Uuid?,
     providers: List<ProviderSetting>,
+    allowClear: Boolean = false,
     onSelect: (Model) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -168,9 +169,9 @@ fun ChatModelPickerSheet(
         selectedModelId = selectedModelId,
         providers = providers,
         modelType = ModelType.CHAT,
-        allowClear = false,
+        allowClear = allowClear,
         onSelect = { model ->
-            model?.let(onSelect)
+            onSelect(model ?: Model())
             onDismiss()
         },
         onDismiss = onDismiss,
