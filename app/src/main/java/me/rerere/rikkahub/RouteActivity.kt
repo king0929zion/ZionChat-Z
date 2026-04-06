@@ -96,6 +96,7 @@ import me.rerere.rikkahub.ui.pages.setting.SettingPluginsPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSearchPage
+import me.rerere.rikkahub.ui.pages.setting.SettingTelegramPluginPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTTSPage
 import me.rerere.rikkahub.ui.pages.setting.SettingXPluginPage
 import me.rerere.rikkahub.ui.pages.translator.TranslatorPage
@@ -387,6 +388,10 @@ class RouteActivity : ComponentActivity() {
                                 SettingXPluginPage()
                             }
 
+                            entry<Screen.SettingTelegramPlugin> {
+                                SettingTelegramPluginPage()
+                            }
+
                             entry<Screen.SettingFiles> {
                                 SettingFilesPage()
                             }
@@ -559,6 +564,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object SettingXPlugin : Screen
+
+    @Serializable
+    data object SettingTelegramPlugin : Screen
 
     @Serializable
     data object SettingFiles : Screen

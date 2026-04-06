@@ -1,14 +1,95 @@
 package me.rerere.rikkahub.data.plugin
 
 import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
 @Serializable
 data class PluginSettings(
     val x: XPluginConfig = XPluginConfig(),
+    val telegram: TelegramPluginConfig = TelegramPluginConfig(),
 ) {
-    fun enabledPluginCount(): Int = listOf(x.enabled).count { it }
+    fun enabledPluginCount(): Int = listOf(x.enabled, telegram.enabled).count { it }
 
     fun hasAnyEnabledTools(): Boolean = x.enabledToolCount() > 0
+}
+
+@Serializable
+data class TelegramPluginConfig(
+    val enabled: Boolean = false,
+    val botToken: String = "",
+    val allowedUsersRaw: String = "",
+    val modelId: Uuid? = null,
+    val lastUpdateId: Long = 0L,
+    val sessions: List<TelegramChatSession> = emptyList(),
+) {
+    fun hasToken(): Boolean = botToken.trim().isNotEmpty()
+
+    fun normalizedAllowedEntries(): List<String> {
+        return allowedUsersRaw
+            .lineSequence()
+            .flatMap { line ->
+                line.split(',', '，', ' ', '\t')
+                    .asSequence()
+            }
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .toList()
+    }
+
+    fun allowedIdentityCount(): Int = normalizedAllowedEntries().size
+
+    fun hasAllowedUsers(): Boolean = allowedIdentityCount() > 0
+
+    fun sessionFor(chatId: Long): TelegramChatSession? {
+        return sessions.firstOrNull { it.chatId == chatId }
+    }
+
+    fun upsertSession(
+        chatId: Long,
+        title: String,
+        transform: (TelegramChatSession) -> TelegramChatSession,
+    ): TelegramPluginConfig {
+        val base = sessionFor(chatId) ?: TelegramChatSession(
+            chatId = chatId,
+            title = title,
+        )
+        val transformed = transform(base)
+        val updated = transformed.copy(
+            title = title.ifBlank { base.title },
+            updatedAt = System.currentTimeMillis(),
+            messages = transformed.messages
+                .takeLast(12)
+                .map { message -> message.copy(text = message.text.take(1200)) }
+        )
+        val nextSessions = sessions
+            .filterNot { it.chatId == chatId }
+            .plus(updated)
+            .sortedByDescending { it.updatedAt }
+            .take(8)
+        return copy(sessions = nextSessions)
+    }
+}
+
+@Serializable
+data class TelegramChatSession(
+    val chatId: Long,
+    val title: String = "",
+    val updatedAt: Long = 0L,
+    val messages: List<TelegramChatMessage> = emptyList(),
+)
+
+@Serializable
+data class TelegramChatMessage(
+    val role: TelegramChatRole,
+    val text: String,
+    val createdAt: Long = System.currentTimeMillis(),
+)
+
+@Serializable
+enum class TelegramChatRole {
+    User,
+    Assistant,
 }
 
 @Serializable

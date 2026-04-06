@@ -35,6 +35,7 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
     val navController = LocalNavController.current
     val settings by vm.settings.collectAsStateWithLifecycle()
     val xConfig = settings.pluginSettings.x
+    val telegramConfig = settings.pluginSettings.telegram
 
     SettingsPage(
         title = stringResource(R.string.plugins_page_title),
@@ -89,6 +90,24 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
                             androidx.compose.material3.Text(stringResource(R.string.plugins_enabled_x_tools_label))
                         },
                     )
+                    item(
+                        leadingContent = {
+                            androidx.compose.material3.Icon(
+                                painter = painterResource(R.drawable.ic_plugin_telegram),
+                                contentDescription = null,
+                                tint = ZionTextPrimary,
+                            )
+                        },
+                        trailingContent = {
+                            androidx.compose.material3.Text(
+                                text = telegramConfig.allowedIdentityCount().toString(),
+                                color = ZionTextPrimary,
+                            )
+                        },
+                        headlineContent = {
+                            androidx.compose.material3.Text(stringResource(R.string.plugins_enabled_telegram_users_label))
+                        },
+                    )
                 }
             }
 
@@ -131,6 +150,40 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
                             androidx.compose.material3.Text(stringResource(R.string.plugins_x_page_title))
                         },
                     )
+                    item(
+                        onClick = { navController.navigate(Screen.SettingTelegramPlugin) },
+                        leadingContent = { TelegramLogoTile() },
+                        supportingContent = {
+                            androidx.compose.material3.Text(
+                                text = when {
+                                    !telegramConfig.enabled -> stringResource(R.string.plugins_telegram_disabled_summary)
+                                    !telegramConfig.hasToken() -> stringResource(R.string.plugins_telegram_missing_token_summary)
+                                    !telegramConfig.hasAllowedUsers() -> stringResource(R.string.plugins_telegram_missing_allowed_users_summary)
+                                    else -> stringResource(
+                                        R.string.plugins_telegram_enabled_summary,
+                                        telegramConfig.allowedIdentityCount(),
+                                    )
+                                }
+                            )
+                        },
+                        trailingContent = {
+                            PluginSystemSwitch(
+                                checked = telegramConfig.enabled,
+                                onCheckedChange = { enabled ->
+                                    vm.updateSettings(
+                                        settings.copy(
+                                            pluginSettings = settings.pluginSettings.copy(
+                                                telegram = telegramConfig.copy(enabled = enabled)
+                                            )
+                                        )
+                                    )
+                                }
+                            )
+                        },
+                        headlineContent = {
+                            androidx.compose.material3.Text(stringResource(R.string.plugins_telegram_page_title))
+                        },
+                    )
                 }
             }
         }
@@ -141,6 +194,40 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
 internal fun PluginLogoTile(
     modifier: Modifier = Modifier,
 ) {
+    PluginIconTile(
+        modifier = modifier,
+        content = {
+            Image(
+                painter = painterResource(R.drawable.zphone_x_logo),
+                contentDescription = "X",
+                modifier = Modifier.size(15.dp)
+            )
+        }
+    )
+}
+
+@Composable
+internal fun TelegramLogoTile(
+    modifier: Modifier = Modifier,
+) {
+    PluginIconTile(
+        modifier = modifier,
+        content = {
+            androidx.compose.material3.Icon(
+                painter = painterResource(R.drawable.ic_plugin_telegram),
+                contentDescription = "Telegram",
+                tint = Color.White,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    )
+}
+
+@Composable
+private fun PluginIconTile(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
     Box(
         modifier = modifier
             .size(28.dp)
@@ -148,10 +235,6 @@ internal fun PluginLogoTile(
             .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(R.drawable.zphone_x_logo),
-            contentDescription = "X",
-            modifier = Modifier.size(15.dp)
-        )
+        content()
     }
 }

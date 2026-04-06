@@ -29,6 +29,7 @@ import me.rerere.rikkahub.di.repositoryModule
 import me.rerere.rikkahub.di.viewModelModule
 import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.plugin.telegram.TelegramPluginService
 import me.rerere.rikkahub.utils.DatabaseUtil
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
@@ -59,6 +60,9 @@ class RikkaHubApp : Application() {
 
         // sync upload files to DB
         syncManagedFiles()
+
+        // start plugin runtime
+        get<TelegramPluginService>().start()
 
         // Init remote config
         get<FirebaseRemoteConfig>().apply {
