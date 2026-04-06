@@ -31,7 +31,7 @@ val repositoryModule = module {
     }
 
     single {
-        XTimelineRepository(get(), get(), get(), get())
+        XTimelineRepository(get(), get(), get(), get(), get())
     }
 
     single {

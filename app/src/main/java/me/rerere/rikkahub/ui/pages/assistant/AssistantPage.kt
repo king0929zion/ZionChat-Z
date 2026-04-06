@@ -2,8 +2,11 @@ package me.rerere.rikkahub.ui.pages.assistant
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -60,14 +63,13 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 top = PageTopBarContentTopPadding,
-                bottom = 28.dp
+                bottom = 24.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item("bots") {
                 CardGroup(
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    title = { Text(stringResource(R.string.assistant_page_title).uppercase()) }
                 ) {
                     if (bots.isEmpty()) {
                         item(
@@ -91,6 +93,8 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                             val resolvedModel = settings.findModelById(
                                 assistant.chatModelId ?: settings.chatModelId
                             )
+                            val modelName = resolvedModel?.displayName
+                                ?: stringResource(R.string.not_set)
                             val displayName = assistant.name.ifBlank { untitledBotLabel }
                             item(
                                 onClick = {
@@ -110,10 +114,26 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
                                     )
                                 },
                                 supportingContent = {
-                                    BotSummaryText(
-                                        modelName = resolvedModel?.displayName,
-                                        prompt = assistant.systemPrompt
-                                    )
+                                    BotPromptPreview(prompt = assistant.systemPrompt)
+                                },
+                                trailingContent = {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Text(
+                                            text = modelName,
+                                            color = ZionTextSecondary,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.widthIn(max = 108.dp)
+                                        )
+                                        Icon(
+                                            imageVector = ZionAppIcons.ChevronRight,
+                                            contentDescription = null,
+                                            tint = ZionTextSecondary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
                                 }
                             )
                         }
@@ -125,28 +145,19 @@ fun AssistantPage(vm: AssistantVM = koinViewModel()) {
 }
 
 @Composable
-private fun BotSummaryText(
-    modelName: String?,
+private fun BotPromptPreview(
     prompt: String,
 ) {
-    val fallbackModelName = stringResource(R.string.not_set)
     val summary = prompt
         .lineSequence()
         .map { it.trim() }
         .firstOrNull { it.isNotEmpty() }
         .orEmpty()
-    val headline = modelName ?: fallbackModelName
 
     Text(
-        text = buildString {
-            append(headline)
-            if (summary.isNotBlank()) {
-                append(" · ")
-                append(summary)
-            }
-        },
+        text = summary.ifBlank { stringResource(R.string.assistant_page_prompt_placeholder) },
         color = ZionTextSecondary,
-        maxLines = 2,
+        maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
 }

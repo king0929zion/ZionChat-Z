@@ -7,18 +7,26 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import me.rerere.ai.provider.ProviderManager
+import me.rerere.ai.provider.TextGenerationParams
+import me.rerere.ai.ui.UIMessage
+import me.rerere.ai.ui.toText
 import me.rerere.rikkahub.AppScope
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.findModelById
+import me.rerere.rikkahub.data.datastore.findProvider
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.datastore.getBotAssistants
 import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.Avatar
 import me.rerere.rikkahub.data.plugin.XBotInteractionMode
 import java.io.File
+import java.util.Locale
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.uuid.Uuid
@@ -119,10 +127,12 @@ class XTimelineRepository(
     private val scope: AppScope,
     private val json: Json,
     private val settingsStore: SettingsStore,
+    private val providerManager: ProviderManager,
 ) {
     private val storageFile = File(context.filesDir, "x_timeline_state.json")
     private val _state = MutableStateFlow(defaultState())
     val state: StateFlow<XTimelineState> = _state.asStateFlow()
+    private val automationMutex = Mutex()
 
     init {
         scope.launch {
@@ -270,54 +280,60 @@ class XTimelineRepository(
     }
 
     private suspend fun maybeRunBotAutomation(triggerPostId: String? = null) {
-        val settings = settingsStore.settingsFlow.value
-        val config = settings.pluginSettings.x
-        val botAssistants = settings.getBotAssistants()
-        if (!config.enabled || !config.botAutomationEnabled || botAssistants.isEmpty()) return
-
-        val cooldownMillis = config.botActivityLevel.cooldownMinutes * 60_000L
-        val now = System.currentTimeMillis()
-        if (now - config.lastBotActivityAt < cooldownMillis) return
-
-        syncBotAuthors(settings)
-        val action = planBotAction(
-            timeline = state.value,
-            settings = settings,
-            botAssistants = botAssistants,
-            config = config,
-            triggerPostId = triggerPostId,
-        ) ?: return
-
-        when (action) {
-            is PlannedBotAction.Publish -> {
-                publishPost(
-                    text = action.text,
-                    quotePostId = action.quotePostId,
-                    source = XPostSource.SYSTEM,
-                    authorId = action.authorId,
-                )
+        automationMutex.withLock {
+            val settings = settingsStore.settingsFlow.value
+            val config = settings.pluginSettings.x
+            val botAssistants = settings.getBotAssistants()
+            if (!config.enabled || !config.botAutomationEnabled || botAssistants.isEmpty()) {
+                return@withLock
             }
 
-            is PlannedBotAction.Reply -> {
-                replyToPost(
-                    postId = action.postId,
-                    text = action.text,
-                    source = XPostSource.SYSTEM,
-                    authorId = action.authorId,
+            val cooldownMillis = config.botActivityLevel.cooldownMinutes * 60_000L
+            val now = System.currentTimeMillis()
+            if (now - config.lastBotActivityAt < cooldownMillis) {
+                return@withLock
+            }
+
+            syncBotAuthors(settings)
+            val action = planBotAction(
+                timeline = state.value,
+                settings = settings,
+                botAssistants = botAssistants,
+                config = config,
+                triggerPostId = triggerPostId,
+            ) ?: return@withLock
+
+            when (action) {
+                is PlannedBotAction.Publish -> {
+                    publishPost(
+                        text = action.text,
+                        quotePostId = action.quotePostId,
+                        source = XPostSource.SYSTEM,
+                        authorId = action.authorId,
+                    )
+                }
+
+                is PlannedBotAction.Reply -> {
+                    replyToPost(
+                        postId = action.postId,
+                        text = action.text,
+                        source = XPostSource.SYSTEM,
+                        authorId = action.authorId,
+                    )
+                }
+            }
+
+            settingsStore.update { old ->
+                old.copy(
+                    pluginSettings = old.pluginSettings.copy(
+                        x = old.pluginSettings.x.copy(lastBotActivityAt = now)
+                    )
                 )
             }
-        }
-
-        settingsStore.update { old ->
-            old.copy(
-                pluginSettings = old.pluginSettings.copy(
-                    x = old.pluginSettings.x.copy(lastBotActivityAt = now)
-                )
-            )
         }
     }
 
-    private fun planBotAction(
+    private suspend fun planBotAction(
         timeline: XTimelineState,
         settings: Settings,
         botAssistants: List<Assistant>,
@@ -339,6 +355,7 @@ class XTimelineRepository(
             val actualMode = resolveInteractionMode(interactionMode, random)
             val responseText = buildBotResponseText(
                 assistant = assistant,
+                timeline = timeline,
                 targetPost = triggerPost.post,
                 settings = settings,
                 quoteStyle = actualMode == XBotInteractionMode.Quote
@@ -376,6 +393,7 @@ class XTimelineRepository(
                 val actualMode = resolveInteractionMode(interactionMode, random)
                 val responseText = buildBotResponseText(
                     assistant = assistant,
+                    timeline = timeline,
                     targetPost = targetPost,
                     settings = settings,
                     quoteStyle = actualMode == XBotInteractionMode.Quote
@@ -419,7 +437,155 @@ class XTimelineRepository(
         }
     }
 
-    private fun buildBotPostText(
+    private suspend fun buildBotPostText(
+        assistant: Assistant,
+        settings: Settings,
+    ): String {
+        val generated = generateBotText(
+            assistant = assistant,
+            settings = settings,
+            instruction = buildString {
+                appendLine("你现在要在 X 上发布一条原创帖子。")
+                appendLine("只输出最终帖子正文，不要标题、不要解释、不要引号、不要 Markdown 代码块。")
+                appendLine("内容要像真实信息流帖子，简洁、有明确观点，可以直接发布。")
+                appendLine("长度尽量控制在 220 个中文字符或等价长度以内。")
+                appendLine("除非人设明确要求，否则不要自称 AI、语言模型或助手。")
+                appendLine("如果看不出上下文语言，请使用 ${Locale.getDefault().displayName} 的主要语言。")
+                assistant.firstMeaningfulLine()?.let {
+                    appendLine()
+                    appendLine("当前 bot 的人设摘要：")
+                    appendLine(it)
+                }
+            }
+        )
+        if (generated != null) {
+            return generated
+        }
+        return fallbackBotPostText(assistant, settings)
+    }
+
+    private suspend fun buildBotResponseText(
+        assistant: Assistant,
+        timeline: XTimelineState,
+        targetPost: XPost,
+        settings: Settings,
+        quoteStyle: Boolean,
+    ): String {
+        val targetAuthor = timeline.findAuthor(targetPost.authorId)
+        val generated = generateBotText(
+            assistant = assistant,
+            settings = settings,
+            instruction = buildString {
+                appendLine(
+                    if (quoteStyle) {
+                        "你现在要在 X 上转帖评论别人的帖子。"
+                    } else {
+                        "你现在要在 X 上直接回复别人的帖子。"
+                    }
+                )
+                appendLine("只输出最终帖子正文，不要标题、不要解释、不要引号、不要 Markdown 代码块。")
+                appendLine("保持 bot 自己的人设、语气和判断，不要写成客服口吻。")
+                appendLine("长度尽量控制在 220 个中文字符或等价长度以内。")
+                appendLine(
+                    if (quoteStyle) {
+                        "转帖评论需要表达你自己的看法，正文要能单独成立，不要简单复述原帖。"
+                    } else {
+                        "回复需要直接回应原帖的核心观点，像真实用户在评论区说话。"
+                    }
+                )
+                appendLine()
+                appendLine("目标帖子作者：${targetAuthor?.displayName ?: "Unknown"} ${targetAuthor?.handle.orEmpty()}".trim())
+                appendLine("目标帖子正文：")
+                appendLine(targetPost.body.trim())
+                assistant.firstMeaningfulLine()?.let {
+                    appendLine()
+                    appendLine("当前 bot 的人设摘要：")
+                    appendLine(it)
+                }
+            }
+        )
+        if (generated != null) {
+            return generated
+        }
+        return fallbackBotResponseText(assistant, targetPost, settings, quoteStyle)
+    }
+
+    private suspend fun generateBotText(
+        assistant: Assistant,
+        settings: Settings,
+        instruction: String,
+    ): String? {
+        val model = settings.findModelById(assistant.chatModelId ?: settings.chatModelId) ?: return null
+        val provider = model.findProvider(settings.providers) ?: return null
+        val providerHandler = providerManager.getProviderByType(provider)
+        val result = runCatching {
+            providerHandler.generateText(
+                providerSetting = provider,
+                messages = buildList {
+                    add(
+                        UIMessage.system(
+                            prompt = assistant.systemPrompt.trim().ifBlank {
+                                buildDefaultBotSystemPrompt(assistant)
+                            }
+                        )
+                    )
+                    add(UIMessage.user(prompt = instruction))
+                },
+                params = TextGenerationParams(
+                    model = model,
+                    temperature = assistant.temperature,
+                    topP = assistant.topP,
+                    maxTokens = assistant.maxTokens,
+                    thinkingBudget = assistant.thinkingBudget ?: 0,
+                    customHeaders = assistant.customHeaders,
+                    customBody = assistant.customBodies,
+                ),
+            )
+        }.getOrNull() ?: return null
+
+        return result.choices
+            .firstOrNull()
+            ?.message
+            ?.toText()
+            ?.let(::sanitizeGeneratedBotText)
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    private fun buildDefaultBotSystemPrompt(assistant: Assistant): String {
+        val botName = assistant.name.ifBlank { "Bot" }
+        return """
+            你是 X 上的一个真实 Bot 账号，名字叫 $botName。
+            你的任务是按照设定直接发帖或回复，输出必须像可以直接发送到时间线的正文。
+            不要解释你的思考过程，不要加引号，不要输出多余说明。
+        """.trimIndent()
+    }
+
+    private fun sanitizeGeneratedBotText(raw: String): String {
+        val text = raw
+            .replace("```", "")
+            .lineSequence()
+            .map { it.trim() }
+            .dropWhile {
+                it.startsWith("当然") ||
+                    it.startsWith("好的") ||
+                    it.startsWith("可以") ||
+                    it.startsWith("以下") ||
+                    it.startsWith("作为")
+            }
+            .joinToString("\n")
+            .trim()
+            .removeSurrounding("\"")
+            .removeSurrounding("“", "”")
+            .replace(Regex("\\n{3,}"), "\n\n")
+        if (text.isBlank()) return ""
+        return if (text.length <= 220) {
+            text
+        } else {
+            text.take(220).trimEnd(' ', '\n', ',', '，', '.', '。', '!', '！', '?', '？', ':', '：') + "…"
+        }
+    }
+
+    private fun fallbackBotPostText(
         assistant: Assistant,
         settings: Settings,
     ): String {
@@ -437,7 +603,7 @@ class XTimelineRepository(
         }
     }
 
-    private fun buildBotResponseText(
+    private fun fallbackBotResponseText(
         assistant: Assistant,
         targetPost: XPost,
         settings: Settings,

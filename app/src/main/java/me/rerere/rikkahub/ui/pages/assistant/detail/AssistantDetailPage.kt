@@ -2,14 +2,19 @@ package me.rerere.rikkahub.ui.pages.assistant.detail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardCapitalization
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -66,15 +71,16 @@ fun AssistantDetailPage(id: String) {
                 start = 16.dp,
                 end = 16.dp,
                 top = PageTopBarContentTopPadding,
-                bottom = 32.dp
+                bottom = 28.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item("avatar") {
-                FieldSection(title = stringResource(R.string.assistant_page_avatar).uppercase()) {
-                    Box(
+            item("profile") {
+                BotConfigCard {
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         UIAvatar(
                             name = displayName,
@@ -82,37 +88,40 @@ fun AssistantDetailPage(id: String) {
                             onUpdate = { avatar ->
                                 vm.update(assistant.copy(avatar = avatar))
                             },
-                            modifier = Modifier.size(88.dp)
+                            modifier = Modifier.size(84.dp)
+                        )
+                        BotFieldLabel(stringResource(R.string.assistant_page_name))
+                        OutlinedTextField(
+                            value = assistant.name,
+                            onValueChange = { vm.update(assistant.copy(name = it)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = {
+                                Text(stringResource(R.string.assistant_page_default_assistant))
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(18.dp),
+                            colors = botTextFieldColors(),
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.Words
+                            )
                         )
                     }
                 }
             }
 
-            item("name") {
-                FieldSection(title = stringResource(R.string.assistant_page_name).uppercase()) {
-                    OutlinedTextField(
-                        value = assistant.name,
-                        onValueChange = { vm.update(assistant.copy(name = it)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = {
-                            Text(stringResource(R.string.assistant_page_default_assistant))
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(18.dp),
-                        colors = botTextFieldColors()
-                    )
-                }
-            }
-
             item("model") {
-                FieldSection(
-                    title = stringResource(R.string.setting_model_page_chat_model).uppercase(),
-                    supporting = if (assistant.chatModelId == null && !inheritedModelName.isNullOrBlank()) {
-                        stringResource(R.string.assistant_page_inherited_model, inheritedModelName)
-                    } else {
-                        null
+                BotConfigCard {
+                    BotFieldLabel(stringResource(R.string.setting_model_page_chat_model))
+                    if (assistant.chatModelId == null && !inheritedModelName.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.assistant_page_inherited_model, inheritedModelName),
+                            fontFamily = SourceSans3,
+                            fontSize = 13.sp,
+                            color = ZionTextSecondary,
+                        )
                     }
-                ) {
+                    Spacer(modifier = Modifier.height(10.dp))
                     ModelSelector(
                         modelId = assistant.chatModelId ?: settings.chatModelId,
                         providers = providers,
@@ -130,7 +139,9 @@ fun AssistantDetailPage(id: String) {
             }
 
             item("prompt") {
-                FieldSection(title = stringResource(R.string.setting_model_page_prompt).uppercase()) {
+                BotConfigCard {
+                    BotFieldLabel(stringResource(R.string.setting_model_page_prompt))
+                    Spacer(modifier = Modifier.height(10.dp))
                     OutlinedTextField(
                         value = assistant.systemPrompt,
                         onValueChange = { vm.update(assistant.copy(systemPrompt = it)) },
@@ -152,37 +163,7 @@ fun AssistantDetailPage(id: String) {
 }
 
 @Composable
-private fun FieldSection(
-    title: String,
-    supporting: String? = null,
-    content: @Composable () -> Unit,
-) {
-    androidx.compose.foundation.layout.Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = title,
-            fontFamily = SourceSans3,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = ZionTextSecondary,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-        supporting?.let {
-            Text(
-                text = it,
-                fontFamily = SourceSans3,
-                fontSize = 13.sp,
-                color = ZionTextSecondary,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
-        BotSectionCard(content = content)
-    }
-}
-
-@Composable
-private fun BotSectionCard(
+private fun BotConfigCard(
     content: @Composable () -> Unit,
 ) {
     Card(
@@ -190,7 +171,7 @@ private fun BotSectionCard(
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        androidx.compose.foundation.layout.Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
@@ -198,6 +179,17 @@ private fun BotSectionCard(
             content()
         }
     }
+}
+
+@Composable
+private fun BotFieldLabel(text: String) {
+    Text(
+        text = text,
+        fontFamily = SourceSans3,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Medium,
+        color = ZionTextSecondary
+    )
 }
 
 @Composable
