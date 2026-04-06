@@ -1,3 +1,7 @@
+## v0.0.78
+
+- 修复 `v0.0.77` 远端构建失败：把 Bots 详情页的 `KeyboardOptions` 导入改回 Compose 正确包，恢复 Android 签名构建。
+
 ## v0.0.77
 
 - 修复 `v0.0.76` 远端构建失败：移除 `XTimelineRepository` 中错误的 `toText` 导入，并把 Bots 详情页的 `KeyboardCapitalization` 改回 Compose 正确输入包，恢复 Android 签名构建。
