@@ -180,6 +180,9 @@ fun SettingProviderDetailPage(
     }
     val isModelsPage = page == ProviderDetailPageModels
 
+    // 添加模型对话框状态
+    var showAddModelDialog by remember { mutableStateOf(false) }
+
     val onEdit = { newProvider: ProviderSetting ->
         val normalizedProvider = newProvider.withAlwaysEnabledDefaults()
         val newSettings = settings.copy(
@@ -210,23 +213,28 @@ fun SettingProviderDetailPage(
         onBack = { navController.popBackStack() },
         trailing = if (isModelsPage) {
             {
-                Surface(
-                    modifier = Modifier.size(40.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    color = ZionSurface
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ProviderConnectionTester(
-                        internalProvider = provider,
-                        modifier = Modifier.fillMaxSize(),
-                        content = {
+                    // 添加模型按钮（加号）
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        color = ZionSurface
+                    ) {
+                        IconButton(
+                            onClick = { showAddModelDialog = true },
+                            modifier = Modifier.fillMaxSize()
+                        ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_model_test),
-                                contentDescription = stringResource(R.string.setting_provider_page_test_connection),
+                                imageVector = HugeIcons.Add01,
+                                contentDescription = stringResource(R.string.setting_provider_page_add_model),
                                 tint = ZionTextPrimary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
-                    )
+                    }
                 }
             }
         } else {
@@ -265,7 +273,9 @@ fun SettingProviderDetailPage(
             if (isModelsPage) {
                 SettingProviderModelPage(
                     provider = provider,
-                    onEdit = onEdit
+                    onEdit = onEdit,
+                    showAddDialog = showAddModelDialog,
+                    onDismissAddDialog = { showAddModelDialog = false }
                 )
             } else {
                 SettingProviderConfigPage(
@@ -472,51 +482,33 @@ private fun SettingProviderConfigPage(
             }
         }
 
-        Surface(
+        // Models入口 - 简化为一行
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable {
-                    onShowModels()
-                },
-            shape = RoundedCornerShape(20.dp),
-            color = groupColor
+                .clickable { onShowModels() }
+                .padding(horizontal = 8.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.setting_provider_page_models),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ZionTextSecondary
-                    )
-                    Text(
-                        text = "Manage models",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = ZionTextPrimary
-                    )
-                    Text(
-                        text = stringResource(
-                            R.string.setting_provider_page_model_count,
-                            provider.models.size
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ZionTextSecondary
-                    )
-                }
-                Icon(
-                    imageVector = ZionAppIcons.ChevronRight,
-                    contentDescription = null,
-                    tint = ZionTextSecondary
-                )
-            }
+            Icon(
+                painter = painterResource(R.drawable.ic_bot),
+                contentDescription = null,
+                tint = ZionTextPrimary,
+                modifier = Modifier.size(22.dp)
+            )
+            Text(
+                text = stringResource(R.string.setting_provider_page_models),
+                style = MaterialTheme.typography.bodyLarge,
+                color = ZionTextPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = ZionAppIcons.ChevronRight,
+                contentDescription = null,
+                tint = ZionTextSecondary,
+                modifier = Modifier.size(18.dp)
+            )
         }
 
         Surface(
@@ -628,18 +620,24 @@ private fun SettingProviderConfigPage(
 @Composable
 private fun SettingProviderModelPage(
     provider: ProviderSetting,
-    onEdit: (ProviderSetting) -> Unit
+    onEdit: (ProviderSetting) -> Unit,
+    showAddDialog: Boolean,
+    onDismissAddDialog: () -> Unit
 ) {
     ModelList(
         providerSetting = provider,
-        onUpdateProvider = onEdit
+        onUpdateProvider = onEdit,
+        showAddDialog = showAddDialog,
+        onDismissAddDialog = onDismissAddDialog
     )
 }
 
 @Composable
 private fun ModelList(
     providerSetting: ProviderSetting,
-    onUpdateProvider: (ProviderSetting) -> Unit
+    onUpdateProvider: (ProviderSetting) -> Unit,
+    showAddDialog: Boolean,
+    onDismissAddDialog: () -> Unit
 ) {
     val providerManager = koinInject<ProviderManager>()
     var refreshTick by remember(providerSetting) { mutableStateOf(0) }
@@ -656,23 +654,25 @@ private fun ModelList(
         )
     }
     val remoteModels = (remoteModelsState as? UiState.Success<List<Model>>)?.data.orEmpty()
-    val remoteModelsError = remoteModelsState as? UiState.Error
-    val remoteStatusText = when (remoteModelsState) {
-        UiState.Loading -> stringResource(R.string.setting_provider_page_loading_available_models)
-        is UiState.Success -> stringResource(
-            R.string.setting_provider_page_available_models_synced,
-            remoteModels.size
-        )
-        is UiState.Error -> remoteModelsError?.error?.message
-            ?: remoteModelsError?.error?.javaClass?.simpleName
-            ?: stringResource(R.string.setting_provider_page_loading_available_models)
-        UiState.Idle -> stringResource(
-            R.string.setting_provider_page_model_count,
-            providerSetting.models.size
-        )
+
+    // 添加模型对话框状态
+    val addModelDialogState = useEditState<Model> {
+        onUpdateProvider(providerSetting.addModel(it))
+        onDismissAddDialog()
     }
+
+    // 外部触发显示添加对话框
+    if (showAddDialog && !addModelDialogState.isEditing) {
+        addModelDialogState.open(Model())
+    }
+
+    // 如果外部状态重置但对话框已关闭，确保同步
+    if (!showAddDialog && addModelDialogState.isEditing) {
+        addModelDialogState.dismiss()
+    }
+
     val lazyListState = rememberLazyListState()
-    val reorderItemOffset = 2
+    val reorderItemOffset = 0
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
         val fromIndex = from.index - reorderItemOffset
         val toIndex = to.index - reorderItemOffset
@@ -681,130 +681,91 @@ private fun ModelList(
         }
     }
 
+    // 添加模型对话框
+    if (addModelDialogState.isEditing) {
+        addModelDialogState.currentState?.let { modelState ->
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            val scope = rememberCoroutineScope()
+            ModalBottomSheet(
+                onDismissRequest = {
+                    addModelDialogState.dismiss()
+                    onDismissAddDialog()
+                },
+                sheetState = sheetState,
+                sheetGesturesEnabled = false,
+                dragHandle = {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                sheetState.hide()
+                                addModelDialogState.dismiss()
+                                onDismissAddDialog()
+                            }
+                        }
+                    ) {
+                        Icon(HugeIcons.ArrowDown01, null)
+                    }
+                }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.95f)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_provider_page_add_model),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        ModelSettingsForm(
+                            model = modelState,
+                            onModelChange = { addModelDialogState.currentState = it },
+                            isEdit = false,
+                            parentProvider = providerSetting
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    ) {
+                        TextButton(
+                            onClick = {
+                                addModelDialogState.dismiss()
+                                onDismissAddDialog()
+                            },
+                        ) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                        TextButton(
+                            onClick = {
+                                if (modelState.modelId.isNotBlank() && modelState.displayName.isNotBlank()) {
+                                    addModelDialogState.confirm()
+                                }
+                            },
+                        ) {
+                            Text(stringResource(R.string.setting_provider_page_add))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         state = lazyListState
     ) {
-        item("modelsProviderStatus") {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = ProviderDetailGroupColor
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(52.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                color = ZionSurface
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    AutoAIIcon(
-                                        name = providerSetting.name,
-                                        modifier = Modifier.size(28.dp),
-                                        color = Color.Transparent
-                                    )
-                                }
-                            }
-
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.setting_provider_page_models),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = ZionTextPrimary
-                                )
-                                Text(
-                                    text = providerSetting.name,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = ZionTextSecondary
-                                )
-                            }
-                        }
-
-                        Surface(
-                            modifier = Modifier.size(40.dp),
-                            shape = RoundedCornerShape(20.dp),
-                            color = ZionSurface
-                        ) {
-                            IconButton(
-                                onClick = { refreshTick += 1 },
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                Icon(
-                                    imageVector = HugeIcons.Refresh03,
-                                    contentDescription = stringResource(R.string.setting_provider_page_refresh_models),
-                                    tint = ZionTextPrimary
-                                )
-                            }
-                        }
-                    }
-
-                    Text(
-                        text = remoteStatusText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (remoteModelsError != null) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            ZionTextSecondary
-                        }
-                    )
-                }
-            }
-        }
-
-        item("modelsActions") {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = ProviderDetailGroupColor
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Available Models",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ZionTextSecondary
-                    )
-                    AddModelButton(
-                        models = remoteModels,
-                        selectedModels = providerSetting.models,
-                        onAddModel = {
-                            onUpdateProvider(providerSetting.addModel(it))
-                        },
-                        onRemoveModel = {
-                            onUpdateProvider(providerSetting.delModel(it))
-                        },
-                        expanded = true,
-                        parentProvider = providerSetting,
-                        onUpdateProvider = onUpdateProvider
-                    )
-                }
-            }
-        }
-
         if (providerSetting.models.isEmpty()) {
             item("emptyModels") {
                 Surface(
@@ -1641,117 +1602,68 @@ private fun ModelCard(
         }
     }
 
-    SwipeToDismissBox(
-        state = swipeToDismissBoxState,
-        backgroundContent = {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                verticalAlignment = Alignment.CenterVertically
+    // 简化的模型卡片
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { dialogState.open(model.copy()) },
+        shape = RoundedCornerShape(16.dp),
+        color = ZionSectionItem
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                color = ZionSurface,
+                shape = RoundedCornerShape(12.dp),
             ) {
-                IconButton(
-                    onClick = {
-                        scope.launch {
-                            swipeToDismissBoxState.reset()
-                        }
-                    }
-                ) {
-                    Icon(HugeIcons.Cancel01, null)
-                }
-                FilledIconButton(
-                    onClick = {
-                        scope.launch {
-                            onDelete()
-                            swipeToDismissBoxState.reset()
-                        }
-                    }
+                Box(
+                    modifier = Modifier.size(40.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        HugeIcons.Delete01,
-                        contentDescription = stringResource(R.string.chat_page_delete)
+                        painter = painterResource(R.drawable.ic_model),
+                        contentDescription = null,
+                        tint = ZionTextPrimary,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
-        },
-        enableDismissFromStartToEnd = false,
-        gesturesEnabled = true,
-        modifier = modifier
-    ) {
-        OutlinedCard(
-            colors = CardDefaults.outlinedCardColors(
-                containerColor = ZionSectionItem
-            ),
-            border = BorderStroke(1.dp, ZionGrayLight)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Surface(
-                    color = ZionSurface,
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Box(
-                        modifier = Modifier.size(44.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_model),
-                            contentDescription = null,
-                            tint = ZionTextPrimary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = model.displayName,
-                        style = MaterialTheme.typography.titleSmall,
-                        color = ZionTextPrimary,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = model.modelId,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = ZionTextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        if (model.providerOverwrite != null) {
-                            Tag(type = TagType.INFO) {
-                                Text(
-                                    model.providerOverwrite?.javaClass?.simpleName ?: model.providerOverwrite?.name
-                                    ?: "ProviderOverwrite"
-                                )
-                            }
-                        }
-                        ModelTypeTag(model = model)
-                        ModelModalityTag(model = model)
-                        ModelAbilityTag(model = model)
-                    }
-                }
+                Text(
+                    text = model.displayName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = ZionTextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = model.modelId,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = ZionTextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
 
-                // Edit button
-                IconButton(
-                    onClick = {
-                        dialogState.open(model.copy())
-                    }
-                ) {
-                    Icon(HugeIcons.Tools, "Edit")
-                }
+            // 删除按钮
+            IconButton(
+                onClick = { onDelete() },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    HugeIcons.Delete01,
+                    contentDescription = stringResource(R.string.chat_page_delete),
+                    tint = ZionTextSecondary,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
