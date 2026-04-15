@@ -654,6 +654,21 @@ private fun ModelList(
         )
     }
     val remoteModels = (remoteModelsState as? UiState.Success<List<Model>>)?.data.orEmpty()
+    val remoteModelsError = remoteModelsState as? UiState.Error
+    val remoteStatusText = when (remoteModelsState) {
+        UiState.Loading -> stringResource(R.string.setting_provider_page_loading_available_models)
+        is UiState.Success -> stringResource(
+            R.string.setting_provider_page_available_models_synced,
+            remoteModels.size
+        )
+        is UiState.Error -> remoteModelsError?.error?.message
+            ?: remoteModelsError?.error?.javaClass?.simpleName
+            ?: stringResource(R.string.setting_provider_page_loading_available_models)
+        UiState.Idle -> stringResource(
+            R.string.setting_provider_page_model_count,
+            providerSetting.models.size
+        )
+    }
 
     // 添加模型对话框状态
     val addModelDialogState = useEditState<Model> {
@@ -766,6 +781,44 @@ private fun ModelList(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         state = lazyListState
     ) {
+        // 刷新/检测模型可用性入口
+        item("refreshSection") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = remoteStatusText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (remoteModelsError != null) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        ZionTextSecondary
+                    }
+                )
+                Surface(
+                    modifier = Modifier.size(32.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = ZionSurface
+                ) {
+                    IconButton(
+                        onClick = { refreshTick += 1 },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = HugeIcons.Refresh03,
+                            contentDescription = stringResource(R.string.setting_provider_page_refresh_models),
+                            tint = ZionTextPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+
         if (providerSetting.models.isEmpty()) {
             item("emptyModels") {
                 Surface(
@@ -1602,67 +1655,86 @@ private fun ModelCard(
         }
     }
 
-    // 简化的模型卡片
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { dialogState.open(model.copy()) },
-        shape = RoundedCornerShape(16.dp),
-        color = ZionSectionItem
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(
-                color = ZionSurface,
-                shape = RoundedCornerShape(12.dp),
+    // 左滑删除的模型卡片
+    SwipeToDismissBox(
+        state = swipeToDismissBoxState,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentAlignment = Alignment.CenterEnd
             ) {
-                Box(
-                    modifier = Modifier.size(40.dp),
-                    contentAlignment = Alignment.Center
+                // 红色圆形删除按钮
+                Surface(
+                    modifier = Modifier.size(44.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    color = MaterialTheme.colorScheme.error
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_model),
-                        contentDescription = null,
-                        tint = ZionTextPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable {
+                                scope.launch {
+                                    onDelete()
+                                    swipeToDismissBoxState.reset()
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            HugeIcons.Delete01,
+                            contentDescription = stringResource(R.string.chat_page_delete),
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+        },
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        gesturesEnabled = true,
+        modifier = modifier
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { dialogState.open(model.copy()) },
+            shape = RoundedCornerShape(16.dp),
+            color = ZionSectionItem
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                // 使用对应模型的图标
+                Surface(
+                    color = ZionSurface,
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Box(
+                        modifier = Modifier.size(40.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AutoAIIcon(
+                            name = model.modelId,
+                            modifier = Modifier.size(24.dp),
+                            color = Color.Transparent
+                        )
+                    }
+                }
+                // 只显示 model name
                 Text(
                     text = model.displayName,
                     style = MaterialTheme.typography.bodyLarge,
                     color = ZionTextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = model.modelId,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = ZionTextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            // 删除按钮
-            IconButton(
-                onClick = { onDelete() },
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    HugeIcons.Delete01,
-                    contentDescription = stringResource(R.string.chat_page_delete),
-                    tint = ZionTextSecondary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
