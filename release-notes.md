@@ -1,3 +1,7 @@
+## v0.2.4
+
+- 修复包名迁移遗漏的 Room Schema 目录（跟随数据库类全限定名同步更名），恢复签名 APK 自动构建。
+
 ## v0.2.3
 
 - 全仓代码包名由 `me.rerere.*` 迁移至 `io.github.king0929zion.zionchatz.*`，各模块 `namespace`、测试断言、快捷方式入口同步更新，不再使用 RikkaHub 的包名（第三方 hugeicons 图标库引用除外）。
