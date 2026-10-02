@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.king0929zion.zionchatz.web"
+    namespace = "io.github.king0929zion.zchat.web"
     compileSdk {
         version = release(36)
     }

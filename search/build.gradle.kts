@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.king0929zion.zionchatz.search"
+    namespace = "io.github.king0929zion.zchat.search"
     compileSdk = 36
 
     defaultConfig {

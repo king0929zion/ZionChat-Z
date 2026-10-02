@@ -29,7 +29,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "zionchatz"
+rootProject.name = "zchat"
 include(":app")
 include(":highlight")
 include(":ai")

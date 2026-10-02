@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.king0929zion.zionchatz.oauth"
+    namespace = "io.github.king0929zion.zchat.oauth"
     compileSdk = 36
 
     defaultConfig {

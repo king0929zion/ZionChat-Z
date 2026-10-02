@@ -1,0 +1,140 @@
+package io.github.king0929zion.zchat.ui.components.ui
+
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import io.github.king0929zion.zchat.ui.theme.ZionGrayLight
+import io.github.king0929zion.zchat.ui.theme.ZionGrayLighter
+import io.github.king0929zion.zchat.ui.theme.ZionSurface
+import io.github.king0929zion.zchat.ui.theme.ZionTextPrimary
+import io.github.king0929zion.zchat.ui.theme.ZionTextSecondary
+
+val ZionTextFieldShape = RoundedCornerShape(22.dp)
+
+@Composable
+fun zionOutlinedTextFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = ZionTextPrimary,
+    unfocusedTextColor = ZionTextPrimary,
+    disabledTextColor = ZionTextPrimary.copy(alpha = 0.5f),
+    cursorColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+    focusedBorderColor = androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+    unfocusedBorderColor = ZionGrayLight,
+    disabledBorderColor = ZionGrayLight.copy(alpha = 0.45f),
+    focusedContainerColor = ZionSurface,
+    unfocusedContainerColor = ZionSurface,
+    disabledContainerColor = ZionGrayLighter,
+    focusedLabelColor = ZionTextSecondary,
+    unfocusedLabelColor = ZionTextSecondary,
+    disabledLabelColor = ZionTextSecondary.copy(alpha = 0.5f),
+    focusedPlaceholderColor = ZionTextSecondary,
+    unfocusedPlaceholderColor = ZionTextSecondary,
+    disabledPlaceholderColor = ZionTextSecondary.copy(alpha = 0.5f),
+)
+
+@Composable
+fun zionTextFieldColors(): TextFieldColors = TextFieldDefaults.colors(
+    focusedTextColor = ZionTextPrimary,
+    unfocusedTextColor = ZionTextPrimary,
+    disabledTextColor = ZionTextPrimary.copy(alpha = 0.5f),
+    cursorColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+    focusedIndicatorColor = androidx.compose.material3.MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+    unfocusedIndicatorColor = Color.Transparent,
+    disabledIndicatorColor = Color.Transparent,
+    focusedContainerColor = ZionSurface,
+    unfocusedContainerColor = ZionSurface,
+    disabledContainerColor = ZionGrayLighter,
+    focusedPlaceholderColor = ZionTextSecondary,
+    unfocusedPlaceholderColor = ZionTextSecondary,
+    disabledPlaceholderColor = ZionTextSecondary.copy(alpha = 0.5f),
+)
+
+@Composable
+fun <T : Number> OutlinedNumberInput(
+    value: T,
+    onValueChange: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "",
+    colors: TextFieldColors = zionOutlinedTextFieldColors()
+) {
+    var textFieldValue by remember(value) { mutableStateOf(value.toString()) }
+    OutlinedTextField(
+        modifier = modifier,
+        value = textFieldValue,
+        onValueChange = { newValue ->
+            textFieldValue = newValue
+            if (textFieldValue.isValidNumberInput()) {
+                try {
+                    @Suppress("UNCHECKED_CAST")
+                    val newVal = when (value) {
+                        is Int -> newValue.toInt() as T
+                        is Float -> newValue.toFloat() as T
+                        is Double -> newValue.toDouble() as T
+                        else -> throw IllegalArgumentException("Unsupported number type")
+                    }
+                    onValueChange(newVal)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        },
+        label = { Text(label) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        isError = !textFieldValue.isValidNumberInput(),
+        colors = colors,
+        shape = ZionTextFieldShape,
+    )
+}
+
+@Composable
+fun <T : Number> NumberInput(
+    value: T,
+    onValueChange: (T) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "",
+    colors: TextFieldColors = zionTextFieldColors()
+) {
+    var textFieldValue by remember(value) { mutableStateOf(value.toString()) }
+    TextField(
+        modifier = modifier,
+        value = textFieldValue,
+        onValueChange = { newValue ->
+            textFieldValue = newValue
+            if (textFieldValue.isValidNumberInput()) {
+                try {
+                    @Suppress("UNCHECKED_CAST")
+                    val newVal = when (value) {
+                        is Int -> newValue.toInt() as T
+                        is Float -> newValue.toFloat() as T
+                        is Double -> newValue.toDouble() as T
+                        else -> throw IllegalArgumentException("Unsupported number type")
+                    }
+                    onValueChange(newVal)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        },
+        label = { Text(label) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        isError = !textFieldValue.isValidNumberInput(),
+        colors = colors,
+        shape = ZionTextFieldShape,
+    )
+}
+
+private val NumberRegex = Regex("^[+-]?\\d+(\\.\\d+)?$")
+private fun String.isValidNumberInput() = this.isNotEmpty() && NumberRegex.matches(this)

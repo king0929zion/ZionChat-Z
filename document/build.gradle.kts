@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.king0929zion.zionchatz.document"
+    namespace = "io.github.king0929zion.zchat.document"
     compileSdk = 36
 
     defaultConfig {

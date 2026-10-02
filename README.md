@@ -1,6 +1,6 @@
 <div align="center">
   <img src="docs/icon.png" alt="App Icon" width="100" />
-  <h1>RikkaHub</h1>
+  <h1>ZChat</h1>
 
   [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/rikkahub/rikkahub)
   [![Ask DeepWiki](https://img.shields.io/badge/zread.ai-blue?style=flat&logo=readthedocs)](https://zread.ai/rikkahub/rikkahub)
@@ -22,7 +22,7 @@ Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqx
 
 🔗 [Download from Website](https://rikka-ai.com/download)
 
-🔗 [Download from Google Play](https://play.google.com/store/apps/details?id=io.github.king0929zion.zionchatz)
+🔗 [Download from Google Play](https://play.google.com/store/apps/details?id=io.github.king0929zion.zchat)
 
 ## 💖 Sponsors
 

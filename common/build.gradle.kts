@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.king0929zion.zionchatz.common"
+    namespace = "io.github.king0929zion.zchat.common"
     compileSdk = 36
 
     defaultConfig {

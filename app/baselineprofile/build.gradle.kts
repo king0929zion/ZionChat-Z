@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.king0929zion.zionchatz.baselineprofile"
+    namespace = "io.github.king0929zion.zchat.baselineprofile"
     compileSdk = 36
 
     compileOptions {

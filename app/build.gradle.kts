@@ -14,15 +14,15 @@ plugins {
 }
 
 android {
-    namespace = "io.github.king0929zion.zionchatz"
+    namespace = "io.github.king0929zion.zchat"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.king0929zion.zionchatz"
+        applicationId = "io.github.king0929zion.zchat"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.2.6"
+        versionCode = 10
+        versionName = "0.2.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

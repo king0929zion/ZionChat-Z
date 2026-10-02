@@ -1,3 +1,9 @@
+## v0.2.7
+
+- 应用正式更名为 ZChat：应用名、应用包名（`io.github.king0929zion.zchat`）、代码包名、深度链接 scheme、关于页仓库链接同步更新，与上游 RikkaHub 彻底区分，不会再互相冲突。注意：包名变化后需卸载旧包重新安装，可先用备份功能导出数据再导入。
+- 应用内更新通道改为本仓库 GitHub Release，不会再提示安装上游 RikkaHub 的更新包。
+- 版本递增至 `0.2.7 (10)`，自动签名构建与 Release 附件随新版本发布。
+
 ## v0.2.6
 
 - 对齐上游 MCP OAuth 授权能力：新增 `:oauth` 模块（PKCE、动态客户端注册、localhost 回环回调、前台服务保活），支持受保护资源元数据发现、缺失时回退服务器 origin、首次 401 触发授权、无注册端点时使用 Client ID Metadata Document，令牌自动刷新并持久化，请求自动携带 Bearer。
