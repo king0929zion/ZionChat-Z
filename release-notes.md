@@ -1,3 +1,10 @@
+## v0.2.1
+
+- 对齐上游 RikkaHub 最新模型识别：新增 GPT-5.5/5.6/6、Gemini 3.5/4、Claude Sonnet 5/Opus 5/5.5 系列、DeepSeek Flash/V4 系列、Qwen 3.6-3.8、豆包 2.x、Kimi K2.6/K3、Step 5、GLM 5.1-5.3、MiniMax M2.7/M3、小米 MIMO 新版本等，新增模型上下文长度（contextLength）支持。
+- 对齐上游提供商自定义请求头：ProviderSetting 新增提供商级 `customHeaders`，对话、嵌入、图像、模型列表、余额请求均会携带，且请求级（助手/模型）同名请求头优先覆盖。
+- 修复聊天页左上角侧边按钮：圆形容器改用 Surface 一次性绘制背景与阴影，消除边缘发丝裂纹；菜单图标改用自绘圆头三横线，线条端部均为圆角、无断裂。
+- 版本递增至 `0.2.1 (4)`，自动签名构建与 Release 附件随新版本发布。
+
 ## v0.2.0
 
 - 应用安装包名已改为 `io.github.king0929zion.zionchatz`，后续签名构建、Release 附件与新安装包都会使用这个新包名。

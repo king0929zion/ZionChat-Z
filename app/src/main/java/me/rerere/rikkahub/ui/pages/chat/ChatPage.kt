@@ -54,7 +54,6 @@ import me.rerere.ai.ui.UIMessagePart
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.LeftToRightListBullet
-import me.rerere.hugeicons.stroke.Menu03
 import me.rerere.hugeicons.stroke.MessageAdd01
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.datastore.Settings
@@ -66,7 +65,9 @@ import me.rerere.rikkahub.data.model.Conversation
 import me.rerere.rikkahub.service.ChatError
 import me.rerere.rikkahub.ui.components.ai.ChatInput
 import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
+import me.rerere.rikkahub.ui.components.ui.HeaderActionContentButton
 import me.rerere.rikkahub.ui.components.ui.HeaderTranslucentBackdrop
+import me.rerere.rikkahub.ui.components.ui.ZionMenuIcon
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
@@ -481,13 +482,13 @@ private fun TopBar(
                 contentAlignment = Alignment.CenterStart,
             ) {
                 if (!bigScreen) {
-                    HeaderActionButton(
+                    HeaderActionContentButton(
                         onClick = {
                             scope.launch { drawerState.open() }
                         },
-                        icon = HugeIcons.Menu03,
-                        contentDescription = "Messages"
-                    )
+                    ) {
+                        ZionMenuIcon()
+                    }
                 }
             }
 

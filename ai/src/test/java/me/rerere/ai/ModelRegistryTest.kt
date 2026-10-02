@@ -46,7 +46,9 @@ class ModelRegistryTest {
         assertTrue(ModelRegistry.CLAUDE_SERIES.match("claude-4.5-sonnet"))
         assertTrue(ModelRegistry.CLAUDE_SERIES.match("claude-sonnet-4-20250929"))
         assertTrue(ModelRegistry.CLAUDE_SERIES.match("claude-4-sonnet"))
-        assertTrue(ModelRegistry.CLAUDE_SERIES.match("claude-3.5-sonnet"))
+        assertTrue(ModelRegistry.CLAUDE_SERIES.match("claude-sonnet-5-20250929"))
+        assertTrue(ModelRegistry.CLAUDE_SERIES.match("claude-opus-5-5"))
+        assertFalse(ModelRegistry.CLAUDE_SERIES.match("claude-3.5-sonnet"))
     }
 
     @Test

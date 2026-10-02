@@ -2,6 +2,7 @@ package me.rerere.rikkahub.ui.components.ui
 
 import android.graphics.Shader
 import android.os.Build
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -20,17 +21,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.asComposeRenderEffect
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,14 +44,6 @@ import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 
 val PageTopBarContentTopPadding: Dp = 72.dp
-
-fun Modifier.headerActionButtonShadow(shape: Shape = CircleShape): Modifier = this.shadow(
-    elevation = 20.dp,
-    shape = shape,
-    clip = false,
-    ambientColor = Color.Black.copy(alpha = 0.25f),
-    spotColor = Color.Black.copy(alpha = 0.18f),
-)
 
 @Composable
 fun Modifier.settingsBottomInsets(): Modifier =
@@ -140,14 +130,9 @@ fun HeaderActionButton(
     contentDescription: String?,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .size(40.dp)
-            .headerActionButtonShadow(CircleShape)
-            .clip(CircleShape)
-            .background(ZionSurface, CircleShape)
-            .pressableScale(pressedScale = 0.95f, onClick = onClick),
-        contentAlignment = Alignment.Center
+    HeaderActionSurface(
+        onClick = onClick,
+        modifier = modifier,
     ) {
         Icon(
             imageVector = icon,
@@ -155,6 +140,72 @@ fun HeaderActionButton(
             tint = ZionTextPrimary,
             modifier = Modifier.size(20.dp)
         )
+    }
+}
+
+@Composable
+fun HeaderActionContentButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    HeaderActionSurface(
+        onClick = onClick,
+        modifier = modifier,
+        content = content,
+    )
+}
+
+@Composable
+private fun HeaderActionSurface(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    // 使用 Surface 一次性绘制圆形背景与阴影，避免 shadow/clip/background
+    // 多层叠加在圆形边缘产生发丝接缝（裂纹）
+    Surface(
+        modifier = modifier
+            .size(40.dp)
+            .pressableScale(pressedScale = 0.95f, onClick = onClick),
+        shape = CircleShape,
+        color = ZionSurface,
+        shadowElevation = 6.dp,
+        content = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+                content = content,
+            )
+        }
+    )
+}
+
+@Composable
+fun ZionMenuIcon(
+    modifier: Modifier = Modifier,
+    color: Color = ZionTextPrimary,
+    strokeWidth: Dp = 2.dp,
+) {
+    // 自绘三横线菜单图标：全部使用圆头线帽，保证线条端部为圆角且无断裂
+    Canvas(modifier = modifier.size(20.dp)) {
+        val strokePx = strokeWidth.toPx()
+        val horizontalInset = strokePx / 2f + 1.dp.toPx()
+        val verticalInset = strokePx / 2f + 2.dp.toPx()
+        val left = horizontalInset
+        val right = size.width - horizontalInset
+        val top = verticalInset
+        val bottom = size.height - verticalInset
+        val centerY = (top + bottom) / 2f
+        listOf(top, centerY, bottom).forEach { y ->
+            drawLine(
+                color = color,
+                start = Offset(left, y),
+                end = Offset(right, y),
+                strokeWidth = strokePx,
+                cap = StrokeCap.Round,
+            )
+        }
     }
 }
 

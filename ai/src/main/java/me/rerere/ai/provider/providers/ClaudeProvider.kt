@@ -39,9 +39,9 @@ import me.rerere.ai.util.configureReferHeaders
 import me.rerere.ai.util.encodeBase64
 import me.rerere.ai.util.json
 import me.rerere.ai.util.mergeCustomBody
+import me.rerere.ai.util.mergeCustomHeaders
 import me.rerere.ai.util.parseErrorDetail
 import me.rerere.ai.util.stringSafe
-import me.rerere.ai.util.toHeaders
 import me.rerere.common.http.await
 import me.rerere.common.http.jsonPrimitiveOrNull
 import okhttp3.MediaType.Companion.toMediaType
@@ -62,6 +62,7 @@ class ClaudeProvider(private val client: OkHttpClient) : Provider<ProviderSettin
         withContext(Dispatchers.IO) {
             val request = Request.Builder()
                 .url("${providerSetting.baseUrl}/models")
+                .headers(providerSetting.mergeCustomHeaders())
                 .addHeader("x-api-key", providerSetting.apiKey)
                 .addHeader("anthropic-version", ANTHROPIC_VERSION)
                 .get()
@@ -103,7 +104,7 @@ class ClaudeProvider(private val client: OkHttpClient) : Provider<ProviderSettin
         val requestBody = buildMessageRequest(providerSetting, messages, params)
         val request = Request.Builder()
             .url("${providerSetting.baseUrl}/messages")
-            .headers(params.customHeaders.toHeaders())
+            .headers(providerSetting.mergeCustomHeaders(params.customHeaders))
             .post(json.encodeToString(requestBody).toRequestBody("application/json".toMediaType()))
             .addHeader("x-api-key", providerSetting.apiKey)
             .addHeader("anthropic-version", ANTHROPIC_VERSION)
@@ -150,7 +151,7 @@ class ClaudeProvider(private val client: OkHttpClient) : Provider<ProviderSettin
         val requestBody = buildMessageRequest(providerSetting, messages, params, stream = true)
         val request = Request.Builder()
             .url("${providerSetting.baseUrl}/messages")
-            .headers(params.customHeaders.toHeaders())
+            .headers(providerSetting.mergeCustomHeaders(params.customHeaders))
             .post(json.encodeToString(requestBody).toRequestBody("application/json".toMediaType()))
             .addHeader("x-api-key", providerSetting.apiKey)
             .addHeader("anthropic-version", ANTHROPIC_VERSION)
