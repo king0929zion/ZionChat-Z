@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "me.rerere.common"
+    namespace = "io.github.king0929zion.zionchatz.common"
     compileSdk = 36
 
     defaultConfig {

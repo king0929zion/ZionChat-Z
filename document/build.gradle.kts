@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "me.rerere.document"
+    namespace = "io.github.king0929zion.zionchatz.document"
     compileSdk = 36
 
     defaultConfig {

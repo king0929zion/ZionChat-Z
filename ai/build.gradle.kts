@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "me.rerere.ai"
+    namespace = "io.github.king0929zion.zionchatz.ai"
     compileSdk = 36
 
     defaultConfig {

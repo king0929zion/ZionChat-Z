@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "me.rerere.search"
+    namespace = "io.github.king0929zion.zionchatz.search"
     compileSdk = 36
 
     defaultConfig {

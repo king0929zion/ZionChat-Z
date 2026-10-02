@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "me.rerere.baselineprofile"
+    namespace = "io.github.king0929zion.zionchatz.baselineprofile"
     compileSdk = 36
 
     compileOptions {

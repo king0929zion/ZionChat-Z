@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "me.rerere.rikkahub.web"
+    namespace = "io.github.king0929zion.zionchatz.web"
     compileSdk {
         version = release(36)
     }

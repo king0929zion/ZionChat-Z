@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "me.rerere.highlight"
+    namespace = "io.github.king0929zion.zionchatz.highlight"
     compileSdk = 36
 
     defaultConfig {

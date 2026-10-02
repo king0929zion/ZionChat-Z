@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "me.rerere.tts"
+    namespace = "io.github.king0929zion.zionchatz.tts"
     compileSdk = 36
 
     defaultConfig {

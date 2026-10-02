@@ -1,3 +1,8 @@
+## v0.2.3
+
+- 全仓代码包名由 `me.rerere.*` 迁移至 `io.github.king0929zion.zionchatz.*`，各模块 `namespace`、测试断言、快捷方式入口同步更新，不再使用 RikkaHub 的包名（第三方 hugeicons 图标库引用除外）。
+- 版本递增至 `0.2.3 (6)`，自动签名构建与 Release 附件随新版本发布。
+
 ## v0.2.2
 
 - 修复 `v0.2.1` 引入的编译问题：补回头部半透明背景所需的 Compose 图形引用，恢复签名 APK 自动构建。
