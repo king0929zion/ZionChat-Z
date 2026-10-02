@@ -1,3 +1,7 @@
+## v0.2.2
+
+- 修复 `v0.2.1` 引入的编译问题：补回头部半透明背景所需的 Compose 图形引用，恢复签名 APK 自动构建。
+
 ## v0.2.1
 
 - 对齐上游 RikkaHub 最新模型识别：新增 GPT-5.5/5.6/6、Gemini 3.5/4、Claude Sonnet 5/Opus 5/5.5 系列、DeepSeek Flash/V4 系列、Qwen 3.6-3.8、豆包 2.x、Kimi K2.6/K3、Step 5、GLM 5.1-5.3、MiniMax M2.7/M3、小米 MIMO 新版本等，新增模型上下文长度（contextLength）支持。
