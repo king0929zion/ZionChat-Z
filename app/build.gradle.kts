@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.king0929zion.zionchatz"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.2.5"
+        versionCode = 9
+        versionName = "0.2.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -292,6 +292,7 @@ dependencies {
     // modules
     implementation(project(":ai"))
     implementation(project(":web"))
+    implementation(project(":oauth"))
     implementation(project(":document"))
     implementation(project(":highlight"))
     implementation(project(":search"))

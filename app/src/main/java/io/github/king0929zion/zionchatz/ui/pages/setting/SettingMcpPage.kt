@@ -74,6 +74,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -237,6 +238,7 @@ private fun McpServerItem(
     val status by mcpManager.getStatus(item).collectAsStateWithLifecycle(McpStatus.Idle)
     val dismissBoxState = rememberSwipeToDismissBoxState()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     SwipeToDismissBox(
         state = dismissBoxState,
         backgroundContent = {
@@ -289,6 +291,17 @@ private fun McpServerItem(
                     is McpStatus.Reconnecting -> CircularProgressIndicator(
                         modifier = Modifier.size(24.dp)
                     )
+
+                    McpStatus.Authorizing -> CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    McpStatus.NeedsAuthorization -> Icon(
+                        HugeIcons.AlertCircle,
+                        null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+
                     is McpStatus.Error -> Icon(HugeIcons.AlertCircle, null)
                 }
 
@@ -326,6 +339,32 @@ private fun McpServerItem(
                                 is McpServerConfig.StreamableHTTPServer -> Text("Streamable HTTP")
                             }
                         }
+                    }
+                }
+
+                when (status) {
+                    McpStatus.NeedsAuthorization -> TextButton(
+                        onClick = { mcpManager.startAuthorization(item, context) }
+                    ) {
+                        Text("去授权")
+                    }
+
+                    McpStatus.Authorizing -> TextButton(
+                        onClick = { mcpManager.cancelAuthorization(item.id) }
+                    ) {
+                        Text("取消")
+                    }
+
+                    else -> {}
+                }
+                if (item.commonOptions.oauth?.isAuthorized == true &&
+                    status != McpStatus.NeedsAuthorization &&
+                    status != McpStatus.Authorizing
+                ) {
+                    TextButton(
+                        onClick = { scope.launch { mcpManager.clearAuthorization(item) } }
+                    ) {
+                        Text("清除授权")
                     }
                 }
 

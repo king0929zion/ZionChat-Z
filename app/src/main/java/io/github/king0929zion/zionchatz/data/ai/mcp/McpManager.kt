@@ -1,5 +1,6 @@
 package io.github.king0929zion.zionchatz.data.ai.mcp
 
+import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
 import io.ktor.client.HttpClient
@@ -34,6 +35,9 @@ import kotlinx.serialization.json.JsonObject
 import io.github.king0929zion.zionchatz.ai.core.InputSchema
 import io.github.king0929zion.zionchatz.ai.ui.UIMessagePart
 import io.github.king0929zion.zionchatz.AppScope
+import io.github.king0929zion.zionchatz.oauth.CustomTabsOAuthAuthorizationLauncher
+import io.github.king0929zion.zionchatz.oauth.OAuthHttpClient
+import io.github.king0929zion.zionchatz.oauth.OAuthLoopbackCallbackServer
 import io.github.king0929zion.zionchatz.data.datastore.SettingsStore
 import io.github.king0929zion.zionchatz.data.datastore.getCurrentAssistant
 import io.github.king0929zion.zionchatz.data.files.FilesManager
@@ -80,6 +84,24 @@ class McpManager(
     private val reconnectJobs: MutableMap<Uuid, Job> = mutableMapOf()
     private val reconnectAttempts: MutableMap<Uuid, Int> = mutableMapOf()
     val syncingStatus = MutableStateFlow<Map<Uuid, McpStatus>>(mapOf())
+
+    private val oauthHttpClient = OAuthHttpClient(okHttpClient)
+    private val oauthDiscoveryClient = McpOAuthDiscoveryClient(okHttpClient)
+    private val oauthCallbackServer = OAuthLoopbackCallbackServer(
+        port = MCP_OAUTH_CALLBACK_PORT,
+        callbackPath = MCP_OAUTH_CALLBACK_PATH,
+    )
+    private val oauthCoordinator = McpOAuthCoordinator(
+        settingsStore = settingsStore,
+        appScope = appScope,
+        oauthClient = oauthHttpClient,
+        discoveryClient = oauthDiscoveryClient,
+        callbackServer = oauthCallbackServer,
+        authorizationLauncher = CustomTabsOAuthAuthorizationLauncher,
+        updateStatus = { id, status ->
+            appScope.launch { setStatusById(id, status) }
+        },
+    )
 
     init {
         appScope.launch {
@@ -139,21 +161,32 @@ class McpManager(
         val config = clients.entries.first { it.value == client }.key
         Log.i(TAG, "callTool: $toolName / $args")
 
-        if (client.transport == null) client.connect(getTransport(config))
-        val result = client.callTool(
-            request = CallToolRequest(
-                params = CallToolRequestParams(
-                    name = tool.name,
-                    arguments = args,
+        return runCatching {
+            val freshConfig = oauthCoordinator.ensureFreshToken(config)
+            if (client.transport == null) client.connect(getTransport(freshConfig))
+            val result = client.callTool(
+                request = CallToolRequest(
+                    params = CallToolRequestParams(
+                        name = tool.name,
+                        arguments = args,
+                    ),
                 ),
-            ),
-            options = RequestOptions(timeout = 120.seconds),
-        )
-        return result.content.map {
-            when(it) {
-                is TextContent -> UIMessagePart.Text(it.text)
-                is ImageContent -> convertImageContentToFilePart(it)
-                else -> UIMessagePart.Text(JsonInstant.encodeToString(it))
+                options = RequestOptions(timeout = 120.seconds),
+            )
+            result.content.map {
+                when (it) {
+                    is TextContent -> UIMessagePart.Text(it.text)
+                    is ImageContent -> convertImageContentToFilePart(it)
+                    else -> UIMessagePart.Text(JsonInstant.encodeToString(it))
+                }
+            }
+        }.getOrElse { error ->
+            error.printStackTrace()
+            if (runCatching { oauthCoordinator.needsAuthorization(config, error) }.getOrDefault(false)) {
+                setStatus(config = config, status = McpStatus.NeedsAuthorization)
+                listOf(UIMessagePart.Text("MCP server needs OAuth authorization, please authorize in settings"))
+            } else {
+                throw error
             }
         }
     }
@@ -179,7 +212,7 @@ class McpManager(
                 client = client,
                 requestBuilder = {
                     headers.appendAll(StringValues.build {
-                        config.commonOptions.headers.forEach {
+                        resolvedHeaders(config).forEach {
                             append(it.first, it.second)
                         }
                     })
@@ -193,13 +226,28 @@ class McpManager(
                 client = client,
                 requestBuilder = {
                     headers.appendAll(StringValues.build {
-                        config.commonOptions.headers.forEach {
+                        resolvedHeaders(config).forEach {
                             append(it.first, it.second)
                         }
                     })
                 }
             )
         }
+    }
+
+    /**
+     * 解析实际发送的请求头：过滤空名称，并为已授权的 OAuth 服务器注入
+     * `Authorization: Bearer`（用户手写 Authorization 头时不覆盖）。
+     */
+    private fun resolvedHeaders(config: McpServerConfig): List<Pair<String, String>> {
+        val headers = config.commonOptions.headers.filter { it.first.isNotBlank() }
+        val token = config.commonOptions.oauth
+            ?.takeIf { it.enabled }
+            ?.accessToken
+            ?.takeIf { it.isNotBlank() }
+            ?: return headers
+        if (headers.any { it.first.equals("Authorization", ignoreCase = true) }) return headers
+        return headers + ("Authorization" to "Bearer $token")
     }
 
     suspend fun addClient(config: McpServerConfig) = withContext(Dispatchers.IO) {
@@ -244,7 +292,15 @@ class McpManager(
             Log.i(TAG, "addClient: connected ${config.commonOptions.name}")
         }.onFailure {
             it.printStackTrace()
-            setStatus(config = config, status = McpStatus.Error(it.message ?: it.javaClass.name))
+            handleConnectionFailure(config, it)
+        }
+    }
+
+    private suspend fun handleConnectionFailure(config: McpServerConfig, error: Throwable) {
+        if (runCatching { oauthCoordinator.needsAuthorization(config, error) }.getOrDefault(false)) {
+            setStatus(config = config, status = McpStatus.NeedsAuthorization)
+        } else {
+            setStatus(config = config, status = McpStatus.Error.from(error))
         }
     }
 
@@ -319,12 +375,14 @@ class McpManager(
                 sync(config)
             }.onFailure {
                 it.printStackTrace()
+                handleConnectionFailure(config, it)
             }
         }
     }
 
     suspend fun removeClient(config: McpServerConfig) = withContext(Dispatchers.IO) {
         cancelReconnect(config.id)
+        oauthCoordinator.forget(config.id)
         val toRemove = clients.entries.filter { it.key.id == config.id }
         toRemove.forEach { entry ->
             runCatching {
@@ -381,8 +439,12 @@ class McpManager(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Reconnect failed for ${config.commonOptions.name}", e)
-                // 继续尝试重连
-                scheduleReconnect(config)
+                if (runCatching { oauthCoordinator.needsAuthorization(config, e) }.getOrDefault(false)) {
+                    setStatus(config, McpStatus.NeedsAuthorization)
+                } else {
+                    // 继续尝试重连
+                    scheduleReconnect(config)
+                }
             }
         }
     }
@@ -441,9 +503,27 @@ class McpManager(
     }
 
     private suspend fun setStatus(config: McpServerConfig, status: McpStatus) {
+        setStatusById(config.id, status)
+    }
+
+    private suspend fun setStatusById(configId: Uuid, status: McpStatus) {
         syncingStatus.emit(syncingStatus.value.toMutableMap().apply {
-            put(config.id, status)
+            put(configId, status)
         })
+    }
+
+    fun startAuthorization(config: McpServerConfig, context: Context) {
+        oauthCoordinator.startAuthorization(config, context)
+    }
+
+    fun cancelAuthorization(configId: Uuid) {
+        oauthCoordinator.cancelAuthorization(configId)
+    }
+
+    suspend fun clearAuthorization(config: McpServerConfig) {
+        oauthCoordinator.clearAuthorization(config)
+        removeClient(config)
+        setStatusById(config.id, McpStatus.Idle)
     }
 
     fun getStatus(config: McpServerConfig): Flow<McpStatus> {

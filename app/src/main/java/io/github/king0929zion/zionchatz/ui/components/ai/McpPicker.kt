@@ -188,6 +188,12 @@ fun McpPicker(
                         is McpStatus.Reconnecting -> CircularProgressIndicator(
                             modifier = Modifier.size(24.dp)
                         )
+
+                        McpStatus.Authorizing -> CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp)
+                        )
+
+                        McpStatus.NeedsAuthorization -> Icon(HugeIcons.Alert01, null)
                         is McpStatus.Error -> Icon(HugeIcons.Alert01, null)
                     }
                     Column(
@@ -204,6 +210,8 @@ fun McpPicker(
                                 is McpStatus.Connecting -> "Connecting"
                                 is McpStatus.Connected -> "Connected"
                                 is McpStatus.Reconnecting -> "Reconnecting (${s.attempt}/${s.maxAttempts})"
+                                is McpStatus.Authorizing -> "Authorizing"
+                                is McpStatus.NeedsAuthorization -> "Needs authorization"
                                 is McpStatus.Error -> "Error: ${s.message}"
                             },
                             style = MaterialTheme.typography.labelSmall,
