@@ -884,6 +884,8 @@
   <string name="error_title_tool_unavailable">工具無法使用</string>
   <string name="error_title_generation">訊息產生失敗</string>
   <string name="error_title_generate_title">自動產生標題失敗</string>
+  <string name="error_title_model_not_found">找不到標題模型，請在設定中選擇。</string>
+  <string name="error_title_model_provider_not_found">找不到標題模型的提供者</string>
   <string name="error_title_translate_message">訊息翻譯失敗</string>
   <string name="error_title_compress_conversation">對話壓縮失敗</string>
   <string name="error_title_operation">操作失敗</string>

@@ -879,6 +879,8 @@
   <string name="error_title_tool_unavailable">Инструмент недоступен</string>
   <string name="error_title_generation">Ошибка генерации сообщения</string>
   <string name="error_title_generate_title">Не удалось автоматически сгенерировать заголовок</string>
+  <string name="error_title_model_not_found">Модель заголовка не найдена. Выберите её в настройках.</string>
+  <string name="error_title_model_provider_not_found">Поставщик модели заголовка не найден</string>
   <string name="error_title_translate_message">Ошибка перевода сообщения</string>
   <string name="error_title_compress_conversation">Сжатие переписки не удалось</string>
   <string name="error_title_operation">Операция не выполнена</string>

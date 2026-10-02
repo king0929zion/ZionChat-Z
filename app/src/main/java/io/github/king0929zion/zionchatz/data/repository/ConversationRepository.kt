@@ -202,6 +202,10 @@ class ConversationRepository(
         return conversationDAO.existsById(uuid.toString())
     }
 
+    suspend fun getAllTitles(): List<String> {
+        return conversationDAO.getAllTitles()
+    }
+
     suspend fun insertConversation(conversation: Conversation) {
         database.withTransaction {
             conversationDAO.insert(

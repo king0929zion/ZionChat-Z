@@ -891,6 +891,8 @@
   <string name="error_title_tool_unavailable">Tool unavailable</string>
   <string name="error_title_generation">Message generation failed</string>
   <string name="error_title_generate_title">Auto title generation failed</string>
+  <string name="error_title_model_not_found">Title model not found. Please select one in settings.</string>
+  <string name="error_title_model_provider_not_found">Provider of the title model not found</string>
   <string name="error_title_translate_message">Message translation failed</string>
   <string name="error_title_compress_conversation">Conversation compression failed</string>
   <string name="error_title_operation">Operation failed</string>

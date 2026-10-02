@@ -890,6 +890,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="error_title_tool_unavailable">工具不可用</string>
   <string name="error_title_generation">消息生成失败</string>
   <string name="error_title_generate_title">自动生成标题失败</string>
+  <string name="error_title_model_not_found">未找到标题模型，请在设置中选择。</string>
+  <string name="error_title_model_provider_not_found">未找到标题模型的提供商</string>
   <string name="error_title_translate_message">消息翻译失败</string>
   <string name="error_title_compress_conversation">对话压缩失败</string>
   <string name="error_title_operation">操作失败</string>

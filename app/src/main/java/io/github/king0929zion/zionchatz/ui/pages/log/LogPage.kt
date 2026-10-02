@@ -1,7 +1,10 @@
 package io.github.king0929zion.zionchatz.ui.pages.log
 
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Copy01
 import me.rerere.hugeicons.stroke.Delete01
+import android.content.ClipData
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,8 +32,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -191,6 +198,9 @@ private fun RequestLogCard(log: LogEntry.RequestLog, onClick: () -> Unit) {
 @Composable
 private fun RequestLogDetail(log: LogEntry.RequestLog) {
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()) }
+    val clipboard = LocalClipboard.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -255,12 +265,39 @@ private fun RequestLogDetail(log: LogEntry.RequestLog) {
         log.requestBody?.let { body ->
             item {
                 HorizontalDivider()
-                Text(
-                    text = "Request Body",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Request Body",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    clipboard.setClipEntry(
+                                        ClipEntry(ClipData.newPlainText("Request Body", body))
+                                    )
+                                } catch (e: RuntimeException) {
+                                    // 内容过大时剪贴板 Binder 事务会抛异常，转 Toast 避免闪退
+                                    Toast.makeText(
+                                        context,
+                                        "Copy failed: content too large for clipboard",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(HugeIcons.Copy01, contentDescription = "Copy")
+                    }
+                }
                 val jsonElement = remember(body) {
                     runCatching { JsonInstantPretty.parseToJsonElement(body) }.getOrNull()
                 }

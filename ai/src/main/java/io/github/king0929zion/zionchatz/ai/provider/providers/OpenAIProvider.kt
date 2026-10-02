@@ -31,6 +31,7 @@ import io.github.king0929zion.zionchatz.ai.util.mergeCustomBody
 import io.github.king0929zion.zionchatz.ai.util.mergeCustomHeaders
 import io.github.king0929zion.zionchatz.common.http.await
 import io.github.king0929zion.zionchatz.common.http.getByKey
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -201,18 +202,25 @@ class OpenAIProvider(
 
         val key = keyRoulette.next(providerSetting.apiKey)
 
+        // Grok（x.ai）图片接口不支持 size 参数；host 精确匹配避免误伤中转域名
+        val host = providerSetting.baseUrl.toHttpUrlOrNull()?.host?.lowercase()
+        val isGrok = host == "x.ai" || (host?.endsWith(".x.ai") == true) ||
+            params.model.modelId.contains("grok", ignoreCase = true)
+
         val requestBody = json.encodeToString(
             buildJsonObject {
                 put("model", params.model.modelId)
                 put("prompt", params.prompt)
                 put("n", params.numOfImages)
-                put(
-                    "size", when (params.aspectRatio) {
-                        ImageAspectRatio.SQUARE -> "1024x1024"
-                        ImageAspectRatio.LANDSCAPE -> "1536x1024"
-                        ImageAspectRatio.PORTRAIT -> "1024x1536"
-                    }
-                )
+                if (!isGrok) {
+                    put(
+                        "size", when (params.aspectRatio) {
+                            ImageAspectRatio.SQUARE -> "1024x1024"
+                            ImageAspectRatio.LANDSCAPE -> "1536x1024"
+                            ImageAspectRatio.PORTRAIT -> "1024x1536"
+                        }
+                    )
+                }
             }.mergeCustomBody(params.customBody)
         )
 
