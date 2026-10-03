@@ -1,3 +1,7 @@
+## v0.0.94
+
+- 修复 v0.0.93 编译错误：AcRemoteTools 的 InputSchema 导入路径、移除 ViewModelModule 中残留的 XAppVM 注册
+
 ## v0.0.93
 
 - **插件中心全面重构**：
