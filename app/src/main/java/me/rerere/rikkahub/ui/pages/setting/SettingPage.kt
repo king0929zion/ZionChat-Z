@@ -19,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,7 +47,6 @@ import me.rerere.hugeicons.stroke.Sun01
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.isNotConfigured
-import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
@@ -66,14 +64,11 @@ import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.plus
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.koinInject
 
 @Composable
 fun SettingPage(vm: SettingVM = koinViewModel()) {
     val navController = LocalNavController.current
     val settings by vm.settings.collectAsStateWithLifecycle()
-    val filesManager: FilesManager = koinInject()
-
     SettingsPage(
         title = stringResource(R.string.settings),
         onBack = { navController.popBackStack() },
@@ -156,11 +151,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                         headlineContent = { Text(stringResource(R.string.setting_page_search_service)) },
                     )
                     item(
-                        onClick = { navController.navigate(Screen.SettingTTS) },
-                        leadingContent = { Icon(ZionAppIcons.Volume, null, tint = Color.Unspecified) },
-                        headlineContent = { Text(stringResource(R.string.setting_page_tts_service)) },
-                    )
-                    item(
                         onClick = { navController.navigate(Screen.SettingMcp) },
                         leadingContent = { Icon(painterResource(R.drawable.ic_mcp), null, tint = Color.Unspecified) },
                         headlineContent = { Text(stringResource(R.string.setting_page_mcp)) },
@@ -189,37 +179,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
                             )
                         },
                         headlineContent = { Text(stringResource(R.string.plugins_page_title)) },
-                    )
-                }
-            }
-
-            item("dataSettings") {
-                val storageState by produceState(-1 to 0L) {
-                    value = filesManager.countChatFiles()
-                }
-                CardGroup(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    title = { Text(stringResource(R.string.setting_page_data_settings)) },
-                ) {
-                    item(
-                        onClick = { navController.navigate(Screen.Backup) },
-                        leadingContent = { Icon(HugeIcons.Database02, null) },
-                        headlineContent = { Text(stringResource(R.string.setting_page_data_backup)) },
-                    )
-                    item(
-                        onClick = { navController.navigate(Screen.SettingFiles) },
-                        leadingContent = { Icon(HugeIcons.ImageUpload, null) },
-                        trailingContent = {
-                            Text(
-                                text = if (storageState.first == -1) {
-                                    stringResource(R.string.calculating)
-                                } else {
-                                    "${storageState.first}"
-                                },
-                                color = ZionTextPrimary
-                            )
-                        },
-                        headlineContent = { Text(stringResource(R.string.setting_page_chat_storage)) },
                     )
                 }
             }

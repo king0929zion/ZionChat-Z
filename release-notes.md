@@ -1,3 +1,12 @@
+## v0.0.98
+
+- **供应商详情页重写**（设计稿 model-service-edit）：药丸表单 Service name / API type / OpenAI API / Base URL / API Key；新增灰色禁用态「Add key」按钮、底部 Key 状态行（No key configured / 1 key configured + 删除）、白色 26dp 圆角 Models 入口卡片（含模型数量副标题）
+- **模型详细设置页重写**（设计稿 model-settings）：仅保留 Model ID / Model Name / Model type（下拉）与 **Capabilities 标签组**（Tools / Thinking / Vision 可多选切换，选中黑底白字）；Advanced（自定义请求头 / Body / 供应商覆盖）与 Built-in Tools 相关组件代码保留但暂不展示
+- **删除「Data Settings」设置分区**（数据备份 / 聊天存储入口）
+- **删除 TTS 语音服务模块**（设置页、路由与页面文件；朗读工具功能保留）
+- 修复 v0.0.97 编译错误：补充 `animateContentSize` import
+- `PillInput` 新增 `enabled` 参数（模型 ID 在编辑态只读）
+
 ## v0.0.97
 
 - **输入区与按钮统一改为灰色**（`PillSpec.FieldColor` = `ZionSectionItem`），与其他设置页卡片风格一致：

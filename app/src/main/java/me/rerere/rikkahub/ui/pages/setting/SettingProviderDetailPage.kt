@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -38,6 +39,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -89,6 +92,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -119,6 +128,10 @@ import me.rerere.rikkahub.ui.components.ai.ModelTypeTag
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.components.ui.FooterTranslucentBackdrop
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.PillInput
+import me.rerere.rikkahub.ui.components.ui.PillSelect
+import me.rerere.rikkahub.ui.components.ui.SectionLabel
+import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.ShareSheet
 import me.rerere.rikkahub.ui.components.ui.Tag
@@ -157,6 +170,49 @@ private fun ProviderSetting.withAlwaysEnabledDefaults(): ProviderSetting {
         enabled = true,
         balanceOption = BalanceOption()
     )
+}
+
+/**
+ * 供应商 API 类型 (设计稿 model-service-edit: API type 下拉)
+ *
+ * "OpenAI Compatible" 同样映射到 OpenAI 类型, 但默认不预填官方 Base URL。
+ */
+enum class ProviderApiTypeOption(
+    val label: String,
+    val defaultBaseUrl: String,
+    val defaultName: String,
+) {
+    OPENAI("OpenAI", "https://api.openai.com/v1", "OpenAI"),
+    COMPATIBLE("OpenAI Compatible", "", "Custom Service"),
+    ANTHROPIC("Anthropic", "https://api.anthropic.com/v1", "Claude"),
+    GEMINI("Gemini", "https://generativelanguage.googleapis.com/v1beta", "Google");
+
+    val isOpenAiCompatible: Boolean
+        get() = this == OPENAI || this == COMPATIBLE
+}
+
+private fun ProviderSetting.apiKeyValue(): String = when (this) {
+    is ProviderSetting.OpenAI -> apiKey
+    is ProviderSetting.Claude -> apiKey
+    is ProviderSetting.Google -> apiKey
+}
+
+private fun ProviderSetting.copyWithApiKey(key: String): ProviderSetting = when (this) {
+    is ProviderSetting.OpenAI -> copy(apiKey = key)
+    is ProviderSetting.Claude -> copy(apiKey = key)
+    is ProviderSetting.Google -> copy(apiKey = key)
+}
+
+private fun ProviderSetting.baseUrlValue(): String = when (this) {
+    is ProviderSetting.OpenAI -> baseUrl
+    is ProviderSetting.Claude -> baseUrl
+    is ProviderSetting.Google -> baseUrl
+}
+
+private fun ProviderSetting.copyWithBaseUrl(url: String): ProviderSetting = when (this) {
+    is ProviderSetting.OpenAI -> copy(baseUrl = url)
+    is ProviderSetting.Claude -> copy(baseUrl = url)
+    is ProviderSetting.Google -> copy(baseUrl = url)
 }
 
 private const val ProviderDetailPageConfig = "config"
@@ -398,6 +454,12 @@ private fun ProviderSectionLabel(text: String) {
     )
 }
 
+/**
+ * 供应商详情配置页 (设计稿: model-service-edit)
+ *
+ * 简约药丸表单: Service name / API type / OpenAI API / Base URL / API Key,
+ * 灰色 Add key 按钮 + 底部 Key 状态行 + Models 入口卡片。
+ */
 @Composable
 private fun SettingProviderConfigPage(
     provider: ProviderSetting,
@@ -406,185 +468,203 @@ private fun SettingProviderConfigPage(
     onShowModels: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val groupColor = ProviderDetailGroupColor
+    val focusManager = LocalFocusManager.current
+
+    // API type 选择 (仅 OpenAI 兼容类型可切换 OpenAI API)
+    val apiTypeOption = remember(provider) {
+        when (provider) {
+            is ProviderSetting.Claude -> ProviderApiTypeOption.ANTHROPIC
+            is ProviderSetting.Google -> ProviderApiTypeOption.GEMINI
+            is ProviderSetting.OpenAI -> {
+                if (provider.baseUrl == ProviderApiTypeOption.OPENAI.defaultBaseUrl) {
+                    ProviderApiTypeOption.OPENAI
+                } else {
+                    ProviderApiTypeOption.COMPATIBLE
+                }
+            }
+        }
+    }
+    var useResponseApi by remember(provider) {
+        mutableStateOf((provider as? ProviderSetting.OpenAI)?.useResponseApi ?: false)
+    }
+    val openAiSelectEnabled = apiTypeOption.isOpenAiCompatible()
+    val apiKeyValue = provider.apiKeyValue()
+
+    fun applyType(newType: ProviderApiTypeOption) {
+        val currentDefault = apiTypeOption.defaultBaseUrl
+        if (provider.baseUrl.isBlank() || provider.baseUrl == currentDefault) {
+            onProviderChange(
+                provider.copyWithBaseUrl(newType.defaultBaseUrl).withAlwaysEnabledDefaults()
+            )
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(top = 6.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(top = ProviderDetailContentTopPadding, bottom = 24.dp)
+            .padding(horizontal = 16.dp),
     ) {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = groupColor
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    modifier = Modifier.size(64.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    color = ZionSurface
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        AutoAIIcon(
-                            name = provider.name,
-                            modifier = Modifier.size(34.dp),
-                            color = Color.Transparent
-                        )
-                    }
-                }
+        SectionLabel(text = "Service name")
+        PillInput(
+            value = provider.name,
+            onValueChange = {
+                onProviderChange(provider.copyProvider(name = it).withAlwaysEnabledDefaults())
+            },
+            placeholder = stringResource(R.string.setting_provider_page_name)
+        )
 
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    ProviderField(
-                        title = stringResource(R.string.setting_provider_page_name),
-                        value = provider.name,
-                        onValueChange = {
-                            onProviderChange(
-                                provider.copyProvider(name = it).withAlwaysEnabledDefaults()
-                            )
-                        },
-                        containerColor = groupColor
-                    )
-                }
-            }
+        SectionLabel(text = "API type")
+        PillSelect(
+            options = ProviderApiTypeOption.entries,
+            selectedOption = apiTypeOption,
+            onOptionSelected = { applyType(it) },
+            optionToString = { it.label },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        SectionLabel(text = "OpenAI API")
+        PillSelect(
+            options = listOf(false, true),
+            selectedOption = useResponseApi,
+            onOptionSelected = { useResponseApi = it },
+            optionToString = { if (it) "Responses API" else "Chat Completions API" },
+            enabled = openAiSelectEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(if (openAiSelectEnabled) 1f else 0.45f)
+        )
+
+        SectionLabel(text = "Base URL")
+        PillInput(
+            value = provider.baseUrlValue(),
+            onValueChange = {
+                onProviderChange(provider.copyWithBaseUrl(it).withAlwaysEnabledDefaults())
+            },
+            placeholder = "https://api.example.com/v1",
+            keyboardType = KeyboardType.Uri
+        )
+
+        SectionLabel(text = "API Key")
+        PillInput(
+            value = apiKeyValue,
+            onValueChange = { onProviderChange(provider.copyWithApiKey(it)) },
+            placeholder = "Enter a new API Key...",
+            keyboardType = KeyboardType.Password
+        )
+
+        // Add key 按钮 (设计稿 .add-key: 无内容时禁用灰显)
+        Spacer(modifier = Modifier.height(16.dp))
+        val canApplyKey = apiKeyValue.isNotBlank()
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .clip(RoundedCornerShape(25.dp))
+                .background(
+                    if (canApplyKey) ZionTextPrimary else Color(0xFFD8D8D8),
+                    RoundedCornerShape(25.dp)
+                )
+                .pressableScale(enabled = canApplyKey, pressedScale = 0.97f) {
+                    focusManager.clearFocus()
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Add key",
+                fontSize = 16.sp,
+                fontFamily = SourceSans3,
+                color = if (canApplyKey) Color.White else Color(0xFFAAAAAA)
+            )
         }
 
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = groupColor
+        // 底部 Key 状态行 (设计稿 .footer)
+        Spacer(modifier = Modifier.height(20.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                ProviderConfigure(
-                    provider = provider,
-                    topPadding = 0.dp,
-                    showNameField = false,
-                    onEdit = {
-                        onProviderChange(it.withAlwaysEnabledDefaults())
-                    }
+            Text(
+                text = if (apiKeyValue.isBlank()) {
+                    "No key configured"
+                } else {
+                    "1 key configured"
+                },
+                fontSize = 14.sp,
+                fontFamily = SourceSans3,
+                color = Color(0xFF555555)
+            )
+            if (!provider.builtIn) {
+                Text(
+                    text = stringResource(R.string.delete),
+                    fontSize = 14.sp,
+                    fontFamily = SourceSans3,
+                    color = ZionTextPrimary,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .pressableScale(pressedScale = 0.95f) { showDeleteDialog = true }
+                        .padding(horizontal = 6.dp, vertical = 3.dp)
                 )
             }
         }
 
-        // Models入口 - 简化为一行
+        // Models 入口卡片 (设计稿 .models-card)
+        Spacer(modifier = Modifier.height(18.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onShowModels() }
-                .padding(horizontal = 8.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .heightIn(min = 74.dp)
+                .clip(RoundedCornerShape(26.dp))
+                .background(ZionSurface, RoundedCornerShape(26.dp))
+                .pressableScale(pressedScale = 0.99f) { onShowModels() }
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_bot),
-                contentDescription = null,
-                tint = ZionTextPrimary,
-                modifier = Modifier.size(22.dp)
-            )
-            Text(
-                text = stringResource(R.string.setting_provider_page_models),
-                style = MaterialTheme.typography.bodyLarge,
-                color = ZionTextPrimary,
-                modifier = Modifier.weight(1f)
-            )
+            Box(
+                modifier = Modifier.size(30.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = ZionAppIcons.Model,
+                    contentDescription = null,
+                    tint = Color(0xFF5F5F5F),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.setting_provider_page_models),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = SourceSans3,
+                    color = ZionTextPrimary
+                )
+                Text(
+                    text = if (provider.models.isEmpty()) {
+                        "No models"
+                    } else {
+                        "${provider.models.size} models"
+                    },
+                    fontSize = 14.sp,
+                    fontFamily = SourceSans3,
+                    color = Color(0xFF666666)
+                )
+            }
             Icon(
                 imageVector = ZionAppIcons.ChevronRight,
                 contentDescription = null,
                 tint = ZionTextSecondary,
                 modifier = Modifier.size(18.dp)
             )
-        }
-
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = groupColor
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(18.dp),
-                        color = ZionGrayLighter
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(enabled = !provider.isUsingDefaultBaseUrl()) {
-                                    onProviderChange(
-                                        provider.resetBaseUrlToDefault().withAlwaysEnabledDefaults()
-                                    )
-                                }
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = HugeIcons.Refresh03,
-                                contentDescription = stringResource(R.string.setting_model_page_reset_to_default),
-                                tint = if (provider.isUsingDefaultBaseUrl()) ZionTextSecondary else ZionTextPrimary
-                            )
-                            Text(
-                                text = stringResource(R.string.setting_model_page_reset_to_default),
-                                color = if (provider.isUsingDefaultBaseUrl()) ZionTextSecondary else ZionTextPrimary,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    if (!provider.builtIn) {
-                        Surface(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(18.dp),
-                            color = ZionGrayLighter
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                    showDeleteDialog = true
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(HugeIcons.Delete01, "Delete", tint = ZionTextPrimary)
-                                Text(
-                                    text = stringResource(R.string.delete),
-                                    color = ZionTextPrimary,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -605,10 +685,10 @@ private fun SettingProviderConfigPage(
             },
             confirmButton = {
                 TextButton(
-                                onClick = {
-                                    showDeleteDialog = false
-                                    onDelete()
-                                }
+                    onClick = {
+                        showDeleteDialog = false
+                        onDelete()
+                    }
                 ) {
                     Text(stringResource(R.string.delete))
                 }
@@ -890,15 +970,20 @@ private fun ModelList(
 }
 
 @Composable
+/**
+ * 模型详细设置表单 (设计稿: model-settings)
+ *
+ * 仅保留四项: Model ID / Model Name / Model type / Capabilities。
+ * Advanced (自定义请求头 / Body / 供应商覆盖) 与 Built-in Tools 相关组件保留在代码中,
+ * 暂不展示。
+ */
+@Composable
 private fun ModelSettingsForm(
     model: Model,
     onModelChange: (Model) -> Unit,
     isEdit: Boolean,
     parentProvider: ProviderSetting? = null
 ) {
-    val pagerState = rememberPagerState { 3 }
-    val scope = rememberCoroutineScope()
-
     fun setModelId(id: String) {
         val inputModality = ModelRegistry.MODEL_INPUT_MODALITIES.getData(id)
         val outputModality = ModelRegistry.MODEL_OUTPUT_MODALITIES.getData(id)
@@ -914,157 +999,137 @@ private fun ModelSettingsForm(
         )
     }
 
-    Column {
-        SecondaryTabRow(
-            selectedTabIndex = pagerState.currentPage,
-            containerColor = ProviderDetailGroupColor,
-        ) {
-            Tab(
-                selected = pagerState.currentPage == 0,
-                onClick = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(0)
-                    }
-                },
-                text = { Text(stringResource(R.string.setting_provider_page_basic_settings)) }
-            )
-            Tab(
-                selected = pagerState.currentPage == 1,
-                onClick = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(1)
-                    }
-                },
-                text = { Text(stringResource(R.string.setting_provider_page_advanced_settings)) }
-            )
-            Tab(
-                selected = pagerState.currentPage == 2,
-                onClick = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(2)
-                    }
-                },
-                text = { Text(stringResource(R.string.setting_page_built_in_tools)) }
-            )
-        }
+    // Capabilities: Tools / Thinking / Vision
+    val hasTool = model.abilities.contains(ModelAbility.TOOL)
+    val hasThinking = model.abilities.contains(ModelAbility.REASONING)
+    val hasVision = model.inputModalities.contains(Modality.IMAGE)
 
-        HorizontalPager(
-            state = pagerState,
+    fun toggleTool(enabled: Boolean) {
+        val next = model.abilities.toMutableList()
+        if (enabled) {
+            if (!next.contains(ModelAbility.TOOL)) next.add(ModelAbility.TOOL)
+        } else {
+            next.remove(ModelAbility.TOOL)
+        }
+        onModelChange(model.copy(abilities = next))
+    }
+
+    fun toggleThinking(enabled: Boolean) {
+        val next = model.abilities.toMutableList()
+        if (enabled) {
+            if (!next.contains(ModelAbility.REASONING)) next.add(ModelAbility.REASONING)
+        } else {
+            next.remove(ModelAbility.REASONING)
+        }
+        onModelChange(model.copy(abilities = next))
+    }
+
+    fun toggleVision(enabled: Boolean) {
+        val next = model.inputModalities.toMutableList()
+        if (enabled) {
+            if (!next.contains(Modality.IMAGE)) next.add(Modality.IMAGE)
+        } else {
+            next.remove(Modality.IMAGE)
+            if (next.isEmpty()) next.add(Modality.TEXT)
+        }
+        onModelChange(model.copy(inputModalities = next))
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+    ) {
+        SectionLabel(text = stringResource(R.string.setting_provider_page_model_id))
+        PillInput(
+            value = model.modelId,
+            onValueChange = { if (!isEdit) setModelId(it.trim()) },
+            placeholder = "gpt-4o",
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isEdit
+        )
+
+        SectionLabel(
+            text = stringResource(
+                if (isEdit) {
+                    R.string.setting_provider_page_model_name
+                } else {
+                    R.string.setting_provider_page_model_display_name
+                }
+            )
+        )
+        PillInput(
+            value = model.displayName,
+            onValueChange = { onModelChange(model.copy(displayName = it.trim())) },
+            placeholder = "GPT-4o",
             modifier = Modifier.fillMaxWidth()
-        ) { page ->
-            when (page) {
-                0 -> {
-                    // 基本设置页面
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 16.dp)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        ProviderField(
-                            value = model.modelId,
-                            onValueChange = {
-                                if (!isEdit) {
-                                    setModelId(it.trim())
-                                }
-                            },
-                            title = stringResource(R.string.setting_provider_page_model_id),
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !isEdit,
-                            containerColor = ProviderDetailGroupColor
-                        )
+        )
 
-                        ProviderField(
-                            value = model.displayName,
-                            onValueChange = {
-                                onModelChange(model.copy(displayName = it.trim()))
-                            },
-                            title = stringResource(
-                                if (isEdit) {
-                                    R.string.setting_provider_page_model_name
-                                } else {
-                                    R.string.setting_provider_page_model_display_name
-                                }
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
-                            containerColor = ProviderDetailGroupColor
-                        )
+        SectionLabel(text = stringResource(R.string.setting_provider_page_model_type))
+        PillSelect(
+            options = ModelType.entries,
+            selectedOption = model.type,
+            onOptionSelected = { onModelChange(model.copy(type = it)) },
+            optionToString = { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-                        ModelTypeSelector(
-                            selectedType = model.type,
-                            onTypeSelected = {
-                                onModelChange(model.copy(type = it))
-                            }
-                        )
-
-                        ModelModalitySelector(
-                            model = model,
-                            inputModalities = model.inputModalities,
-                            onUpdateInputModalities = {
-                                onModelChange(model.copy(inputModalities = it))
-                            },
-                            outputModalities = model.outputModalities,
-                            onUpdateOutputModalities = {
-                                onModelChange(model.copy(outputModalities = it))
-                            }
-                        )
-
-                        if (model.type == ModelType.CHAT) {
-                            ModalAbilitySelector(
-                                abilities = model.abilities,
-                                onUpdateAbilities = {
-                                    onModelChange(model.copy(abilities = it))
-                                }
-                            )
-                        }
-                    }
-                }
-
-                1 -> {
-                    // 高级设置页面
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        ProviderOverrideSettings(
-                            providerOverride = model.providerOverwrite,
-                            onUpdateProviderOverride = { providerOverride ->
-                                onModelChange(model.copy(providerOverwrite = providerOverride))
-                            },
-                            parentProvider = parentProvider
-                        )
-
-                        CustomHeaders(
-                            headers = model.customHeaders,
-                            onUpdate = { headers ->
-                                onModelChange(model.copy(customHeaders = headers))
-                            }
-                        )
-
-                        CustomBodies(
-                            customBodies = model.customBodies,
-                            onUpdate = { bodies ->
-                                onModelChange(model.copy(customBodies = bodies))
-                            }
-                        )
-                    }
-                }
-
-                2 -> {
-                    // 内置工具页面
-                    BuiltInToolsSettings(
-                        tools = model.tools,
-                        onUpdateTools = { tools ->
-                            onModelChange(model.copy(tools = tools))
-                        }
-                    )
-                }
-            }
+        // Capabilities chips (设计稿 .chips)
+        Spacer(modifier = Modifier.height(26.dp))
+        SectionLabel(text = "Capabilities")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            CapabilityChip(
+                text = "Tools",
+                active = hasTool,
+                modifier = Modifier.weight(1f),
+                onClick = { toggleTool(!hasTool) }
+            )
+            CapabilityChip(
+                text = "Thinking",
+                active = hasThinking,
+                modifier = Modifier.weight(1f),
+                onClick = { toggleThinking(!hasThinking) }
+            )
+            CapabilityChip(
+                text = "Vision",
+                active = hasVision,
+                modifier = Modifier.weight(1f),
+                onClick = { toggleVision(!hasVision) }
+            )
         }
+
+        Spacer(modifier = Modifier.height(28.dp))
+    }
+}
+
+/**
+ * 能力标签 (设计稿 .chip: 高 31dp / 全圆角 / 选中黑底白字)
+ */
+@Composable
+private fun CapabilityChip(
+    text: String,
+    active: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .height(31.dp)
+            .clip(CircleShape)
+            .background(if (active) ZionTextPrimary else ZionSurface, CircleShape)
+            .pressableScale(pressedScale = 0.97f, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            fontFamily = SourceSans3,
+            color = if (active) Color.White else Color(0xFF5C5C5C),
+            maxLines = 1
+        )
     }
 }
 

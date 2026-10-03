@@ -32,24 +32,8 @@ import org.koin.androidx.compose.koinViewModel
 import kotlin.uuid.Uuid
 
 /**
- * API 类型选项 (设计稿: API type 下拉)
- *
- * [ProviderSetting] 只有三种实现: OpenAI / Claude / Google。
- * "OpenAI Compatible" 同样映射到 OpenAI 类型, 但默认不预填官方 Base URL。
+ * API 类型选项复用 [ProviderApiTypeOption] (定义于 SettingProviderDetailPage.kt)
  */
-private enum class ApiTypeOption(
-    val label: String,
-    val defaultBaseUrl: String,
-    val defaultName: String,
-) {
-    OPENAI("OpenAI", "https://api.openai.com/v1", "OpenAI"),
-    COMPATIBLE("OpenAI Compatible", "", "Custom Service"),
-    ANTHROPIC("Anthropic", "https://api.anthropic.com/v1", "Claude"),
-    GEMINI("Gemini", "https://generativelanguage.googleapis.com/v1beta", "Google");
-}
-
-private fun ApiTypeOption.isOpenAiCompatible(): Boolean =
-    this == ApiTypeOption.OPENAI || this == ApiTypeOption.COMPATIBLE
 
 /**
  * 新增模型服务页面 (设计稿: Add model service)
@@ -66,10 +50,10 @@ fun SettingProviderAddPage(
     val navController = LocalNavController.current
     val initialType = remember(apiType) {
         when (apiType.lowercase()) {
-            "google" -> ApiTypeOption.GEMINI
-            "claude", "anthropic" -> ApiTypeOption.ANTHROPIC
-            "compatible", "openai compatible" -> ApiTypeOption.COMPATIBLE
-            else -> ApiTypeOption.OPENAI
+            "google" -> ProviderApiTypeOption.GEMINI
+            "claude", "anthropic" -> ProviderApiTypeOption.ANTHROPIC
+            "compatible", "openai compatible" -> ProviderApiTypeOption.COMPATIBLE
+            else -> ProviderApiTypeOption.OPENAI
         }
     }
 
@@ -79,7 +63,7 @@ fun SettingProviderAddPage(
     var baseUrl by remember(initialType) { mutableStateOf(initialType.defaultBaseUrl) }
     var apiKey by remember { mutableStateOf("") }
 
-    fun applyType(newType: ApiTypeOption) {
+    fun applyType(newType: ProviderApiTypeOption) {
         val previous = apiTypeOption
         apiTypeOption = newType
         // Base URL 为空或仍是上一个类型的默认值时, 跟随类型切换为新的默认值
@@ -133,7 +117,7 @@ fun SettingProviderAddPage(
 
             SectionLabel(text = "API type")
             PillSelect(
-                options = ApiTypeOption.entries,
+                options = ProviderApiTypeOption.entries,
                 selectedOption = apiTypeOption,
                 onOptionSelected = { applyType(it) },
                 optionToString = { it.label },
@@ -141,7 +125,7 @@ fun SettingProviderAddPage(
             )
 
             // OpenAI API: 仅 OpenAI 兼容类型可切换
-            val openAiSelectEnabled = apiTypeOption.isOpenAiCompatible()
+            val openAiSelectEnabled = apiTypeOption.isOpenAiCompatible
             SectionLabel(text = "OpenAI API")
             PillSelect(
                 options = listOf(false, true),
@@ -176,7 +160,7 @@ fun SettingProviderAddPage(
 }
 
 private fun buildProvider(
-    apiTypeOption: ApiTypeOption,
+    apiTypeOption: ProviderApiTypeOption,
     serviceName: String,
     baseUrl: String,
     apiKey: String,
@@ -184,20 +168,20 @@ private fun buildProvider(
 ): ProviderSetting {
     val name = serviceName.ifBlank { apiTypeOption.defaultName }
     return when (apiTypeOption) {
-        ApiTypeOption.OPENAI, ApiTypeOption.COMPATIBLE -> ProviderSetting.OpenAI(
+        ProviderApiTypeOption.OPENAI, ProviderApiTypeOption.COMPATIBLE -> ProviderSetting.OpenAI(
             name = name,
             baseUrl = baseUrl,
             apiKey = apiKey,
             useResponseApi = useResponseApi
         )
 
-        ApiTypeOption.ANTHROPIC -> ProviderSetting.Claude(
+        ProviderApiTypeOption.ANTHROPIC -> ProviderSetting.Claude(
             name = name,
             baseUrl = baseUrl,
             apiKey = apiKey
         )
 
-        ApiTypeOption.GEMINI -> ProviderSetting.Google(
+        ProviderApiTypeOption.GEMINI -> ProviderSetting.Google(
             name = name,
             baseUrl = baseUrl,
             apiKey = apiKey

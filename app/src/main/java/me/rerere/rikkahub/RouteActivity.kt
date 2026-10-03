@@ -114,7 +114,6 @@ import me.rerere.rikkahub.ui.pages.setting.PluginStorePage
 import me.rerere.rikkahub.ui.pages.setting.PluginDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingAcRemotePluginPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTelegramPluginPage
-import me.rerere.rikkahub.ui.pages.setting.SettingTTSPage
 import me.rerere.rikkahub.ui.pages.translator.TranslatorPage
 import me.rerere.rikkahub.ui.pages.webview.WebViewPage
 import me.rerere.rikkahub.ui.pages.stats.StatsPage
@@ -457,10 +456,6 @@ class RouteActivity : ComponentActivity() {
                                 SettingProviderAddPage(apiType = key.apiType)
                             }
 
-                            entry<Screen.SettingTTS> {
-                                SettingTTSPage()
-                            }
-
                             entry<Screen.SettingMcp> {
                                 SettingMcpPage()
                             }
@@ -693,9 +688,6 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object SettingAcRemotePlugin : Screen
-
-    @Serializable
-    data object SettingTTS : Screen
 
     @Serializable
     data object SettingMcp : Screen

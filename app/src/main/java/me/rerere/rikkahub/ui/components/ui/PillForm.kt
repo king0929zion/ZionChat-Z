@@ -108,15 +108,17 @@ fun PillInput(
     modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Text,
     singleLine: Boolean = true,
+    enabled: Boolean = true,
 ) {
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         singleLine = singleLine,
+        enabled = enabled,
         textStyle = TextStyle(
             fontSize = PillSpec.FieldFontSize,
             fontFamily = SourceSans3,
-            color = ZionTextPrimary
+            color = if (enabled) ZionTextPrimary else ZionTextSecondary
         ),
         cursorBrush = SolidColor(ZionTextPrimary),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
