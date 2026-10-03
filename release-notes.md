@@ -1,3 +1,7 @@
+## v0.0.96
+
+- 修复 v0.0.95 编译错误：`PillSelect` 内文本改用 `Row` 作用域以支持 `weight`，保证选择器文本与箭头正确对齐
+
 ## v0.0.95
 
 - **Add MCP / Add model service 两页严格对齐设计稿**：

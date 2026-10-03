@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -155,7 +156,7 @@ fun <T> PillSelect(
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier) {
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(PillSpec.FieldHeight)
@@ -163,7 +164,7 @@ fun <T> PillSelect(
                 .background(ZionSurface, RoundedCornerShape(PillSpec.FieldRadius))
                 .pressableScale(enabled = enabled, pressedScale = 0.985f) { expanded = true }
                 .padding(start = PillSpec.FieldPadding, end = 14.dp),
-            contentAlignment = Alignment.CenterStart
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = optionToString(selectedOption),
