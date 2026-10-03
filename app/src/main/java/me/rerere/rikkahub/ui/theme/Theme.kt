@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import kotlinx.serialization.Serializable
 import me.rerere.rikkahub.ui.hooks.rememberUserSettingsState
+import me.rerere.rikkahub.utils.getActivity
 
 private val ExtendLightColors = lightExtendColors()
 val LocalExtendColors = compositionLocalOf { ExtendLightColors }
@@ -130,9 +131,11 @@ fun RikkahubTheme(
 
     // 更新状态栏图标颜色
     val view = LocalView.current
-    if (!view.isInEditMode) {
+    // 悬浮窗等使用 Application Context，没有可更新的系统栏，不可强转 Activity
+    val activity = view.context.getActivity()
+    if (!view.isInEditMode && activity != null) {
         SideEffect {
-            val window = (view.context as Activity).window
+            val window = activity.window
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = true
                 isAppearanceLightNavigationBars = true

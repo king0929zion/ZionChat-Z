@@ -1,3 +1,7 @@
+## v0.0.90
+
+- 修复启动即崩溃（ClassCastException）：主题更新系统栏图标的 `SideEffect` 中把 `view.context` 强转为 `Activity`，在悬浮窗（TTS 悬浮控制器等使用 Application Context 的场景）组合时必然崩溃。改为上游的 `getActivity()` 安全链式查找 + 空检查，无 Activity 时（悬浮窗）跳过系统栏更新。
+
 ## v0.0.89
 
 - 修复 v0.0.88 遗留的第二轮编译问题（约 20 处）：
