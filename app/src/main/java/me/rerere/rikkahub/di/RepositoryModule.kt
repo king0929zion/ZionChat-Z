@@ -10,7 +10,6 @@ import me.rerere.rikkahub.data.repository.FolderRepository
 import me.rerere.rikkahub.data.repository.FilesRepository
 import me.rerere.rikkahub.data.repository.GenMediaRepository
 import me.rerere.rikkahub.data.repository.MemoryRepository
-import me.rerere.rikkahub.data.x.XTimelineRepository
 import me.rerere.rikkahub.data.repository.WorkspaceRepository
 import me.rerere.workspace.ProotShellRunner
 import me.rerere.workspace.RootfsInstaller
@@ -42,10 +41,6 @@ val repositoryModule = module {
 
     single {
         FavoriteRepository(get())
-    }
-
-    single {
-        XTimelineRepository(get(), get(), get(), get(), get())
     }
 
     single {

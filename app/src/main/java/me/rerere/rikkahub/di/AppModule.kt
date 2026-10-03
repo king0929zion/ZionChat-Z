@@ -8,7 +8,7 @@ import me.rerere.rikkahub.AppScope
 import me.rerere.rikkahub.data.ai.AILoggingManager
 import me.rerere.rikkahub.data.ai.tools.local.LocalTools
 import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
-import me.rerere.rikkahub.data.ai.tools.XPluginTools
+import me.rerere.rikkahub.data.ai.tools.AcRemoteTools
 import me.rerere.rikkahub.data.event.AppEventBus
 import me.rerere.rikkahub.data.plugin.telegram.TelegramPluginService
 import me.rerere.rikkahub.service.ChatNotificationManager
@@ -38,7 +38,10 @@ val appModule = module {
     }
 
     single {
-        XPluginTools(get())
+        AcRemoteTools(
+            context = get(),
+            settingsStore = get(),
+        )
     }
 
     single {
@@ -103,7 +106,7 @@ val appModule = module {
             memoryRepository = get(),
             conversationRepository = get(),
             localTools = get(),
-            xPluginTools = get(),
+            acRemoteTools = get(),
             mcpManager = get(),
             skillManager = get(),
             workspaceRepository = get(),

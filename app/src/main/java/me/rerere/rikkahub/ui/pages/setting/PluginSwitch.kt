@@ -19,7 +19,7 @@ internal fun PluginSystemSwitch(
             checkedBorderColor = Color.Black,
             uncheckedThumbColor = Color.Black,
             uncheckedTrackColor = Color.White,
-            uncheckedBorderColor = Color(0xFF1C1C1E),
+            uncheckedBorderColor = Color(0xFFC7C7CC),
         )
     )
 }

@@ -110,12 +110,12 @@ import me.rerere.rikkahub.ui.pages.setting.SettingSearchPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSearchDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingMcpAddPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderAddPage
+import me.rerere.rikkahub.ui.pages.setting.PluginStorePage
+import me.rerere.rikkahub.ui.pages.setting.PluginDetailPage
+import me.rerere.rikkahub.ui.pages.setting.SettingAcRemotePluginPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTelegramPluginPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTTSPage
-import me.rerere.rikkahub.ui.pages.setting.SettingXPluginPage
 import me.rerere.rikkahub.ui.pages.translator.TranslatorPage
-import me.rerere.rikkahub.ui.pages.xapp.XAppPage
-import me.rerere.rikkahub.ui.pages.zphone.ZPhonePage
 import me.rerere.rikkahub.ui.pages.webview.WebViewPage
 import me.rerere.rikkahub.ui.pages.stats.StatsPage
 import me.rerere.rikkahub.ui.theme.LocalDarkMode
@@ -404,10 +404,6 @@ class RouteActivity : ComponentActivity() {
                                 ImageGenPage()
                             }
 
-                            entry<Screen.ZPhone> {
-                                ZPhonePage()
-                            }
-
                             entry<Screen.WebView> { key ->
                                 WebViewPage(key.url, key.contentId)
                             }
@@ -473,8 +469,16 @@ class RouteActivity : ComponentActivity() {
                                 SettingPluginsPage()
                             }
 
-                            entry<Screen.SettingXPlugin> {
-                                SettingXPluginPage()
+                            entry<Screen.PluginStore> {
+                                PluginStorePage()
+                            }
+
+                            entry<Screen.PluginDetail> { key ->
+                                PluginDetailPage(pluginId = key.pluginId)
+                            }
+
+                            entry<Screen.SettingAcRemotePlugin> {
+                                SettingAcRemotePluginPage()
                             }
 
                             entry<Screen.SettingTelegramPlugin> {
@@ -531,10 +535,6 @@ class RouteActivity : ComponentActivity() {
 
                             entry<Screen.Stats> {
                                 StatsPage()
-                            }
-
-                            entry<Screen.XApp> {
-                                XAppPage()
                             }
                         }
                     )
@@ -644,9 +644,6 @@ sealed interface Screen : NavKey {
     data object ImageGen : Screen
 
     @Serializable
-    data object ZPhone : Screen
-
-    @Serializable
     data class WebView(val url: String = "", val contentId: String = "") : Screen
 
     @Serializable
@@ -686,16 +683,22 @@ sealed interface Screen : NavKey {
     data class SettingProviderAdd(val apiType: String = "") : Screen
 
     @Serializable
+    data object SettingPlugins : Screen
+
+    @Serializable
+    data object PluginStore : Screen
+
+    @Serializable
+    data class PluginDetail(val pluginId: String) : Screen
+
+    @Serializable
+    data object SettingAcRemotePlugin : Screen
+
+    @Serializable
     data object SettingTTS : Screen
 
     @Serializable
     data object SettingMcp : Screen
-
-    @Serializable
-    data object SettingPlugins : Screen
-
-    @Serializable
-    data object SettingXPlugin : Screen
 
     @Serializable
     data object SettingTelegramPlugin : Screen
@@ -735,7 +738,4 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Stats : Screen
-
-    @Serializable
-    data object XApp : Screen
 }

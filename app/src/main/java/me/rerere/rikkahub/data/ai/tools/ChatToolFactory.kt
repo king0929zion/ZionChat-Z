@@ -7,7 +7,7 @@ import me.rerere.ai.core.Tool
 import me.rerere.ai.provider.BuiltInTools
 import me.rerere.ai.provider.Model
 import me.rerere.rikkahub.data.ai.mcp.McpManager
-import me.rerere.rikkahub.data.ai.tools.XPluginTools
+import me.rerere.rikkahub.data.ai.tools.AcRemoteTools
 import me.rerere.rikkahub.data.ai.tools.local.LocalTools
 import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.files.SkillManager
@@ -32,7 +32,7 @@ class ChatToolFactory(
     private val memoryRepository: MemoryRepository,
     private val conversationRepository: ConversationRepository,
     private val localTools: LocalTools,
-    private val xPluginTools: XPluginTools,
+    private val acRemoteTools: AcRemoteTools,
     private val mcpManager: McpManager,
     private val skillManager: SkillManager,
     private val workspaceRepository: WorkspaceRepository,
@@ -59,7 +59,9 @@ class ChatToolFactory(
             addAll(createSearchTools(settings))
         }
         addAll(localTools.getTools(assistant.localTools))
-        addAll(xPluginTools.getTools(settings.pluginSettings.x))
+        if (settings.pluginSettings.acRemote.enabled) {
+            addAll(acRemoteTools.getTools())
+        }
         if (assistant.enableRecentChatsReference) {
             addAll(createConversationTools(conversationRepository, assistant.id))
         }

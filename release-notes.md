@@ -1,3 +1,18 @@
+## v0.0.93
+
+- **插件中心全面重构**：
+  - 页面改为三分区：Enabled plugins（已启用，带开关）/ Plugin Store（商店入口）/ Installed — N plugins（已安装列表）
+  - 新增**插件商店**页面（按设计稿）：卡片列表（图标 / 名称 / 分类），Get ↔ Added 一键安装/卸载
+  - 商店上架 MCP 接入插件：**高德地图**（官方 MCP，端点 `mcp.amap.com/mcp?key=`）、**GitHub**（官方远程 MCP，PAT 作为 Bearer 头）、**12306**（社区 12306 MCP，端点可配置）；安装即自动注册对应 MCP Server，卸载即移除
+  - 插件详情页支持编辑端点 / API Key / 启用开关
+- **自研空调红外遥控插件**（Gree/格力协议，38kHz 红外帧编码 + Kelvinator 块校验）：
+  - 遥控面板：温度 +- / 电源 / 模式（自动·制冷·除湿·送风·制热）/ 风速（自动·低·中·高），操作即时发射红外并持久化状态；无红外硬件时给出提示
+  - AI 本地工具 `air_conditioner_remote`：支持开机/关机/调温/设定温度/切模式/切风速，替代原 X 插件工具
+  - 新增 TRANSMIT_IR 权限
+- 开关按钮关闭态描边由黑色改为灰色（#C7C7CC）
+- **删除 X 插件**（XPluginTools / X 插件设置页 / X 时间线仓库 / Leaderboard）
+- **删除 ZPhone 模块**（ZPhonePage / XApp 时间线页 / 抽屉入口 / 相关路由）
+
 ## v0.0.92
 
 - 修复 v0.0.91 供应商列表页的编译错误（误删 `getValue` 委托导入）
