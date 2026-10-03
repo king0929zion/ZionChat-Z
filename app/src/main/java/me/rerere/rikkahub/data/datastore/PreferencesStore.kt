@@ -31,6 +31,7 @@ import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.AppScope
 import me.rerere.rikkahub.data.ai.mcp.McpServerConfig
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_OCR_PROMPT
+import me.rerere.rikkahub.data.ai.prompts.DEFAULT_COMPRESS_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_SUGGESTION_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_TITLE_PROMPT
 import me.rerere.rikkahub.data.ai.prompts.DEFAULT_TRANSLATION_PROMPT
@@ -290,6 +291,9 @@ class SettingsStore(
                 suggestionPrompt = preferences[SUGGESTION_PROMPT] ?: DEFAULT_SUGGESTION_PROMPT,
                 ocrModelId = preferences[OCR_MODEL]?.let { Uuid.parse(it) } ?: Uuid.random(),
                 ocrPrompt = preferences[OCR_PROMPT] ?: DEFAULT_OCR_PROMPT,
+                compressModelId = preferences[COMPRESS_MODEL]?.let { Uuid.parse(it) }
+                    ?: DEFAULT_AUTO_MODEL_ID,
+                compressPrompt = preferences[COMPRESS_PROMPT] ?: DEFAULT_COMPRESS_PROMPT,
                 assistantId = preferences[SELECT_ASSISTANT]?.let { Uuid.parse(it) }
                     ?: DEFAULT_ASSISTANT_ID,
                 assistantTags = preferences[ASSISTANT_TAGS]?.let {
@@ -611,6 +615,8 @@ data class Settings(
     val suggestionPrompt: String = DEFAULT_SUGGESTION_PROMPT,
     val ocrModelId: Uuid = Uuid.random(),
     val ocrPrompt: String = DEFAULT_OCR_PROMPT,
+    val compressModelId: Uuid = Uuid.random(),
+    val compressPrompt: String = DEFAULT_COMPRESS_PROMPT,
     val assistantId: Uuid = DEFAULT_ASSISTANT_ID,
     val providers: List<ProviderSetting> = DEFAULT_PROVIDERS,
     val assistants: List<Assistant> = DEFAULT_ASSISTANTS,
@@ -875,3 +881,12 @@ private val DEFAULT_TTS_PROVIDERS = listOf(
 )
 
 internal val DEFAULT_ASSISTANTS_IDS = DEFAULT_ASSISTANTS.map { it.id }
+
+val DEFAULT_MODE_INJECTIONS = listOf(
+    PromptInjection.ModeInjection(
+        id = Uuid.parse("b87eaf16-f5cd-4ac1-9e4f-b11ae3a61d74"),
+        content = LEARNING_MODE_PROMPT,
+        position = InjectionPosition.AFTER_SYSTEM_PROMPT,
+        name = "Learning Mode"
+    )
+)

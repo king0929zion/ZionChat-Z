@@ -5,6 +5,7 @@ import com.google.firebase.analytics.analytics
 import com.google.firebase.crashlytics.crashlytics
 import kotlinx.serialization.json.Json
 import me.rerere.rikkahub.AppScope
+import me.rerere.rikkahub.data.ai.AILoggingManager
 import me.rerere.rikkahub.data.ai.tools.local.LocalTools
 import me.rerere.rikkahub.data.ai.tools.ChatToolFactory
 import me.rerere.rikkahub.data.ai.tools.XPluginTools
@@ -26,6 +27,10 @@ val appModule = module {
 
     single {
         AppEventBus()
+    }
+
+    single {
+        AILoggingManager()
     }
 
     single {

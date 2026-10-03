@@ -12,6 +12,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import me.rerere.ai.core.ReasoningLevel
 import me.rerere.ai.provider.ProviderManager
 import me.rerere.ai.provider.TextGenerationParams
 import me.rerere.ai.ui.UIMessage
@@ -206,16 +207,14 @@ class TelegramPluginService(
                 temperature = assistant.temperature,
                 topP = assistant.topP,
                 maxTokens = assistant.maxTokens,
-                thinkingBudget = assistant.thinkingBudget ?: 0,
+                reasoningLevel = ReasoningLevel.fromBudgetTokens(assistant.thinkingBudget),
                 customHeaders = assistant.customHeaders,
                 customBody = assistant.customBodies,
             ),
         )
 
-        return result.choices
-            .firstOrNull()
-            ?.message
-            ?.toText()
+        return result.message
+            .toText()
             ?.let(::sanitizeTelegramReply)
             .orEmpty()
     }

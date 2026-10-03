@@ -272,7 +272,18 @@ private fun ChatPageContent(
                     onCancelClick = { loadingJob?.cancel() },
                     enableSearch = enableWebSearch,
                     onToggleSearch = { enabled ->
-                        vm.updateSettings(setting.copy(enableWebSearch = enabled))
+                        val assistantId = setting.getCurrentAssistant().id
+                        vm.updateSettings(
+                            setting.copy(
+                                assistants = setting.assistants.map { assistant ->
+                                    if (assistant.id == assistantId) {
+                                        assistant.copy(enableWebSearch = enabled)
+                                    } else {
+                                        assistant
+                                    }
+                                }
+                            )
+                        )
                     },
                     onSendClick = {
                         if (currentChatModel == null) {

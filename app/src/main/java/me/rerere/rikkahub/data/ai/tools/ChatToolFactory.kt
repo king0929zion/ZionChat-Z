@@ -44,11 +44,8 @@ class ChatToolFactory(
         workspaceCwd: String? = null,
     ): List<Tool> = buildList {
         if (assistant.enableMemory) {
-            val memoryAssistantId = if (assistant.useGlobalMemory) {
-                MemoryRepository.GLOBAL_MEMORY_ID
-            } else {
-                assistant.id.toString()
-            }
+            // fork 设计: 记忆始终按助手隔离 (不再启用全局共享记忆)
+            val memoryAssistantId = assistant.id.toString()
             addAll(
                 buildMemoryTools(
                     json = json,

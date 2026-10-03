@@ -19,26 +19,16 @@ object ZionAppIcons {
         viewportHeight = 24f
     ).apply {
         path(
-            fill = SolidColor(Color(0xFF1C1C1E)),
-            stroke = null,
-            strokeLineWidth = 0f,
-            strokeLineCap = StrokeCap.Butt,
-            strokeLineJoin = StrokeJoin.Miter,
-            strokeLineMiter = 1f,
-            pathFillType = PathFillType.NonZero
+            fill = SolidColor(Color.Transparent),
+            stroke = SolidColor(Color(0xFF1C1C1E)),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round
         ) {
-            moveTo(4f, 8f)
-            horizontalLineToRelative(16f)
-            arcToRelative(1f, 1f, 0f, true, true, 0f, -2f)
-            horizontalLineTo(4f)
-            arcToRelative(1f, 1f, 0f, true, false, 0f, -2f)
-            close()
-            moveTo(4f, 13f)
-            horizontalLineToRelative(10f)
-            arcToRelative(1f, 1f, 0f, true, false, 0f, -2f)
-            horizontalLineTo(4f)
-            arcToRelative(1f, 1f, 0f, true, false, 0f, -2f)
-            close()
+            moveTo(4f, 7f)
+            horizontalLineTo(20f)
+            moveTo(4f, 12f)
+            horizontalLineTo(14f)
         }
     }.build()
 

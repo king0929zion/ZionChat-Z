@@ -1,3 +1,17 @@
+## v0.0.88
+
+- 修复 v0.0.87 合并后的首轮编译问题（fork 已集成内容与上游新 API 的衔接）：
+  - 恢复 Assistant 上的 `quickMessages` / `thinkingBudget` 字段（合并时被上游字段列表覆盖），Telegram / X Bot 生成链路改用新的 `reasoningLevel` API
+  - 恢复 `compressModelId` / `compressPrompt` 设置项与 `DEFAULT_COMPRESS_PROMPT`（上游压缩对话功能补全）
+  - 恢复提示词注入数据模型（`PromptInjection` / `Lorebook` / `InjectionPosition`）与 `DEFAULT_MODE_INJECTIONS`
+  - 恢复开发者页依赖的 `DeveloperVM` / `AILoggingManager`（上游已移除，fork 保留开发者页）
+  - X 插件工具适配新版 Tool API（`needsApproval` 改为函数）
+  - 聊天输入栏适配 haze 2.0（`hazeBlur`），移除已改名的 hugeicons 图标引用
+  - 工具气泡 JSON 展示适配新版 Kotlin 原生语法高亮（`CodeHighlightText`）
+  - 全局记忆按 fork 设计保持助手隔离（ChatToolFactory / ChatService）
+- 应用正式更名为 **ZChat**：全部语言的 app 名称改为 ZChat，默认 User-Agent 改为 `ZChat-Android`
+- 修复主对话页侧边栏入口按钮图标：原绘制的汉堡菜单路径末尾弧线方向写反导致出现竖向裂痕且左端无圆角，现改为描边 + 圆头线帽样式，两端圆角正常
+
 ## v0.0.87
 
 - 合并上游 RikkaHub 全部补丁（163 个修复提交 + 自 v2.1 分叉以来的 522 个提交），同时完整保留 Zion 定制 UI 与 X / ZPhone / Bots / Telegram 插件功能：

@@ -118,7 +118,7 @@ class XPluginTools(
                 required = listOf("text")
             )
         },
-        needsApproval = XPluginTool.PublishPost.requiresApproval,
+        needsApproval = { XPluginTool.PublishPost.requiresApproval },
         execute = { args ->
             val text = args.requireString("text")
             val quotePostId = args.jsonObject["quote_post_id"]?.jsonPrimitive?.contentOrNull
@@ -143,7 +143,7 @@ class XPluginTools(
                 required = listOf("post_id", "text")
             )
         },
-        needsApproval = XPluginTool.ReplyPost.requiresApproval,
+        needsApproval = { XPluginTool.ReplyPost.requiresApproval },
         execute = { args ->
             val postId = args.requireString("post_id")
             val text = args.requireString("text")
@@ -167,7 +167,7 @@ class XPluginTools(
                 required = listOf("post_id")
             )
         },
-        needsApproval = XPluginTool.LikePost.requiresApproval,
+        needsApproval = { XPluginTool.LikePost.requiresApproval },
         execute = { args ->
             val post = repository.toggleLike(args.requireString("post_id"))
             listOf(UIMessagePart.Text(togglePayload("点赞", post.id, post.likedByMe).toString()))
@@ -185,7 +185,7 @@ class XPluginTools(
                 required = listOf("post_id")
             )
         },
-        needsApproval = XPluginTool.RepostPost.requiresApproval,
+        needsApproval = { XPluginTool.RepostPost.requiresApproval },
         execute = { args ->
             val post = repository.toggleRepost(args.requireString("post_id"))
             listOf(UIMessagePart.Text(togglePayload("转发", post.id, post.repostedByMe).toString()))
@@ -203,7 +203,7 @@ class XPluginTools(
                 required = listOf("post_id")
             )
         },
-        needsApproval = XPluginTool.BookmarkPost.requiresApproval,
+        needsApproval = { XPluginTool.BookmarkPost.requiresApproval },
         execute = { args ->
             val post = repository.toggleBookmark(args.requireString("post_id"))
             listOf(UIMessagePart.Text(togglePayload("收藏", post.id, post.bookmarkedByMe).toString()))

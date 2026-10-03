@@ -673,11 +673,8 @@ class ChatService(
                 conversationModeInjectionIds = conversation.modeInjectionIds,
                 conversationLorebookIds = conversation.lorebookIds,
                 workspaceCwd = conversation.workspaceCwd,
-                memories = if (assistant.useGlobalMemory) {
-                    memoryRepository.getGlobalMemories()
-                } else {
-                    memoryRepository.getMemoriesOfAssistant(assistant.id.toString())
-                },
+                // fork 设计: 记忆始终按助手隔离 (不再启用全局共享记忆)
+                memories = memoryRepository.getMemoriesOfAssistant(assistant.id.toString()),
                 inputTransformers = buildList {
                     addAll(inputTransformers)
                     add(templateTransformer)

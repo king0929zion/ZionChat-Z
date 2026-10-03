@@ -108,10 +108,13 @@ import coil3.compose.AsyncImage
 import com.dokar.sonner.ToastType
 import com.yalantis.ucrop.UCrop
 import com.yalantis.ucrop.UCropActivity
+import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.materials.HazeMaterials
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.hazeBlur
+import dev.chrisbanes.haze.blur.material3.Material3
 import kotlinx.coroutines.launch
+import me.rerere.ai.core.ReasoningLevel
 import me.rerere.ai.provider.BuiltInTools
 import me.rerere.ai.provider.Model
 import me.rerere.ai.provider.ModelAbility
@@ -121,7 +124,6 @@ import me.rerere.ai.ui.UIMessagePart
 import me.rerere.common.android.appTempFolder
 import me.rerere.hugeicons.HugeIcons
 import me.rerere.hugeicons.stroke.Book03
-import me.rerere.hugeicons.stroke.FullScreen
 import me.rerere.hugeicons.stroke.MusicNote03
 import me.rerere.hugeicons.stroke.Package01
 import me.rerere.hugeicons.stroke.Video01
@@ -325,9 +327,11 @@ fun ChatInput(
                         )
                         .clip(RoundedCornerShape(23.dp))
                         .then(
-                            if (settings.displaySetting.enableBlurEffect) Modifier.hazeEffect(
-                                state = hazeState,
-                                style = HazeMaterials.ultraThin(containerColor = hazeTintColor)
+                            if (settings.displaySetting.enableBlurEffect) Modifier.hazeBlur(
+                                input = HazeInput.Sources(hazeState),
+                                style = HazeBlurStyle.Material3 {
+                                    blurRadius(12.dp)
+                                }
                             ) else Modifier
                         ),
                     shape = RoundedCornerShape(23.dp),
@@ -587,7 +591,7 @@ private fun ToolMenuMainPage(
         SearchServiceOptions.TYPES[it::class] ?: "Search"
     } ?: stringResource(R.string.setting_provider_page_disabled)
     val provider = model?.findProvider(providers = settings.providers)
-    val reasoningEnabled = assistant.thinkingBudget != 0
+    val reasoningEnabled = assistant.reasoningLevel.isEnabled
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
@@ -669,7 +673,9 @@ private fun ToolMenuMainPage(
                     showChevron = false,
                     onClick = {
                         onUpdateAssistant(
-                            assistant.copy(thinkingBudget = if (reasoningEnabled) 0 else -1)
+                            assistant.copy(
+                                reasoningLevel = if (reasoningEnabled) ReasoningLevel.OFF else ReasoningLevel.AUTO
+                            )
                         )
                     }
                 )
