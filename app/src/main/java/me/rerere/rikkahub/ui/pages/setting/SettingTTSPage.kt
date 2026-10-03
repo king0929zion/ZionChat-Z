@@ -373,6 +373,13 @@ private fun TTSProviderItem(
                             is TTSProviderSetting.SystemTTS -> stringResource(R.string.setting_tts_page_provider_system)
                             is TTSProviderSetting.Qwen -> "Qwen"
                             is TTSProviderSetting.Groq -> "Groq"
+                            is TTSProviderSetting.ElevenLabs -> "ElevenLabs"
+                            is TTSProviderSetting.FishAudio -> "Fish Audio"
+                            is TTSProviderSetting.MiMo -> "MiMo"
+                            is TTSProviderSetting.Step -> "StepFun"
+                            is TTSProviderSetting.Volcengine -> "Volcengine"
+                            is TTSProviderSetting.XAI -> "xAI"
+                            else -> provider::class.simpleName.orEmpty()
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

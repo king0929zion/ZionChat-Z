@@ -98,8 +98,15 @@ private fun zionLightColorScheme(
 
 @Composable
 fun RikkahubTheme(
+    colorMode: ColorMode = ColorMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
+    // fork 主题为 Zion 浅色设计; colorMode 仅影响 LocalDarkMode (如终端页强制深色)
+    val darkMode = when (colorMode) {
+        ColorMode.SYSTEM -> false
+        ColorMode.LIGHT -> false
+        ColorMode.DARK -> true
+    }
     val settings by rememberUserSettingsState()
     val context = LocalContext.current
     val presetLightScheme = remember(settings.themeId) {
@@ -134,7 +141,7 @@ fun RikkahubTheme(
     }
 
     CompositionLocalProvider(
-        LocalDarkMode provides false,
+        LocalDarkMode provides darkMode,
         LocalExtendColors provides extendColors,
         LocalIndication provides NoRippleIndication,
     ) {

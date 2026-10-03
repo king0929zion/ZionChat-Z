@@ -1,3 +1,16 @@
+## v0.0.89
+
+- 修复 v0.0.88 遗留的第二轮编译问题（约 20 处）：
+  - 补齐 `COMPRESS_MODEL` / `COMPRESS_PROMPT` 偏好键定义
+  - 移除聊天输入栏内与上游 `AttachmentChips` 冲突的重复 `MediaFileInputRow` 函数簇
+  - MCP 状态显示补充 OAuth 授权中新状态（`Authorizing` / `NeedsAuthorization`）
+  - 消息渲染补充新部件分支：图表卡片（`ChartBlock` + `ChartCard`）、服务端工具步骤（`ServerToolStep` + `ChatMessageServerToolStep`）
+  - 移植 fork 版侧边栏会话分页列表（`ChatVM.conversations` + 日期分组标签）到新版 ChatVM，属性初始化顺序修正
+  - 恢复 `SelectTextField` 组件（上游组件页依赖），恢复 `DisplaySetting.showUpdates` 设置项
+  - `RikkahubTheme` 增加 `colorMode` 参数（工作区终端页强制深色）
+  - TTS 设置页补全全部 12 种 TTS 提供商分支（ElevenLabs / Fish Audio / MiMo / StepFun / 火山引擎 / xAI 等）
+  - 助手记忆链路按 fork 设计统一为助手隔离（AssistantDetailVM）
+
 ## v0.0.88
 
 - 修复 v0.0.87 合并后的首轮编译问题（fork 已集成内容与上游新 API 的衔接）：

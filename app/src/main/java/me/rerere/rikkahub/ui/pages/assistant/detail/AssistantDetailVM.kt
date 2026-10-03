@@ -67,12 +67,9 @@ class AssistantDetailVM(
         )
 
     val memories = assistant
-        .flatMapLatest { currentAssistant ->
-            if (currentAssistant.useGlobalMemory) {
-                memoryRepository.getGlobalMemoriesFlow()
-            } else {
-                memoryRepository.getMemoriesOfAssistantFlow(assistantId.toString())
-            }
+        .flatMapLatest {
+            // fork 设计: 记忆始终按助手隔离 (不再启用全局共享记忆)
+            memoryRepository.getMemoriesOfAssistantFlow(assistantId.toString())
         }
         .stateIn(
             scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList()
@@ -180,13 +177,9 @@ class AssistantDetailVM(
 
     fun addMemory(memory: AssistantMemory) {
         viewModelScope.launch {
-            val memoryAssistantId = if (assistant.value.useGlobalMemory) {
-                MemoryRepository.GLOBAL_MEMORY_ID
-            } else {
-                assistantId.toString()
-            }
+            // fork 设计: 记忆始终按助手隔离
             memoryRepository.addMemory(
-                assistantId = memoryAssistantId,
+                assistantId = assistantId.toString(),
                 content = memory.content
             )
         }

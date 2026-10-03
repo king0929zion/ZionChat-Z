@@ -67,6 +67,7 @@ import me.rerere.hugeicons.stroke.BubbleChatQuestion
 import me.rerere.hugeicons.stroke.Book03
 import me.rerere.hugeicons.stroke.Cancel01
 import me.rerere.hugeicons.stroke.Clipboard
+import me.rerere.hugeicons.stroke.Tools
 import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.Eraser
 import me.rerere.hugeicons.stroke.Favourite
@@ -163,6 +164,35 @@ private fun isXToolName(toolName: String): Boolean = toolName in setOf(
     ToolNames.X_REPOST_POST,
     ToolNames.X_BOOKMARK_POST,
 )
+
+@Composable
+fun ChainOfThoughtScope.ChatMessageServerToolStep(tool: UIMessagePart.ServerTool) {
+    val loading = !tool.isFinished
+    ChainOfThoughtStep(
+        icon = {
+            if (loading) {
+                DotLoading(size = 10.dp)
+            } else {
+                Icon(
+                    imageVector = HugeIcons.Tools,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = LocalContentColor.current.copy(alpha = 0.7f),
+                )
+            }
+        },
+        label = {
+            Text(
+                text = stringResource(R.string.chat_message_tool_call_generic, tool.toolName),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.shimmer(isLoading = loading),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+    )
+}
 
 @Composable
 fun ChainOfThoughtScope.ChatMessageToolStep(
