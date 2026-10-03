@@ -323,7 +323,6 @@ fun SettingProviderDetailPage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = ProviderDetailContentTopPadding)
                 .padding(horizontal = 16.dp)
         ) {
             if (isModelsPage) {
@@ -507,6 +506,8 @@ private fun SettingProviderConfigPage(
             .verticalScroll(rememberScrollState())
             .padding(bottom = 24.dp),
     ) {
+        // 顶部留白放在滚动内容内部, 使内容滚动时能上浮进入顶栏区域,产生渐进式模糊
+        Spacer(modifier = Modifier.height(ProviderDetailContentTopPadding))
         SectionLabel(text = "Service name")
         PillInput(
             value = provider.name,
@@ -554,7 +555,7 @@ private fun SettingProviderConfigPage(
             placeholder = "Enter a new API Key...",
             keyboardType = KeyboardType.Password,
             singleLine = false,
-            minHeight = 96.dp
+            minHeight = 68.dp
         )
 
         // 多 Key 轮询说明 (每行一个 Key, 请求时自动轮换)
@@ -874,7 +875,10 @@ private fun ModelList(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(
+            top = ProviderDetailContentTopPadding,
+            bottom = 24.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         state = lazyListState
     ) {
