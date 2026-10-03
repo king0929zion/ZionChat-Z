@@ -16,11 +16,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -40,7 +43,6 @@ import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
-import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
@@ -175,14 +177,17 @@ private fun ProviderServiceRow(
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(ZionGrayLighter, RoundedCornerShape(12.dp)),
+                .background(ZionGrayLight, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
-            AutoAIIcon(
-                name = iconName,
-                modifier = Modifier.size(24.dp),
-                color = ZionTextSecondary
-            )
+            // LocalContentColor 决定 SVG 图形填充色; color = Transparent 去掉图标自带内层底色
+            CompositionLocalProvider(LocalContentColor provides ZionTextSecondary) {
+                AutoAIIcon(
+                    name = iconName,
+                    modifier = Modifier.size(24.dp),
+                    color = Color.Transparent
+                )
+            }
         }
 
         Text(

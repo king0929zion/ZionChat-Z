@@ -554,8 +554,7 @@ private fun SettingProviderConfigPage(
             onValueChange = { onProviderChange(provider.copyWithApiKey(it)) },
             placeholder = "Enter a new API Key...",
             keyboardType = KeyboardType.Password,
-            singleLine = false,
-            minHeight = 68.dp
+            singleLine = false
         )
 
         // 多 Key 轮询说明 (每行一个 Key, 请求时自动轮换)

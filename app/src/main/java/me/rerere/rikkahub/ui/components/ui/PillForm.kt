@@ -133,7 +133,7 @@ fun PillInput(
                 .fillMaxWidth()
                 .defaultMinSize(minHeight = minHeight)
                 .padding(horizontal = PillSpec.FieldPadding)
-                .padding(vertical = if (singleLine) 0.dp else 14.dp),
+                .padding(vertical = if (singleLine) 0.dp else 10.dp),
             contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart
         ) {
             if (value.isEmpty() && placeholder.isNotEmpty()) {
