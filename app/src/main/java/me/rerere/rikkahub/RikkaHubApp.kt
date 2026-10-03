@@ -1,27 +1,25 @@
 package me.rerere.rikkahub
 
 import android.app.Application
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.ComposeFoundationFlags
 import androidx.compose.runtime.Composer
 import androidx.compose.runtime.tooling.ComposeStackTraceMode
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.remoteConfigSettings
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import me.rerere.rikkahub.data.files.FileFolders
+import me.rerere.rikkahub.data.files.SkillManager
+import java.io.File
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.first
 import me.rerere.common.android.appTempFolder
 import me.rerere.rikkahub.di.appModule
 import me.rerere.rikkahub.di.dataSourceModule
@@ -30,7 +28,13 @@ import me.rerere.rikkahub.di.viewModelModule
 import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.plugin.telegram.TelegramPluginService
+import me.rerere.rikkahub.data.sync.BackupManager
+import me.rerere.rikkahub.data.sync.RestoreFailedException
+import me.rerere.rikkahub.utils.JsonInstant
+import me.rerere.rikkahub.utils.CrashHandler
 import me.rerere.rikkahub.utils.DatabaseUtil
+import me.rerere.rikkahub.data.repository.WorkspaceRepository
+import me.rerere.workspace.WorkspaceManager
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -44,6 +48,18 @@ const val CHAT_LIVE_UPDATE_NOTIFICATION_CHANNEL_ID = "chat_live_update"
 class RikkaHubApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Restore files and settings before eager Koin singletons or workers can access them.
+        try {
+            val restored = runBlocking(Dispatchers.IO) {
+                BackupManager.applyPendingRestore(this@RikkaHubApp, JsonInstant)
+            }
+            if (restored) {
+                Toast.makeText(this, R.string.backup_page_restore_success, Toast.LENGTH_LONG).show()
+            }
+        } catch (e: RestoreFailedException) {
+            Log.e(TAG, "Backup restore rolled back", e)
+            Toast.makeText(this, "备份恢复失败，已保留原数据。请重新导入备份。", Toast.LENGTH_LONG).show()
+        }
         startKoin {
             androidLogger()
             androidContext(this@RikkaHubApp)
@@ -55,8 +71,20 @@ class RikkaHubApp : Application() {
         // set cursor window size to 32MB
         DatabaseUtil.setCursorWindowSize(32 * 1024 * 1024)
 
+        // install crash handler
+        CrashHandler.install(this)
+
         // delete temp files
         deleteTempFiles()
+
+        // cleanup stale tool output files
+        cleanupToolOutputs()
+
+        // cleanup workspace temp dirs (proot + rootfs /tmp)
+        cleanupWorkspaceTempDirs()
+
+        // check workspace integrity (mark workspaces with missing files as broken after backup restore)
+        checkWorkspaceIntegrity()
 
         // sync upload files to DB
         syncManagedFiles()
@@ -64,14 +92,8 @@ class RikkaHubApp : Application() {
         // start plugin runtime
         get<TelegramPluginService>().start()
 
-        // Init remote config
-        get<FirebaseRemoteConfig>().apply {
-            setConfigSettingsAsync(remoteConfigSettings {
-                minimumFetchIntervalInSeconds = 1800
-            })
-            setDefaultsAsync(R.xml.remote_config_defaults)
-            fetchAndActivate()
-        }
+        // Extract builtin skills from assets after install/update
+        extractBuiltinSkills()
 
         // Increment launch count
         incrementLaunchCount()
@@ -82,12 +104,30 @@ class RikkaHubApp : Application() {
     private fun incrementLaunchCount() {
         get<AppScope>().launch {
             runCatching {
-                val store = get<SettingsStore>()
-                val current = store.settingsFlowRaw.first()
-                store.update(current.copy(launchCount = current.launchCount + 1))
-                Log.i(TAG, "incrementLaunchCount: ${store.settingsFlowRaw.first().launchCount}")
+                val count = get<SettingsStore>().incrementLaunchCount()
+                Log.i(TAG, "incrementLaunchCount: $count")
             }.onFailure {
                 Log.e(TAG, "incrementLaunchCount failed", it)
+            }
+        }
+    }
+
+    private fun cleanupWorkspaceTempDirs() {
+        get<AppScope>().launch(Dispatchers.IO) {
+            runCatching {
+                get<WorkspaceManager>().cleanupAllTempDirs()
+            }.onFailure {
+                Log.e(TAG, "cleanupWorkspaceTempDirs failed", it)
+            }
+        }
+    }
+
+    private fun checkWorkspaceIntegrity() {
+        get<AppScope>().launch(Dispatchers.IO) {
+            runCatching {
+                get<WorkspaceRepository>().checkIntegrity()
+            }.onFailure {
+                Log.e(TAG, "checkWorkspaceIntegrity failed", it)
             }
         }
     }
@@ -98,6 +138,23 @@ class RikkaHubApp : Application() {
             if (dir.exists()) {
                 dir.deleteRecursively()
             }
+        }
+    }
+
+    private fun cleanupToolOutputs() {
+        get<AppScope>().launch(Dispatchers.IO) {
+            runCatching {
+                val dir = File(filesDir, FileFolders.TOOL_OUTPUTS)
+                if (dir.exists()) {
+                    dir.deleteRecursively()
+                }
+            }
+        }
+    }
+
+    private fun extractBuiltinSkills() {
+        get<AppScope>().launch(Dispatchers.IO) {
+            get<SkillManager>().ensureBuiltinSkillsExtracted()
         }
     }
 

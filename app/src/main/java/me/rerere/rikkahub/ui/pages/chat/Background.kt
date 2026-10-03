@@ -15,10 +15,18 @@ import me.rerere.rikkahub.ui.theme.ZionBackground
 import me.rerere.rikkahub.ui.theme.ZionChatBackground
 
 @Composable
-fun AssistantBackground(setting: Settings) {
+fun AssistantBackground(setting: Settings, modifier: Modifier = Modifier) {
     val assistant = setting.getCurrentAssistant()
+
+    // 动态渐变背景 (上游 MeshGradient)
+    if (assistant.useGradientBackground) {
+        MeshGradientBackground(modifier = modifier)
+        return
+    }
+
+    // Zion 品牌渐变基底
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(

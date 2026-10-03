@@ -1,8 +1,14 @@
 package me.rerere.rikkahub.ui.pages.log
 
+import android.content.ClipData
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.ClipEntry
 import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Copy01
 import me.rerere.hugeicons.stroke.Delete01
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,7 +28,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Switch
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,11 +39,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.rerere.common.android.LogEntry
 import me.rerere.common.android.Logging
+import me.rerere.rikkahub.R
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.JsonTree
@@ -49,6 +60,7 @@ import java.util.Locale
 @Composable
 fun LogPage() {
     var logs by remember { mutableStateOf(Logging.getRecentLogs()) }
+    var requestLoggingEnabled by remember { mutableStateOf(Logging.isRequestLoggingEnabled()) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -72,6 +84,11 @@ fun LogPage() {
     ) { contentPadding ->
         UnifiedLogList(
             logs = logs,
+            requestLoggingEnabled = requestLoggingEnabled,
+            onRequestLoggingChange = {
+                requestLoggingEnabled = it
+                Logging.setRequestLoggingEnabled(it)
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
@@ -80,9 +97,14 @@ fun LogPage() {
 }
 
 @Composable
-private fun UnifiedLogList(logs: List<LogEntry>, modifier: Modifier = Modifier) {
+private fun UnifiedLogList(
+    logs: List<LogEntry>,
+    requestLoggingEnabled: Boolean,
+    onRequestLoggingChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
     var selectedLog by remember { mutableStateOf<LogEntry.RequestLog?>(null) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded))
     val scope = rememberCoroutineScope()
     val sortedLogs = remember(logs) { logs.sortedByDescending { it.timestamp } }
 
@@ -91,6 +113,13 @@ private fun UnifiedLogList(logs: List<LogEntry>, modifier: Modifier = Modifier) 
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(16.dp)
     ) {
+        item {
+            RequestLoggingSwitchCard(
+                enabled = requestLoggingEnabled,
+                onEnabledChange = onRequestLoggingChange
+            )
+        }
+
         items(sortedLogs, key = { it.id }, contentType = { it.javaClass.simpleName }) { log ->
             when (log) {
                 is LogEntry.RequestLog -> RequestLogCard(
@@ -112,6 +141,41 @@ private fun UnifiedLogList(logs: List<LogEntry>, modifier: Modifier = Modifier) 
             sheetState = sheetState
         ) {
             RequestLogDetail(log)
+        }
+    }
+}
+
+@Composable
+private fun RequestLoggingSwitchCard(
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CustomColors.cardColorsOnSurfaceContainer,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.log_page_record_requests),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = stringResource(R.string.log_page_record_requests_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = enabled,
+                onCheckedChange = onEnabledChange
+            )
         }
     }
 }
@@ -191,108 +255,141 @@ private fun RequestLogCard(log: LogEntry.RequestLog, onClick: () -> Unit) {
 @Composable
 private fun RequestLogDetail(log: LogEntry.RequestLog) {
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()) }
+    val clipboard = LocalClipboard.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Text(
-                text = "Request Details",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        item {
-            DetailSection("Time", dateFormat.format(Date(log.timestamp)))
-        }
-
-        item {
-            DetailSection("URL", log.url)
-        }
-
-        item {
-            DetailSection("Method", log.method)
-        }
-
-        log.responseCode?.let { code ->
+    SelectionContainer {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             item {
-                DetailSection("Status Code", code.toString())
-            }
-        }
-
-        log.durationMs?.let { duration ->
-            item {
-                DetailSection("Duration", "${duration}ms")
-            }
-        }
-
-        log.error?.let { error ->
-            item {
-                DetailSection("Error", error)
-            }
-        }
-
-        if (log.requestHeaders.isNotEmpty()) {
-            item {
-                HorizontalDivider()
                 Text(
-                    text = "Request Headers",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 8.dp)
+                    text = "Request Details",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
             }
-            log.requestHeaders.forEach { (key, value) ->
+
+            item {
+                DetailSection("Time", dateFormat.format(Date(log.timestamp)))
+            }
+
+            item {
+                DetailSection("URL", log.url)
+            }
+
+            item {
+                DetailSection("Method", log.method)
+            }
+
+            log.responseCode?.let { code ->
                 item {
-                    HeaderItem(key, value)
+                    DetailSection("Status Code", code.toString())
                 }
             }
-        }
 
-        log.requestBody?.let { body ->
-            item {
-                HorizontalDivider()
-                Text(
-                    text = "Request Body",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-                val jsonElement = remember(body) {
-                    runCatching { JsonInstantPretty.parseToJsonElement(body) }.getOrNull()
+            log.durationMs?.let { duration ->
+                item {
+                    DetailSection("Duration", "${duration}ms")
                 }
-                if (jsonElement != null) {
-                    JsonTree(
-                        json = jsonElement,
-                        modifier = Modifier.padding(top = 4.dp),
-                        initialExpandLevel = 2
-                    )
-                } else {
+            }
+
+            log.error?.let { error ->
+                item {
+                    DetailSection("Error", error)
+                }
+            }
+
+            if (log.requestHeaders.isNotEmpty()) {
+                item {
+                    HorizontalDivider()
                     Text(
-                        text = body,
-                        fontFamily = JetbrainsMono,
-                        modifier = Modifier.padding(top = 4.dp)
+                        text = "Request Headers",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 8.dp)
                     )
                 }
+                log.requestHeaders.forEach { (key, value) ->
+                    item {
+                        HeaderItem(key, value)
+                    }
+                }
             }
-        }
 
-        if (log.responseHeaders.isNotEmpty()) {
-            item {
-                HorizontalDivider()
-                Text(
-                    text = "Response Headers",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-            log.responseHeaders.forEach { (key, value) ->
+            log.requestBody?.let { body ->
                 item {
-                    HeaderItem(key, value)
+                    HorizontalDivider()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Request Body",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    try {
+                                        clipboard.setClipEntry(
+                                            ClipEntry(ClipData.newPlainText("Request Body", body))
+                                        )
+                                    } catch (e: RuntimeException) {
+                                        // 内容过大时 Binder 会抛出 TransactionTooLargeException (被包装为 RuntimeException)
+                                        Toast.makeText(
+                                            context,
+                                            "Copy failed: content too large for clipboard",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = HugeIcons.Copy01,
+                                contentDescription = stringResource(R.string.copy)
+                            )
+                        }
+                    }
+                    val jsonElement = remember(body) {
+                        runCatching { JsonInstantPretty.parseToJsonElement(body) }.getOrNull()
+                    }
+                    if (jsonElement != null) {
+                        JsonTree(
+                            json = jsonElement,
+                            modifier = Modifier.padding(top = 4.dp),
+                            initialExpandLevel = 2
+                        )
+                    } else {
+                        Text(
+                            text = body,
+                            fontFamily = JetbrainsMono,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            if (log.responseHeaders.isNotEmpty()) {
+                item {
+                    HorizontalDivider()
+                    Text(
+                        text = "Response Headers",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+                log.responseHeaders.forEach { (key, value) ->
+                    item {
+                        HeaderItem(key, value)
+                    }
                 }
             }
         }
@@ -339,28 +436,30 @@ private fun TextLogCard(log: LogEntry.TextLog) {
         modifier = Modifier.fillMaxWidth(),
         colors = CustomColors.cardColorsOnSurfaceContainer,
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+        SelectionContainer {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = log.tag,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = dateFormat.format(Date(log.timestamp)),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Text(
-                    text = log.tag,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = dateFormat.format(Date(log.timestamp)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = log.message,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = JetbrainsMono
                 )
             }
-            Text(
-                text = log.message,
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = JetbrainsMono
-            )
         }
     }
 }

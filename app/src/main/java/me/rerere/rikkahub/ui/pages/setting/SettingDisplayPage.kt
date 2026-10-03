@@ -274,9 +274,9 @@ fun SettingDisplayPage(vm: SettingVM = koinViewModel()) {
                             supportingContent = { Text(stringResource(R.string.setting_display_page_show_date_below_name_desc)) },
                             trailingContent = {
                                 Switch(
-                                    checked = displaySetting.showDateBelowName,
+                                    checked = displaySetting.showDateTimeInMessage,
                                     onCheckedChange = {
-                                        updateDisplaySetting(displaySetting.copy(showDateBelowName = it))
+                                        updateDisplaySetting(displaySetting.copy(showDateTimeInMessage = it))
                                     }
                                 )
                             },

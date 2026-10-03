@@ -3,14 +3,19 @@ package me.rerere.rikkahub.di
 import me.rerere.rikkahub.ui.pages.assistant.AssistantVM
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantDetailVM
 import me.rerere.rikkahub.ui.pages.backup.BackupVM
+import me.rerere.rikkahub.ui.pages.chat.ChatDrawerVM
 import me.rerere.rikkahub.ui.pages.chat.ChatVM
 import me.rerere.rikkahub.ui.pages.debug.DebugVM
-import me.rerere.rikkahub.ui.pages.developer.DeveloperVM
 import me.rerere.rikkahub.ui.pages.favorite.FavoriteVM
 import me.rerere.rikkahub.ui.pages.search.SearchVM
 import me.rerere.rikkahub.ui.pages.history.HistoryVM
 import me.rerere.rikkahub.ui.pages.stats.StatsVM
 import me.rerere.rikkahub.ui.pages.imggen.ImgGenVM
+import me.rerere.rikkahub.ui.pages.developer.DeveloperVM
+import me.rerere.rikkahub.ui.pages.extensions.skills.SkillDetailVM
+import me.rerere.rikkahub.ui.pages.extensions.skills.SkillsVM
+import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspaceDetailVM
+import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspaceVM
 import me.rerere.rikkahub.ui.pages.setting.SettingVM
 import me.rerere.rikkahub.ui.pages.translator.TranslatorVM
 import me.rerere.rikkahub.ui.pages.xapp.XAppVM
@@ -32,6 +37,7 @@ val viewModelModule = module {
             favoriteRepository = get(),
         )
     }
+    viewModelOf(::ChatDrawerVM)
     viewModelOf(::SettingVM)
     viewModelOf(::DebugVM)
     viewModelOf(::HistoryVM)
@@ -42,12 +48,24 @@ val viewModelModule = module {
             settingsStore = get(),
             memoryRepository = get(),
             filesManager = get(),
+            skillManager = get(),
+            workspaceRepository = get(),
         )
     }
     viewModelOf(::TranslatorVM)
     viewModelOf(::BackupVM)
     viewModelOf(::ImgGenVM)
     viewModelOf(::DeveloperVM)
+    viewModelOf(::SkillsVM)
+    viewModelOf(::SkillDetailVM)
+    viewModelOf(::WorkspaceVM)
+    viewModel<WorkspaceDetailVM> {
+        WorkspaceDetailVM(
+            id = it.get(),
+            repository = get(),
+            terminalSessionManager = get(),
+        )
+    }
     viewModelOf(::FavoriteVM)
     viewModelOf(::SearchVM)
     viewModelOf(::StatsVM)

@@ -37,7 +37,7 @@ fun ChatMessageMeta(
     when (message.role) {
         MessageRole.USER -> {
             val showNickname = settings.displaySetting.userNickname.isNotBlank()
-            val showDate = settings.displaySetting.showDateBelowName
+            val showDate = settings.displaySetting.showDateTimeInMessage
             if (!showNickname && !showDate) {
                 return
             }
@@ -66,7 +66,7 @@ fun ChatMessageMeta(
         }
 
         MessageRole.ASSISTANT -> {
-            val showDate = settings.displaySetting.showDateBelowName
+            val showDate = settings.displaySetting.showDateTimeInMessage
             if (!showDate) {
                 return
             }

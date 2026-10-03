@@ -6,10 +6,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -18,11 +18,10 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -32,31 +31,40 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.res.stringResource
-import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
+import coil3.gif.AnimatedImageDecoder
+import coil3.gif.GifDecoder
+import coil3.network.cachecontrol.CacheControlCacheStrategy
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import coil3.svg.SvgDecoder
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import kotlinx.serialization.Serializable
-import me.rerere.highlight.Highlighter
-import me.rerere.highlight.LocalHighlighter
 import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.db.DatabaseMigrationTracker
+import me.rerere.rikkahub.data.db.MigrationState
+import me.rerere.rikkahub.data.event.AppEvent
+import me.rerere.rikkahub.data.event.AppEventBus
+import me.rerere.rikkahub.ui.activity.SafeModeActivity
 import me.rerere.rikkahub.ui.components.ui.TTSController
+import me.rerere.rikkahub.ui.context.LocalASRState
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalSettings
 import me.rerere.rikkahub.ui.context.LocalSharedTransitionScope
@@ -65,29 +73,32 @@ import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.context.Navigator
 import me.rerere.rikkahub.ui.hooks.readBooleanPreference
 import me.rerere.rikkahub.ui.hooks.readStringPreference
+import me.rerere.rikkahub.ui.hooks.rememberCustomAsrState
 import me.rerere.rikkahub.ui.hooks.rememberCustomTtsState
 import me.rerere.rikkahub.ui.pages.assistant.AssistantPage
-import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantBasicPage
 import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantDetailPage
-import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantLocalToolPage
-import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantMcpPage
-import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantMemoryPage
-import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantPromptPage
-import me.rerere.rikkahub.ui.pages.assistant.detail.AssistantRequestPage
 import me.rerere.rikkahub.ui.pages.personalization.PersonalizationMemoryPage
 import me.rerere.rikkahub.ui.pages.personalization.PersonalizationPage
 import me.rerere.rikkahub.ui.pages.backup.BackupPage
 import me.rerere.rikkahub.ui.pages.chat.ChatPage
 import me.rerere.rikkahub.ui.pages.debug.DebugPage
 import me.rerere.rikkahub.ui.pages.developer.DeveloperPage
+import me.rerere.rikkahub.ui.pages.extensions.skills.SkillDetailPage
+import me.rerere.rikkahub.ui.pages.extensions.skills.SkillsPage
+import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspacePage
+import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspaceDetailPage
+import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspaceFileEditorPage
+import me.rerere.rikkahub.ui.pages.extensions.workspace.WorkspaceTerminalPage
+import me.rerere.workspace.WorkspaceStorageArea
 import me.rerere.rikkahub.ui.pages.favorite.FavoritePage
 import me.rerere.rikkahub.ui.pages.history.HistoryPage
 import me.rerere.rikkahub.ui.pages.imggen.ImageGenPage
 import me.rerere.rikkahub.ui.pages.log.LogPage
 import me.rerere.rikkahub.ui.pages.search.SearchPage
-import me.rerere.rikkahub.ui.pages.stats.StatsPage
 import me.rerere.rikkahub.ui.pages.setting.SettingAboutPage
 import me.rerere.rikkahub.ui.pages.setting.SettingDisplayPage
+import me.rerere.rikkahub.ui.pages.setting.SettingPreferencesNetworkPage
+import me.rerere.rikkahub.ui.pages.setting.SettingThemePage
 import me.rerere.rikkahub.ui.pages.setting.SettingFilesPage
 import me.rerere.rikkahub.ui.pages.setting.SettingMcpPage
 import me.rerere.rikkahub.ui.pages.setting.SettingModelPage
@@ -96,6 +107,7 @@ import me.rerere.rikkahub.ui.pages.setting.SettingPluginsPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSearchPage
+import me.rerere.rikkahub.ui.pages.setting.SettingSearchDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTelegramPluginPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTTSPage
 import me.rerere.rikkahub.ui.pages.setting.SettingXPluginPage
@@ -103,37 +115,54 @@ import me.rerere.rikkahub.ui.pages.translator.TranslatorPage
 import me.rerere.rikkahub.ui.pages.xapp.XAppPage
 import me.rerere.rikkahub.ui.pages.zphone.ZPhonePage
 import me.rerere.rikkahub.ui.pages.webview.WebViewPage
+import me.rerere.rikkahub.ui.pages.stats.StatsPage
 import me.rerere.rikkahub.ui.theme.LocalDarkMode
 import me.rerere.rikkahub.ui.theme.RikkahubTheme
-import androidx.compose.foundation.layout.Arrangement
-import me.rerere.rikkahub.data.db.DatabaseMigrationTracker
-import me.rerere.rikkahub.data.event.AppEventBus
-import me.rerere.rikkahub.data.event.AppEvent
-import me.rerere.rikkahub.data.db.MigrationState
+import me.rerere.rikkahub.utils.openUsageAccessSettings
 import okhttp3.OkHttpClient
 import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
 import kotlin.uuid.Uuid
 
 private const val TAG = "RouteActivity"
+private const val ACTION_TRANSLATE = "me.rerere.rikkahub.action.TRANSLATE"
+private const val ACTION_IMAGE_GEN = "me.rerere.rikkahub.action.IMAGE_GEN"
 
 class RouteActivity : ComponentActivity() {
-    private val highlighter by inject<Highlighter>()
     private val okHttpClient by inject<OkHttpClient>()
     private val settingsStore by inject<SettingsStore>()
     private var navStack: MutableList<NavKey>? = null
+    private val pendingIntents = ArrayDeque<Intent>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         disableNavigationBarContrast()
         super.onCreate(savedInstanceState)
+        if (me.rerere.rikkahub.utils.CrashHandler.hasCrashed(this)) {
+            startActivity(Intent(this, SafeModeActivity::class.java))
+            finish()
+            return
+        }
+        if (savedInstanceState == null) {
+            handleIntent(intent)
+        }
         setContent {
             RikkahubTheme {
                 setSingletonImageLoaderFactory { context ->
                     ImageLoader.Builder(context)
                         .crossfade(true)
                         .components {
-                            add(OkHttpNetworkFetcherFactory(callFactory = { okHttpClient }))
+                            add(
+                                OkHttpNetworkFetcherFactory(
+                                    callFactory = { okHttpClient },
+                                    cacheStrategy = { CacheControlCacheStrategy() },
+                                )
+                            )
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                                add(AnimatedImageDecoder.Factory())
+                            } else {
+                                add(GifDecoder.Factory())
+                            }
                             add(SvgDecoder.Factory(scaleToDensity = true))
                         }
                         .build()
@@ -151,21 +180,52 @@ class RouteActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Navigate to the chat screen if a conversation ID is provided
-        intent.getStringExtra("conversationId")?.let { text ->
-            navStack?.add(Screen.Chat(text))
-        }    }
+        setIntent(intent)
+        handleIntent(intent)
+    }
 
+    private fun handleIntent(intent: Intent) {
+        val backStack = navStack ?: run {
+            // Compose 尚未创建导航栈，待就绪后处理。
+            pendingIntents.addLast(intent)
+            return
+        }
+        val destination = when (intent.action) {
+            ACTION_TRANSLATE -> Screen.Translator
+            ACTION_IMAGE_GEN -> Screen.ImageGen
+            Intent.ACTION_SEND -> intent.getStringExtra(Intent.EXTRA_STREAM)?.let { streamUri ->
+                // 相机快捷方式拍摄的照片直接进入新会话并附带图片
+                Screen.Chat(
+                    id = Uuid.random().toString(),
+                    files = listOf(streamUri),
+                )
+            } ?: Screen.Chat(id = Uuid.random().toString(), text = intent.getStringExtra(Intent.EXTRA_TEXT))
+            Intent.ACTION_PROCESS_TEXT -> Screen.Chat(
+                id = Uuid.random().toString(),
+                text = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString(),
+            )
+            else -> intent.getStringExtra("conversationId")?.let { Screen.Chat(it) }
+        }
+        if (destination != null && backStack.lastOrNull() != destination) {
+            backStack.add(destination)
+        }
+    }
+
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun AppRoutes() {
         val toastState = rememberToasterState()
         val settings by settingsStore.settingsFlow.collectAsStateWithLifecycle()
         val tts = rememberCustomTtsState()
+        val asr = rememberCustomAsrState()
         val eventBus = koinInject<AppEventBus>()
         LaunchedEffect(tts) {
             eventBus.events.collect { event ->
                 when (event) {
                     is AppEvent.Speak -> tts.speak(event.text)
+                    is AppEvent.OpenUsageAccessSettings -> this@RouteActivity.openUsageAccessSettings()
+                    is AppEvent.ChatGenerationUpdate -> Unit // 由 ChatNotificationManager 消费
+                    is AppEvent.ChatGenerationEnded -> Unit // 由 ChatNotificationManager 消费
                 }
             }
         }
@@ -183,16 +243,21 @@ class RouteActivity : ComponentActivity() {
         )
 
         val backStack = rememberNavBackStack(startScreen)
-        SideEffect { this@RouteActivity.navStack = backStack }
+        SideEffect {
+            navStack = backStack
+            while (pendingIntents.isNotEmpty()) {
+                handleIntent(pendingIntents.removeFirst())
+            }
+        }
 
         SharedTransitionLayout {
             CompositionLocalProvider(
                 LocalNavController provides Navigator(backStack),
                 LocalSharedTransitionScope provides this,
                 LocalSettings provides settings,
-                LocalHighlighter provides highlighter,
                 LocalToaster provides toastState,
                 LocalTTSState provides tts,
+                LocalASRState provides asr,
             ) {
                 Toaster(
                     state = toastState,
@@ -205,6 +270,7 @@ class RouteActivity : ComponentActivity() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .semantics { testTagsAsResourceId = true }
                         .background(MaterialTheme.colorScheme.background)
                 ) {
                     NavDisplay(
@@ -262,7 +328,7 @@ class RouteActivity : ComponentActivity() {
                         entryProvider = entryProvider {
                             entry<Screen.Chat>(
                                 metadata = NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() }
-                                        + NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() }
+                                    + NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() }
                             ) { key ->
                                 ChatPage(
                                     id = Uuid.parse(key.id),
@@ -341,11 +407,19 @@ class RouteActivity : ComponentActivity() {
                             }
 
                             entry<Screen.WebView> { key ->
-                                WebViewPage(key.url, key.content)
+                                WebViewPage(key.url, key.contentId)
                             }
 
                             entry<Screen.SettingDisplay> {
                                 SettingDisplayPage()
+                            }
+
+                            entry<Screen.SettingTheme> {
+                                SettingThemePage()
+                            }
+
+                            entry<Screen.SettingNetwork> {
+                                SettingPreferencesNetworkPage()
                             }
 
                             entry<Screen.SettingProvider> {
@@ -370,6 +444,11 @@ class RouteActivity : ComponentActivity() {
 
                             entry<Screen.SettingSearch> {
                                 SettingSearchPage()
+                            }
+
+                            entry<Screen.SettingSearchDetail> { key ->
+                                val id = Uuid.parse(key.serviceId)
+                                SettingSearchDetailPage(id)
                             }
 
                             entry<Screen.SettingTTS> {
@@ -408,18 +487,46 @@ class RouteActivity : ComponentActivity() {
                                 LogPage()
                             }
 
+                            entry<Screen.Skills> {
+                                SkillsPage()
+                            }
+
+                            entry<Screen.SkillDetail> { key ->
+                                SkillDetailPage(skillName = key.skillName)
+                            }
+
+                            entry<Screen.Workspaces> {
+                                WorkspacePage()
+                            }
+
+                            entry<Screen.WorkspaceDetail> { key ->
+                                WorkspaceDetailPage(key.id)
+                            }
+
+                            entry<Screen.WorkspaceTerminal> { key ->
+                                WorkspaceTerminalPage(key.id)
+                            }
+
+                            entry<Screen.WorkspaceFileEditor> { key ->
+                                WorkspaceFileEditorPage(
+                                    id = key.id,
+                                    area = WorkspaceStorageArea.valueOf(key.area),
+                                    path = key.path,
+                                )
+                            }
+
                             entry<Screen.MessageSearch> {
                                 SearchPage()
                             }
 
-            entry<Screen.Stats> {
-                StatsPage()
-            }
+                            entry<Screen.Stats> {
+                                StatsPage()
+                            }
 
-            entry<Screen.XApp> {
-                XAppPage()
-            }
-        }
+                            entry<Screen.XApp> {
+                                XAppPage()
+                            }
+                        }
                     )
                     if (BuildConfig.DEBUG) {
                         Text(
@@ -530,10 +637,16 @@ sealed interface Screen : NavKey {
     data object ZPhone : Screen
 
     @Serializable
-    data class WebView(val url: String = "", val content: String = "") : Screen
+    data class WebView(val url: String = "", val contentId: String = "") : Screen
 
     @Serializable
     data object SettingDisplay : Screen
+
+    @Serializable
+    data object SettingTheme : Screen
+
+    @Serializable
+    data object SettingNetwork : Screen
 
     @Serializable
     data object SettingProvider : Screen
@@ -552,6 +665,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object SettingSearch : Screen
+
+    @Serializable
+    data class SettingSearchDetail(val serviceId: String) : Screen
 
     @Serializable
     data object SettingTTS : Screen
@@ -579,6 +695,24 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object Log : Screen
+
+    @Serializable
+    data object Skills : Screen
+
+    @Serializable
+    data class SkillDetail(val skillName: String) : Screen
+
+    @Serializable
+    data object Workspaces : Screen
+
+    @Serializable
+    data class WorkspaceDetail(val id: String) : Screen
+
+    @Serializable
+    data class WorkspaceTerminal(val id: String) : Screen
+
+    @Serializable
+    data class WorkspaceFileEditor(val id: String, val area: String, val path: String) : Screen
 
     @Serializable
     data object MessageSearch : Screen

@@ -6,17 +6,21 @@ import me.rerere.hugeicons.stroke.ArrowUp01
 import me.rerere.hugeicons.stroke.Add01
 import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.Cancel01
+import me.rerere.hugeicons.stroke.Refresh03
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -36,7 +40,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +49,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,15 +79,19 @@ import me.rerere.rikkahub.data.model.Assistant
 import me.rerere.rikkahub.data.model.AssistantAffectScope
 import me.rerere.rikkahub.data.model.AssistantRegex
 import me.rerere.rikkahub.data.model.Conversation
-import me.rerere.rikkahub.data.model.QuickMessage
 import me.rerere.rikkahub.data.model.toMessageNode
 import me.rerere.rikkahub.ui.components.message.ChatMessage
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoPageTopBar
 import me.rerere.rikkahub.ui.components.ui.FormItem
+import me.rerere.rikkahub.ui.components.ui.ItemAction
+import me.rerere.rikkahub.ui.components.ui.ItemActionMenu
+import me.rerere.rikkahub.ui.components.ui.RikkaConfirmDialog
 import me.rerere.rikkahub.ui.components.ui.Select
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TextArea
+import me.rerere.rikkahub.ui.components.ui.longPressReorder
+import me.rerere.rikkahub.ui.theme.ChatFontProvider
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.ui.theme.JetbrainsMono
 import me.rerere.rikkahub.utils.UiState
@@ -93,6 +101,7 @@ import me.rerere.rikkahub.utils.onSuccess
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
+import sh.calvin.reorderable.ReorderableColumn
 import kotlin.uuid.Uuid
 
 @Composable
@@ -116,7 +125,7 @@ fun AssistantPromptPage(id: String) {
         containerColor = CustomColors.topBarColors.containerColor,
     ) { innerPadding ->
         AssistantPromptContent(
-            modifier = Modifier.padding(innerPadding),
+            innerPadding = innerPadding,
             assistant = assistant,
             settings = settings,
             onUpdate = { vm.update(it) }
@@ -126,7 +135,7 @@ fun AssistantPromptPage(id: String) {
 
 @Composable
 private fun AssistantPromptContent(
-    modifier: Modifier = Modifier,
+    innerPadding: PaddingValues,
     assistant: Assistant,
     settings: Settings,
     onUpdate: (Assistant) -> Unit
@@ -135,11 +144,12 @@ private fun AssistantPromptContent(
     val templateTransformer = koinInject<TemplateTransformer>()
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .imePadding()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp)
+            .padding(innerPadding)
+            .imePadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Card(
@@ -199,9 +209,78 @@ private fun AssistantPromptContent(
             FormItem(
                 modifier = Modifier.padding(8.dp),
                 label = {
-                    Text(stringResource(R.string.assistant_page_message_template))
+                    Text(stringResource(R.string.assistant_page_allow_conversation_system_prompt))
+                },
+                description = {
+                    Text(stringResource(R.string.assistant_page_allow_conversation_system_prompt_desc))
+                },
+                tail = {
+                    Switch(
+                        checked = assistant.allowConversationSystemPrompt,
+                        onCheckedChange = {
+                            onUpdate(
+                                assistant.copy(
+                                    allowConversationSystemPrompt = it
+                                )
+                            )
+                        }
+                    )
+                }
+            )
+        }
+
+        Card(
+            colors = CustomColors.cardColorsOnSurfaceContainer
+        ) {
+            FormItem(
+                modifier = Modifier.padding(8.dp),
+                label = {
+                    Text(stringResource(R.string.assistant_page_allow_conversation_prompt_injection))
+                },
+                description = {
+                    Text(stringResource(R.string.assistant_page_allow_conversation_prompt_injection_desc))
+                },
+                tail = {
+                    Switch(
+                        checked = assistant.allowConversationPromptInjection,
+                        onCheckedChange = {
+                            onUpdate(
+                                assistant.copy(
+                                    allowConversationPromptInjection = it
+                                )
+                            )
+                        }
+                    )
+                }
+            )
+        }
+
+        Card(
+            colors = CustomColors.cardColorsOnSurfaceContainer
+        ) {
+            FormItem(
+                modifier = Modifier.padding(8.dp),
+                label = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(stringResource(R.string.assistant_page_message_template))
+                        Spacer(Modifier.weight(1f))
+                        IconButton(
+                            onClick = {
+                                onUpdate(assistant.copy(messageTemplate = "{{ message }}"))
+                            },
+                            enabled = assistant.messageTemplate != "{{ message }}",
+                        ) {
+                            Icon(
+                                imageVector = HugeIcons.Refresh03,
+                                contentDescription = null,
+                            )
+                        }
+                    }
                 },
                 content = {
+                    val missingMessage = "{{ message }}" !in assistant.messageTemplate
                     OutlinedTextField(
                         value = assistant.messageTemplate,
                         onValueChange = {
@@ -214,6 +293,10 @@ private fun AssistantPromptContent(
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 5,
                         maxLines = 15,
+                        isError = missingMessage,
+                        supportingText = if (missingMessage) {
+                            { Text(stringResource(R.string.assistant_page_message_template_missing_message)) }
+                        } else null,
                         textStyle = LocalTextStyle.current.copy(
                             fontSize = 12.sp,
                             fontFamily = JetbrainsMono,
@@ -295,17 +378,19 @@ private fun AssistantPromptContent(
                     )
                 }
                 preview.onSuccess {
-                    it.fastForEach { message ->
-                        ChatMessage(
-                            node = message.toMessageNode(),
-                            onFork = {},
-                            onRegenerate = {},
-                            onEdit = {},
-                            onShare = {},
-                            onDelete = {},
-                            onUpdate = {},
-                            lastMessage = false,
-                        )
+                    ChatFontProvider(displaySetting = settings.displaySetting) {
+                        it.fastForEach { message ->
+                            ChatMessage(
+                                node = message.toMessageNode(),
+                                onFork = {},
+                                onRegenerate = {},
+                                onEdit = {},
+                                onShare = {},
+                                onDelete = {},
+                                onUpdate = {},
+                                lastMessage = false,
+                            )
+                        }
                     }
                 }
             }
@@ -419,99 +504,6 @@ private fun AssistantPromptContent(
             FormItem(
                 modifier = Modifier.padding(8.dp),
                 label = {
-                    Text(stringResource(R.string.assistant_page_quick_messages))
-                },
-                description = {
-                    Text(stringResource(R.string.assistant_page_quick_messages_desc))
-                }
-            )
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(16.dp)
-            ) {
-                assistant.quickMessages.fastForEachIndexed { index, quickMessage ->
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            OutlinedTextField(
-                                value = quickMessage.title,
-                                onValueChange = { title ->
-                                    onUpdate(
-                                        assistant.copy(
-                                            quickMessages = assistant.quickMessages.mapIndexed { i, msg ->
-                                                if (i == index) {
-                                                    msg.copy(title = title)
-                                                } else {
-                                                    msg
-                                                }
-                                            }
-                                        )
-                                    )
-                                },
-                                modifier = Modifier.weight(1f),
-                                label = { Text(stringResource(R.string.assistant_page_quick_message_title)) }
-                            )
-                            IconButton(
-                                onClick = {
-                                    onUpdate(
-                                        assistant.copy(
-                                            quickMessages = assistant.quickMessages.filterIndexed { i, _ ->
-                                                i != index
-                                            }
-                                        )
-                                    )
-                                }
-                            ) {
-                                Icon(HugeIcons.Cancel01, null)
-                            }
-                        }
-                        OutlinedTextField(
-                            value = quickMessage.content,
-                            onValueChange = { text ->
-                                onUpdate(
-                                    assistant.copy(
-                                        quickMessages = assistant.quickMessages.mapIndexed { i, msg ->
-                                            if (i == index) {
-                                                msg.copy(content = text)
-                                            } else {
-                                                msg
-                                            }
-                                        }
-                                    )
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 6,
-                            label = { Text(stringResource(R.string.assistant_page_quick_message_content)) }
-                        )
-                    }
-                }
-                Button(
-                    onClick = {
-                        onUpdate(
-                            assistant.copy(
-                                quickMessages = assistant.quickMessages + QuickMessage()
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(HugeIcons.Add01, null)
-                }
-            }
-        }
-
-        Card(
-            colors = CustomColors.cardColorsOnSurfaceContainer
-        ) {
-            FormItem(
-                modifier = Modifier.padding(8.dp),
-                label = {
                     Text(stringResource(R.string.assistant_page_regex_title))
                 },
                 description = {
@@ -522,13 +514,39 @@ private fun AssistantPromptContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
-                assistant.regexes.fastForEachIndexed { index, regex ->
-                    AssistantRegexCard(
-                        regex = regex,
-                        onUpdate = onUpdate,
-                        assistant = assistant,
-                        index = index
-                    )
+                var expandedIds by remember { mutableStateOf(emptySet<Uuid>()) }
+                ReorderableColumn(
+                    list = assistant.regexes,
+                    onSettle = { fromIndex, toIndex ->
+                        val regexes = assistant.regexes.toMutableList().apply {
+                            add(toIndex, removeAt(fromIndex))
+                        }
+                        onUpdate(assistant.copy(regexes = regexes))
+                    },
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) { index, regex, isDragging ->
+                    key(regex.id) {
+                        ReorderableItem(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            val expanded = regex.id in expandedIds
+                            AssistantRegexCard(
+                                regex = regex,
+                                onUpdate = onUpdate,
+                                assistant = assistant,
+                                index = index,
+                                expanded = expanded,
+                                onExpandedChange = {
+                                    expandedIds = if (it) expandedIds + regex.id else expandedIds - regex.id
+                                },
+                                // 展开后内部是输入框，长按拖拽会与文本选择冲突
+                                modifier = longPressReorder(
+                                    isDragging = isDragging,
+                                    enabled = !expanded && assistant.regexes.size > 1,
+                                ),
+                            )
+                        }
+                    }
                 }
                 Button(
                     onClick = {
@@ -554,13 +572,14 @@ private fun AssistantRegexCard(
     regex: AssistantRegex,
     onUpdate: (Assistant) -> Unit,
     assistant: Assistant,
-    index: Int
+    index: Int,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    var expanded by remember {
-        mutableStateOf(false)
-    }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier
@@ -569,8 +588,16 @@ private fun AssistantRegexCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable { onExpandedChange(!expanded) },
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    imageVector = if (expanded) HugeIcons.ArrowUp01 else HugeIcons.ArrowDown01,
+                    contentDescription = null,
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
                 Text(
                     text = regex.name,
                     maxLines = 1,
@@ -596,16 +623,16 @@ private fun AssistantRegexCard(
                     },
                     modifier = Modifier.padding(start = 8.dp)
                 )
-                IconButton(
-                    onClick = {
-                        expanded = !expanded
-                    }
-                ) {
-                    Icon(
-                        imageVector = if (expanded) HugeIcons.ArrowUp01 else HugeIcons.ArrowDown01,
-                        contentDescription = null
+                ItemActionMenu(
+                    actions = listOf(
+                        ItemAction(
+                            text = stringResource(R.string.delete),
+                            icon = HugeIcons.Delete01,
+                            destructive = true,
+                            onClick = { showDeleteDialog = true },
+                        ),
                     )
-                }
+                )
             }
 
             if (expanded) {
@@ -737,27 +764,21 @@ private fun AssistantRegexCard(
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
-
-                TextButton(
-                    onClick = {
-                        onUpdate(
-                            assistant.copy(
-                                regexes = assistant.regexes.filterIndexed { i, _ ->
-                                    i != index
-                                }
-                            )
-                        )
-                    }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Icon(HugeIcons.Delete01, null)
-                        Text(stringResource(R.string.delete))
-                    }
-                }
             }
         }
+    }
+
+    RikkaConfirmDialog(
+        show = showDeleteDialog,
+        title = stringResource(R.string.confirm_delete),
+        confirmText = stringResource(R.string.delete),
+        dismissText = stringResource(R.string.cancel),
+        onConfirm = {
+            showDeleteDialog = false
+            onUpdate(assistant.copy(regexes = assistant.regexes.filter { it.id != regex.id }))
+        },
+        onDismiss = { showDeleteDialog = false },
+    ) {
+        Text(stringResource(R.string.common_delete_confirm_message, regex.name))
     }
 }

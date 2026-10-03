@@ -25,7 +25,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
 private const val TAG = "GrokSearchService"
-private const val GROK_ENDPOINT = "https://api.x.ai/v1/responses"
 
 object GrokSearchService : SearchService<SearchServiceOptions.GrokOptions> {
     override val name: String = "Grok"
@@ -42,8 +41,8 @@ object GrokSearchService : SearchService<SearchServiceOptions.GrokOptions> {
         }
     }
 
-    override val parameters: InputSchema?
-        get() = InputSchema.Obj(
+    override fun parameters(options: SearchServiceOptions.GrokOptions): InputSchema? =
+        InputSchema.Obj(
             properties = buildJsonObject {
                 put("query", buildJsonObject {
                     put("type", "string")
@@ -53,7 +52,7 @@ object GrokSearchService : SearchService<SearchServiceOptions.GrokOptions> {
             required = listOf("query")
         )
 
-    override val scrapingParameters: InputSchema? = null
+    override fun scrapingParameters(options: SearchServiceOptions.GrokOptions): InputSchema? = null
 
     override suspend fun search(
         params: JsonObject,
@@ -73,10 +72,7 @@ object GrokSearchService : SearchService<SearchServiceOptions.GrokOptions> {
                 put("input", buildJsonArray {
                     add(buildJsonObject {
                         put("role", JsonPrimitive("system"))
-                        put(
-                            "content",
-                            JsonPrimitive("You are a helpful search assistant. Search the web to find accurate and up-to-date information for the user's query. Provide a comprehensive answer with citations.")
-                        )
+                        put("content", JsonPrimitive(serviceOptions.systemPrompt))
                     })
                     add(buildJsonObject {
                         put("role", JsonPrimitive("user"))
@@ -97,7 +93,7 @@ object GrokSearchService : SearchService<SearchServiceOptions.GrokOptions> {
             Log.i(TAG, "search: $query")
 
             val request = Request.Builder()
-                .url(GROK_ENDPOINT)
+                .url(serviceOptions.customUrl)
                 .post(body.toString().toRequestBody())
                 .addHeader("Authorization", "Bearer ${serviceOptions.apiKey}")
                 .addHeader("Content-Type", "application/json")

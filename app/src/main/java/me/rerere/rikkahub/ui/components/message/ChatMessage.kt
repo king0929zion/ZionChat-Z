@@ -90,6 +90,7 @@ import me.rerere.rikkahub.ui.theme.extendColors
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionUserMessageBubble
 import me.rerere.rikkahub.utils.JsonInstant
+import me.rerere.rikkahub.ui.components.webview.WebViewContentCache
 import me.rerere.rikkahub.utils.base64Encode
 import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.urlDecode
@@ -218,7 +219,8 @@ fun ChatMessage(
                         markdown = textContent,
                         colorScheme = colorScheme
                     )
-                    navController.navigate(Screen.WebView(content = htmlContent.base64Encode()))
+                    val contentId = WebViewContentCache.store(context.cacheDir, htmlContent)
+                    navController.navigate(Screen.WebView(contentId = contentId))
                 }
             },
             onDismissRequest = {

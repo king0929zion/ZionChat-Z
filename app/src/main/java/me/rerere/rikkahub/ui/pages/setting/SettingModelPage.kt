@@ -90,35 +90,19 @@ fun SettingModelPage(vm: SettingVM = koinViewModel()) {
 
     val sections = listOf(
         ModelSectionConfig(
-            key = "title",
-            title = stringResource(R.string.setting_model_page_title_model).uppercase(),
+            key = "fast",
+            title = stringResource(R.string.setting_model_page_fast_model).uppercase(),
             required = false,
-            modelId = settings.titleModelId,
+            modelId = settings.fastModelId,
             type = ModelType.CHAT,
             prompt = settings.titlePrompt,
             promptVariablesLabel = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
             resetPrompt = DEFAULT_TITLE_PROMPT,
             onSelect = { model ->
-                vm.updateSettings(settings.copy(titleModelId = model?.id ?: Uuid.random()))
+                vm.updateSettings(settings.copy(fastModelId = model?.id ?: Uuid.random()))
             },
             onPromptChange = { prompt ->
                 vm.updateSettings(settings.copy(titlePrompt = prompt))
-            }
-        ),
-        ModelSectionConfig(
-            key = "suggestion",
-            title = stringResource(R.string.setting_model_page_suggestion_model).uppercase(),
-            required = false,
-            modelId = settings.suggestionModelId,
-            type = ModelType.CHAT,
-            prompt = settings.suggestionPrompt,
-            promptVariablesLabel = stringResource(R.string.setting_model_page_suggestion_prompt_vars),
-            resetPrompt = DEFAULT_SUGGESTION_PROMPT,
-            onSelect = { model ->
-                vm.updateSettings(settings.copy(suggestionModelId = model?.id ?: Uuid.random()))
-            },
-            onPromptChange = { prompt ->
-                vm.updateSettings(settings.copy(suggestionPrompt = prompt))
             }
         ),
         ModelSectionConfig(

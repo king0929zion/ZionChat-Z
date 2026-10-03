@@ -1,49 +1,37 @@
 package me.rerere.rikkahub.ui.pages.setting
 
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.AlertCircle
-import me.rerere.hugeicons.stroke.ArrowDown01
-import me.rerere.hugeicons.stroke.ArrowUp01
-import me.rerere.hugeicons.stroke.FileImport
-import me.rerere.hugeicons.stroke.MessageBlocked
-import me.rerere.hugeicons.stroke.Add01
-import me.rerere.hugeicons.stroke.Settings03
-import me.rerere.hugeicons.stroke.Console
-import me.rerere.hugeicons.stroke.Delete01
-import me.rerere.hugeicons.stroke.Upload02
-import me.rerere.hugeicons.stroke.Cancel01
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.FlowRowOverflow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,22 +43,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.SwipeToDismissBox
-import me.rerere.rikkahub.ui.components.ui.Switch
-import me.rerere.rikkahub.ui.components.ui.SwitchSize
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -78,43 +64,57 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.contentOrNull
 import me.rerere.ai.core.InputSchema
+import me.rerere.hugeicons.HugeIcons
+import me.rerere.hugeicons.stroke.Add01
+import me.rerere.hugeicons.stroke.AlertCircle
+import me.rerere.hugeicons.stroke.ArrowDown01
+import me.rerere.hugeicons.stroke.ArrowUp01
+import me.rerere.hugeicons.stroke.Delete01
+import me.rerere.hugeicons.stroke.FileImport
 import me.rerere.hugeicons.stroke.McpServer
+import me.rerere.hugeicons.stroke.MessageBlocked
+import me.rerere.hugeicons.stroke.View
+import me.rerere.hugeicons.stroke.ViewOff
 import me.rerere.rikkahub.R
+import me.rerere.rikkahub.data.ai.mcp.McpCommonOptions
 import me.rerere.rikkahub.data.ai.mcp.McpManager
 import me.rerere.rikkahub.data.ai.mcp.McpServerConfig
-import me.rerere.rikkahub.data.ai.mcp.McpCommonOptions
 import me.rerere.rikkahub.data.ai.mcp.McpStatus
 import me.rerere.rikkahub.data.ai.mcp.McpTool
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.FormItem
-import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
-import me.rerere.rikkahub.ui.components.ui.SettingsPage
+import me.rerere.rikkahub.ui.components.ui.ItemAction
+import me.rerere.rikkahub.ui.components.ui.ItemActionMenu
+import me.rerere.rikkahub.ui.components.ui.RikkaConfirmDialog
+import me.rerere.rikkahub.ui.components.ui.Switch
+import me.rerere.rikkahub.ui.components.ui.SwitchSize
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
-import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.hooks.EditState
 import me.rerere.rikkahub.ui.hooks.EditStateContent
 import me.rerere.rikkahub.ui.hooks.useEditState
-import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.ui.theme.extendColors
+import me.rerere.rikkahub.utils.writeClipboardText
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 
 @Composable
 fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
-    val navController = LocalNavController.current
     val settings by vm.settings.collectAsStateWithLifecycle()
     val mcpConfigs = settings.mcpServers
     val creationState = useEditState<McpServerConfig> {
@@ -137,33 +137,45 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
             ))
     }
     var showImportDialog by remember { mutableStateOf(false) }
-    SettingsPage(
-        title = stringResource(R.string.setting_mcp_page_title),
-        onBack = { navController.popBackStack() },
-        trailing = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                IconButton(
-                    onClick = {
-                        showImportDialog = true
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    Scaffold(
+        topBar = {
+            LargeFlexibleTopAppBar(
+                title = {
+                    Text(stringResource(R.string.setting_mcp_page_title))
+                },
+                navigationIcon = {
+                    BackButton()
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            showImportDialog = true
+                        }
+                    ) {
+                        Icon(HugeIcons.FileImport, null)
                     }
-                ) {
-                    Icon(ZionAppIcons.Files, null)
-                }
-                IconButton(
-                    onClick = {
-                        creationState.open(McpServerConfig.StreamableHTTPServer())
+                    IconButton(
+                        onClick = {
+                            creationState.open(McpServerConfig.StreamableHTTPServer())
+                        }
+                    ) {
+                        Icon(HugeIcons.Add01, null)
                     }
-                ) {
-                    Icon(ZionAppIcons.Plus, null)
-                }
-            }
-        }
-    ) {
+                },
+                scrollBehavior = scrollBehavior,
+                colors = CustomColors.topBarColors
+            )
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = CustomColors.topBarColors.containerColor
+    ) { innerPadding ->
         val mcpManager = koinInject<McpManager>()
         val status by mcpManager.syncingStatus.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
         val state = rememberPullToRefreshState()
         val loading = status.values.any { it == McpStatus.Connecting || it is McpStatus.Reconnecting }
+        val layoutDirection = LocalLayoutDirection.current
         PullToRefreshBox(
             isRefreshing = loading,
             onRefresh = {
@@ -172,15 +184,18 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                 }
             },
             state = state,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = PageTopBarContentTopPadding)
+            modifier = Modifier.fillMaxSize()
         ) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)
+                contentPadding = PaddingValues(
+                    start = innerPadding.calculateStartPadding(layoutDirection) + 16.dp,
+                    top = innerPadding.calculateTopPadding() + 16.dp,
+                    end = innerPadding.calculateEndPadding(layoutDirection) + 16.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 16.dp,
+                )
             ) {
                 items(mcpConfigs, key = { it.id }) { mcpConfig ->
                     McpServerItem(
@@ -222,7 +237,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
             onDismiss = { showImportDialog = false },
             onImport = { newConfigs ->
                 val existingIds = mcpConfigs.map { it.commonOptions.name }.toSet()
-                val toAdd = newConfigs.filter { it.commonOptions.name !in existingIds }
+                val toAdd = newConfigs.filter { it.commonOptions.name.isNotBlank() && it.commonOptions.name !in existingIds }
                 vm.updateSettings(settings.copy(mcpServers = mcpConfigs + toAdd))
                 showImportDialog = false
             }
@@ -239,110 +254,175 @@ private fun McpServerItem(
 ) {
     val mcpManager = koinInject<McpManager>()
     val status by mcpManager.getStatus(item).collectAsStateWithLifecycle(McpStatus.Idle)
-    val dismissBoxState = rememberSwipeToDismissBoxState()
-    val scope = rememberCoroutineScope()
-    SwipeToDismissBox(
-        state = dismissBoxState,
-        backgroundContent = {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-            ) {
-                FilledTonalIconButton(
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var errorDetail by remember { mutableStateOf<McpStatus.Error?>(null) }
+
+    errorDetail?.let { error ->
+        val context = LocalContext.current
+        val fullText = error.detail ?: error.message
+        AlertDialog(
+            onDismissRequest = { errorDetail = null },
+            title = { Text(item.commonOptions.name.ifBlank { "MCP" }) },
+            text = {
+                SelectionContainer {
+                    Text(
+                        text = fullText,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .heightIn(max = 320.dp)
+                            .verticalScroll(rememberScrollState()),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
                     onClick = {
-                        scope.launch { dismissBoxState.reset() }
+                        context.writeClipboardText(fullText)
+                        errorDetail = null
                     }
                 ) {
-                    Icon(HugeIcons.Cancel01, null)
+                    Text(stringResource(R.string.copy))
                 }
-                FilledTonalIconButton(
-                    onClick = {
-                        onDelete()
-                    }
-                ) {
-                    Icon(HugeIcons.Delete01, null)
+            },
+            dismissButton = {
+                TextButton(onClick = { errorDetail = null }) {
+                    Text(stringResource(R.string.cancel))
                 }
-            }
-        },
-        enableDismissFromStartToEnd = false,
-        enableDismissFromEndToStart = true,
-        modifier = modifier
+            },
+        )
+    }
+    Card(
+        onClick = { onEdit(item) },
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = CustomColors.listItemColors.containerColor
+        )
     ) {
-        Card(
-            shape = RoundedCornerShape(26.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = CustomColors.listItemColors.containerColor
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                when (status) {
-                    McpStatus.Idle -> Icon(HugeIcons.MessageBlocked, null)
-                    McpStatus.Connecting -> CircularProgressIndicator(
-                        modifier = Modifier.size(
-                            24.dp
-                        )
+            when (status) {
+                McpStatus.Idle -> Icon(HugeIcons.MessageBlocked, null)
+                McpStatus.Connecting -> CircularProgressIndicator(
+                    modifier = Modifier.size(
+                        24.dp
                     )
+                )
 
-                    McpStatus.Connected -> Icon(HugeIcons.McpServer, null)
-                    is McpStatus.Reconnecting -> CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp)
+                McpStatus.Connected -> Icon(HugeIcons.McpServer, null)
+                is McpStatus.Reconnecting -> CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp)
+                )
+                is McpStatus.Error -> Icon(HugeIcons.AlertCircle, null)
+                McpStatus.NeedsAuthorization -> Icon(HugeIcons.AlertCircle, null)
+                McpStatus.Authorizing -> CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = item.commonOptions.name,
+                        style = MaterialTheme.typography.titleLarge,
                     )
-                    is McpStatus.Error -> Icon(HugeIcons.AlertCircle, null)
+                    val dotColor =
+                        if (item.commonOptions.enable) MaterialTheme.extendColors.green6 else MaterialTheme.extendColors.red6
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .drawWithContent {
+                                drawCircle(
+                                    color = dotColor
+                                )
+                            }
+                    )
                 }
 
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = item.commonOptions.name,
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                        val dotColor =
-                            if (item.commonOptions.enable) MaterialTheme.extendColors.green6 else MaterialTheme.extendColors.red6
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .drawWithContent {
-                                    drawCircle(
-                                        color = dotColor
-                                    )
-                                }
-                        )
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Tag(type = TagType.SUCCESS) {
-                            when (item) {
-                                is McpServerConfig.SseTransportServer -> Text("SSE")
-                                is McpServerConfig.StreamableHTTPServer -> Text("Streamable HTTP")
-                            }
+                    Tag(type = TagType.SUCCESS) {
+                        when (item) {
+                            is McpServerConfig.SseTransportServer -> Text("SSE")
+                            is McpServerConfig.StreamableHTTPServer -> Text("Streamable HTTP")
                         }
                     }
                 }
-
-                IconButton(
-                    onClick = {
-                        onEdit(item)
+                if (status is McpStatus.Error) {
+                    val error = status as McpStatus.Error
+                    Text(
+                        text = error.message,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.clickable { errorDetail = error },
+                    )
+                }
+                if (status == McpStatus.NeedsAuthorization) {
+                    val context = LocalContext.current
+                    Text(
+                        text = "需要 OAuth 授权",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Button(
+                        onClick = { mcpManager.startAuthorization(item, context) },
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    ) {
+                        Text("OAuth 授权")
                     }
-                ) {
-                    Icon(ZionAppIcons.Tool, null)
+                }
+                if (status == McpStatus.Authorizing) {
+                    Text(
+                        text = "正在授权，请在浏览器中完成…",
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    TextButton(
+                        onClick = { mcpManager.cancelAuthorization(item) },
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    ) {
+                        Text("取消授权")
+                    }
                 }
             }
+
+            ItemActionMenu(
+                actions = listOf(
+                    ItemAction(
+                        text = stringResource(R.string.delete),
+                        icon = HugeIcons.Delete01,
+                        destructive = true,
+                        onClick = { showDeleteDialog = true },
+                    ),
+                )
+            )
         }
+    }
+
+    RikkaConfirmDialog(
+        show = showDeleteDialog,
+        title = stringResource(R.string.confirm_delete),
+        confirmText = stringResource(R.string.delete),
+        dismissText = stringResource(R.string.cancel),
+        onConfirm = {
+            showDeleteDialog = false
+            onDelete()
+        },
+        onDismiss = { showDeleteDialog = false },
+    ) {
+        Text(stringResource(R.string.common_delete_confirm_message, item.commonOptions.name))
     }
 }
 
@@ -355,7 +435,7 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
             onDismissRequest = {
                 state.dismiss()
             },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded))
         ) {
             Column(
                 modifier = Modifier
@@ -419,7 +499,7 @@ private fun McpServerConfigModal(state: EditState<McpServerConfig>) {
                 ) {
                     TextButton(
                         onClick = {
-                            if (config.commonOptions.name.isNotBlank()) {
+                            if (config.commonOptions.name.isNotBlank() && isValidMcpName(config.commonOptions.name)) {
                                 state.confirm()
                             }
                         }
@@ -491,6 +571,7 @@ private fun McpCommonOptionsConfigure(
                 Text(stringResource(R.string.setting_mcp_page_name_desc))
             }
         ) {
+            val nameInvalid = !isValidMcpName(config.commonOptions.name)
             OutlinedTextField(
                 value = config.commonOptions.name,
                 onValueChange = { name ->
@@ -508,7 +589,11 @@ private fun McpCommonOptionsConfigure(
                 },
                 label = { Text(stringResource(R.string.setting_mcp_page_name)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.setting_mcp_page_name_placeholder)) }
+                placeholder = { Text(stringResource(R.string.setting_mcp_page_name_placeholder)) },
+                isError = nameInvalid,
+                supportingText = if (nameInvalid) {
+                    { Text(stringResource(R.string.setting_mcp_page_name_invalid)) }
+                } else null
             )
         }
 
@@ -631,6 +716,7 @@ private fun McpCommonOptionsConfigure(
                 config.commonOptions.headers.forEachIndexed { index, header ->
                     var headerName by remember(header.first) { mutableStateOf(header.first) }
                     var headerValue by remember(header.second) { mutableStateOf(header.second) }
+                    var headerValueVisible by rememberSaveable { mutableStateOf(false) }
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -683,6 +769,15 @@ private fun McpCommonOptionsConfigure(
                                 },
                                 label = { Text(stringResource(R.string.setting_mcp_page_header_value)) },
                                 modifier = Modifier.fillMaxWidth(),
+                                visualTransformation = if (headerValueVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    IconButton(onClick = { headerValueVisible = !headerValueVisible }) {
+                                        Icon(
+                                            if (headerValueVisible) HugeIcons.ViewOff else HugeIcons.View,
+                                            contentDescription = null
+                                        )
+                                    }
+                                },
                                 placeholder = { Text(stringResource(R.string.setting_mcp_page_header_value_placeholder)) }
                             )
                         }
@@ -801,7 +896,6 @@ private fun McpToolCard(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Card(
-        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
             containerColor = CustomColors.listItemColors.containerColor
         )
@@ -903,6 +997,10 @@ private fun McpToolCard(
     }
 }
 
+private fun isValidMcpName(name: String): Boolean {
+    return name.isEmpty() || name.all { it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' }
+}
+
 private fun parseMcpServersFromJson(json: String): List<McpServerConfig> {
     val root = Json.parseToJsonElement(json).jsonObject
     val mcpServers = root["mcpServers"]?.jsonObject ?: return emptyList()
@@ -933,7 +1031,7 @@ private fun McpImportModal(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded))
     ) {
         Column(
             modifier = Modifier

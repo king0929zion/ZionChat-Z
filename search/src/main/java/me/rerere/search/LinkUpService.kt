@@ -18,6 +18,7 @@ import me.rerere.ai.core.InputSchema
 import me.rerere.search.SearchResult.SearchResultItem
 import me.rerere.search.SearchService.Companion.httpClient
 import me.rerere.search.SearchService.Companion.json
+import me.rerere.search.SearchService.Companion.keyRoulette
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
@@ -38,8 +39,8 @@ object LinkUpService : SearchService<SearchServiceOptions.LinkUpOptions> {
         }
     }
 
-    override val parameters: InputSchema?
-        get() = InputSchema.Obj(
+    override fun parameters(options: SearchServiceOptions.LinkUpOptions): InputSchema? =
+        InputSchema.Obj(
             properties = buildJsonObject {
                 put("query", buildJsonObject {
                     put("type", "string")
@@ -49,8 +50,8 @@ object LinkUpService : SearchService<SearchServiceOptions.LinkUpOptions> {
             required = listOf("query")
         )
 
-    override val scrapingParameters: InputSchema?
-        get() = InputSchema.Obj(
+    override fun scrapingParameters(options: SearchServiceOptions.LinkUpOptions): InputSchema? =
+        InputSchema.Obj(
             properties = buildJsonObject {
                 put("url", buildJsonObject {
                     put("type", "string")
@@ -73,11 +74,12 @@ object LinkUpService : SearchService<SearchServiceOptions.LinkUpOptions> {
                 put("outputType", JsonPrimitive("sourcedAnswer"))
                 put("includeImages", JsonPrimitive("false"))
             }
+            val apiKey = keyRoulette.next(serviceOptions.apiKey, serviceOptions.id.toString())
 
             val request = Request.Builder()
                 .url("https://api.linkup.so/v1/search")
                 .post(body.toString().toRequestBody())
-                .addHeader("Authorization", "Bearer ${serviceOptions.apiKey}")
+                .addHeader("Authorization", "Bearer $apiKey")
                 .addHeader("Content-Type", "application/json")
                 .build()
 
@@ -120,11 +122,12 @@ object LinkUpService : SearchService<SearchServiceOptions.LinkUpOptions> {
                 put("renderJs", JsonPrimitive(false))
                 put("extractImages", JsonPrimitive(false))
             }
+            val apiKey = keyRoulette.next(serviceOptions.apiKey, serviceOptions.id.toString())
 
             val request = Request.Builder()
                 .url("https://api.linkup.so/v1/fetch")
                 .post(body.toString().toRequestBody())
-                .addHeader("Authorization", "Bearer ${serviceOptions.apiKey}")
+                .addHeader("Authorization", "Bearer $apiKey")
                 .addHeader("Content-Type", "application/json")
                 .build()
 

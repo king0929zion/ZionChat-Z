@@ -1,3 +1,19 @@
+## v0.0.87
+
+- 合并上游 RikkaHub 全部补丁（163 个修复提交 + 自 v2.1 分叉以来的 522 个提交），同时完整保留 Zion 定制 UI 与 X / ZPhone / Bots / Telegram 插件功能：
+  - 聊天内核：消息发送队列、自动重试（可在设置中关闭）、工具审批状态修复、会话状态保持等大量稳定性修复
+  - 模型支持：Claude 4.5–5.5、Gemini 3.5–4、GPT 5.4–6、GLM 5.x、Kimi K3、DeepSeek V4、Qwen 3.5–3.8、MiMo、MiniMax 等新模型注册；推理级别体系（xhigh / max effort）；阶梯式上下文截断并保留提示词缓存
+  - 工作区（Workspace）：Linux 终端（proot、多标签、后台运行）、文件管理器、DocumentsProvider、Shell 兼容模式
+  - MCP：OAuth 2.1 授权流、Client ID Metadata Document、同名工具消歧、SDK 升级
+  - 提供商：高级设置（自定义请求头 / 请求体）、网络配置页（User-Agent 与代理）、API Key 轮询（LRU）、连接测试组件
+  - 搜索：新增 Serper / Tinyfish / Firecrawl / Custom JS / 豆包 / GPT 内置搜索，Exa deep 模式与网页抓取，按日期排序，搜索结果页按服务详情管理
+  - 技能系统：内置技能（skill-creator）、GitHub 导入、搜索过滤
+  - 主题：极简白 / Claude 主题、自定义配色（HSL、导入导出）、动态渐变背景（Mesh Gradient）、程序化头像
+  - Markdown：Kotlin 原生语法高亮、表格卡片与 CSV 导出、化学公式、SVG 预览、Mermaid 11
+  - 安全与数据：启动备份一致性快照恢复、安全模式（崩溃检测）、数据库迁移桥接（本仓库 v19 结构安全升级到上游 v25 结构，不丢数据）
+- 保持 fork 既有决策：不含网页端（web-ui）、不含赞助商推荐提供商、聊天 UI 维持 Zion 风格
+- 构建链路适配：CI 拉取 git 子模块（material-color-utilities），targetSDK 升级到 37
+
 ## v0.0.86
 
 - 继续优化模型管理页 UI：
