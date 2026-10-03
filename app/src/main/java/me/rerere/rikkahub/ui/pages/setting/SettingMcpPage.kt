@@ -94,8 +94,10 @@ import me.rerere.rikkahub.data.ai.mcp.McpCommonOptions
 import me.rerere.rikkahub.data.ai.mcp.McpManager
 import me.rerere.rikkahub.data.ai.mcp.McpServerConfig
 import me.rerere.rikkahub.data.ai.mcp.McpStatus
+import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.ai.mcp.McpTool
 import me.rerere.rikkahub.ui.components.nav.BackButton
+import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.components.ui.FormItem
 import me.rerere.rikkahub.ui.components.ui.ItemAction
 import me.rerere.rikkahub.ui.components.ui.ItemActionMenu
@@ -116,6 +118,7 @@ import org.koin.compose.koinInject
 @Composable
 fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
+    val navController = LocalNavController.current
     val mcpConfigs = settings.mcpServers
     val creationState = useEditState<McpServerConfig> {
         vm.updateSettings(
@@ -157,7 +160,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
                     }
                     IconButton(
                         onClick = {
-                            creationState.open(McpServerConfig.StreamableHTTPServer())
+                            navController.navigate(Screen.SettingMcpAdd)
                         }
                     ) {
                         Icon(HugeIcons.Add01, null)

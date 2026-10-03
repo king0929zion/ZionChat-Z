@@ -108,6 +108,8 @@ import me.rerere.rikkahub.ui.pages.setting.SettingProviderDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSearchPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSearchDetailPage
+import me.rerere.rikkahub.ui.pages.setting.SettingMcpAddPage
+import me.rerere.rikkahub.ui.pages.setting.SettingProviderAddPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTelegramPluginPage
 import me.rerere.rikkahub.ui.pages.setting.SettingTTSPage
 import me.rerere.rikkahub.ui.pages.setting.SettingXPluginPage
@@ -451,6 +453,14 @@ class RouteActivity : ComponentActivity() {
                                 SettingSearchDetailPage(id)
                             }
 
+                            entry<Screen.SettingMcpAdd> {
+                                SettingMcpAddPage()
+                            }
+
+                            entry<Screen.SettingProviderAdd> { key ->
+                                SettingProviderAddPage(apiType = key.apiType)
+                            }
+
                             entry<Screen.SettingTTS> {
                                 SettingTTSPage()
                             }
@@ -668,6 +678,12 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data class SettingSearchDetail(val serviceId: String) : Screen
+
+    @Serializable
+    data object SettingMcpAdd : Screen
+
+    @Serializable
+    data class SettingProviderAdd(val apiType: String = "") : Screen
 
     @Serializable
     data object SettingTTS : Screen

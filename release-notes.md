@@ -1,3 +1,11 @@
+## v0.0.91
+
+- 按设计稿重写两个新增页面（配色 / 比例 / 动画遵循项目整体设计）：
+  - **Add MCP**：Enable 开关卡片、Name、Transport Type（Streamable HTTP / SSE）、Endpoint URL、Custom Headers 键值对（可增删），右上角 Add 按钮随表单有效性启停（灰 / 黑切换），保存后返回 MCP 列表
+  - **Add model service**：Service name、API type（OpenAI / Anthropic / Gemini / OpenAI Compatible，切换时智能跟随默认 Base URL）、OpenAI API（Chat Completions / Responses，非 OpenAI 类型置灰）、Base URL、API Key，底部黑色 Create & enable 一键创建并启用；右上角支持扫码预填表单
+- 供应商列表页 "+" 与预设行 (OpenAI/Google/Claude) 均改为跳转新页面，移除旧的底部弹窗 + 对话框流程
+- 新增共享表单组件（SectionLabel / PillInput / PillToggle），沿用项目 pressableScale 按压动画与胶囊圆角风格
+
 ## v0.0.90
 
 - 修复启动即崩溃（ClassCastException）：主题更新系统栏图标的 `SideEffect` 中把 `view.context` 强转为 `Activity`，在悬浮窗（TTS 悬浮控制器等使用 Application Context 的场景）组合时必然崩溃。改为上游的 `getActivity()` 安全链式查找 + 空检查，无 Activity 时（悬浮窗）跳过系统栏更新。
