@@ -24,7 +24,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,8 +37,8 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.ui.components.ui.HeaderActionButton
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.PillInput
+import me.rerere.rikkahub.ui.components.ui.PillSelect
 import me.rerere.rikkahub.ui.components.ui.SectionLabel
-import me.rerere.rikkahub.ui.components.ui.Select
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.decodeProviderSetting
 import me.rerere.rikkahub.ui.components.ui.pressableScale
@@ -175,7 +174,7 @@ fun SettingProviderAddPage(
             )
 
             SectionLabel(text = "API type")
-            Select(
+            PillSelect(
                 options = ApiTypeOption.entries,
                 selectedOption = apiTypeOption,
                 onOptionSelected = { applyType(it) },
@@ -186,11 +185,12 @@ fun SettingProviderAddPage(
             // OpenAI API: 仅 OpenAI 兼容类型可切换
             val openAiSelectEnabled = apiTypeOption.isOpenAiCompatible()
             SectionLabel(text = "OpenAI API")
-            Select(
+            PillSelect(
                 options = listOf(false, true),
                 selectedOption = useResponseApi,
                 onOptionSelected = { if (openAiSelectEnabled) useResponseApi = it },
                 optionToString = { if (it) "Responses API" else "Chat Completions API" },
+                enabled = openAiSelectEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .alpha(if (openAiSelectEnabled) 1f else 0.45f)
@@ -212,15 +212,15 @@ fun SettingProviderAddPage(
                 keyboardType = KeyboardType.Password
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(15.dp))
 
-            // Create & enable
+            // Create & enable (设计稿 .create: 高 51dp / 圆角 25.5dp / 字号 14.5sp)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
-                    .clip(RoundedCornerShape(25.dp))
-                    .background(ZionTextPrimary, RoundedCornerShape(25.dp))
+                    .height(51.dp)
+                    .clip(RoundedCornerShape(25.5.dp))
+                    .background(ZionTextPrimary, RoundedCornerShape(25.5.dp))
                     .pressableScale(pressedScale = 0.97f) {
                         val provider = buildProvider(
                             apiTypeOption = apiTypeOption,
@@ -240,8 +240,7 @@ fun SettingProviderAddPage(
             ) {
                 Text(
                     text = "Create & enable",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.5.sp,
                     fontFamily = SourceSans3,
                     color = Color.White
                 )

@@ -41,9 +41,10 @@ import me.rerere.rikkahub.data.ai.mcp.McpCommonOptions
 import me.rerere.rikkahub.data.ai.mcp.McpServerConfig
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.PillInput
+import me.rerere.rikkahub.ui.components.ui.PillSelect
+import me.rerere.rikkahub.ui.components.ui.PillSpec
 import me.rerere.rikkahub.ui.components.ui.PillToggle
 import me.rerere.rikkahub.ui.components.ui.SectionLabel
-import me.rerere.rikkahub.ui.components.ui.Select
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.headerActionButtonShadow
 import me.rerere.rikkahub.ui.components.ui.pressableScale
@@ -52,8 +53,6 @@ import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionActionIcon
-import me.rerere.rikkahub.ui.theme.ZionGrayLighter
-import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
@@ -128,27 +127,26 @@ fun SettingMcpAddPage(vm: SettingVM = koinViewModel()) {
                 .padding(horizontal = 16.dp)
                 .settingsBottomInsets()
         ) {
-            // Enable 卡片
+            // Enable 卡片 (设计稿 .enable: 高 62dp / 圆角 22.5dp / 纯白底)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(ZionSectionItem)
-                    .padding(horizontal = 18.dp),
+                    .height(PillSpec.CardHeight)
+                    .clip(RoundedCornerShape(PillSpec.CardRadius))
+                    .background(ZionSurface, RoundedCornerShape(PillSpec.CardRadius))
+                    .padding(start = 20.dp, end = 18.5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = ZionAppIcons.Tool,
                     contentDescription = null,
                     tint = ZionActionIcon,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.5.dp)
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(17.5.dp))
                 Text(
                     text = "Enable",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 17.5.sp,
                     fontFamily = SourceSans3,
                     color = ZionTextPrimary,
                     modifier = Modifier.weight(1f)
@@ -171,7 +169,7 @@ fun SettingMcpAddPage(vm: SettingVM = koinViewModel()) {
             )
 
             SectionLabel(text = "Transport Type")
-            Select(
+            PillSelect(
                 options = listOf(TRANSPORT_STREAMABLE_HTTP, TRANSPORT_SSE),
                 selectedOption = when (config) {
                     is McpServerConfig.SseTransportServer -> TRANSPORT_SSE
@@ -216,8 +214,7 @@ fun SettingMcpAddPage(vm: SettingVM = koinViewModel()) {
             ) {
                 Text(
                     text = "Custom Headers",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
                     fontFamily = SourceSans3,
                     color = ZionTextSecondary,
                     modifier = Modifier.weight(1f)
@@ -242,8 +239,7 @@ fun SettingMcpAddPage(vm: SettingVM = koinViewModel()) {
                     )
                     Text(
                         text = "Add Header",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp,
                         fontFamily = SourceSans3,
                         color = ZionTextPrimary
                     )
@@ -335,26 +331,26 @@ private fun HeaderInput(
         onValueChange = onValueChange,
         singleLine = true,
         textStyle = TextStyle(
-            fontSize = 13.sp,
+            fontSize = 12.5.sp,
             fontFamily = SourceSans3,
             color = ZionTextPrimary
         ),
         cursorBrush = SolidColor(ZionTextPrimary),
         modifier = modifier
-            .height(40.dp)
+            .height(41.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(ZionGrayLighter)
+            .background(ZionSurface)
     ) { innerTextField ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 14.dp),
+                .padding(horizontal = 12.5.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             if (value.isEmpty()) {
                 Text(
                     text = placeholder,
-                    fontSize = 13.sp,
+                    fontSize = 12.5.sp,
                     fontFamily = SourceSans3,
                     color = ZionTextSecondary
                 )

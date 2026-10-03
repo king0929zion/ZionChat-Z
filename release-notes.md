@@ -1,3 +1,14 @@
+## v0.0.95
+
+- **Add MCP / Add model service 两页严格对齐设计稿**：
+  - 输入框圆角由 18dp 加大到 **22dp**（设计稿 44px），高度 52dp → **54.5dp**，底色改为纯白 `#fff`
+  - 新增**无描边药丸选择器** `PillSelect`：与输入框完全同高（54.5dp）、同圆角（22dp）、纯白底、**无 1dp 描边**，右侧为设计稿的下拉 chevron；替换原先带描边且高度不定的 `Select`
+  - Transport Type / API type / OpenAI API 三处下拉全部改用新选择器；OpenAI API 在非 OpenAI 兼容类型下自动禁用
+  - Enable 卡片改为设计稿规格：高 62dp、圆角 22.5dp、纯白底
+  - 标签字号 13sp → 14sp（设计稿 28px）；自定义请求头输入框高 41dp / 圆角 16dp / 字号 12.5sp
+  - Create & enable 按钮对齐设计稿：高 51dp、圆角 25.5dp、字号 14.5sp
+  - 新增 `PillSpec` 统一管理药丸表单的设计稿尺寸常量
+
 ## v0.0.94
 
 - 修复 v0.0.93 编译错误：AcRemoteTools 的 InputSchema 导入路径、移除 ViewModelModule 中残留的 XAppVM 注册
