@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.rerere.rikkahub.ui.theme.SourceSans3
+import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
@@ -47,11 +48,16 @@ import me.rerere.rikkahub.ui.theme.ZionTextSecondary
  *
  * - 字段高度: 109px / 2 = 54.5dp
  * - 字段圆角: 44px / 2 = 22dp
- * - 字段底色: #fff, 无描边
+ * - 字段底色: 灰色 (ZionSectionItem), 无描边
  * - Enable 卡片: 高 62dp, 圆角 22.5dp
  * - 标签: 14sp / #5d5d5d
  */
 object PillSpec {
+    /** 字段 / 选择器 / 按钮统一底色 (灰色, 与其他设置页卡片一致) */
+    val FieldColor = ZionSectionItem
+
+    /** 下拉菜单阴影高度 (尽量淡) */
+    val DropdownShadow = 2.dp
     /** 字段高度 (设计稿 .field) */
     val FieldHeight = 54.5.dp
 
@@ -92,7 +98,7 @@ fun SectionLabel(
 /**
  * 药丸输入框 (设计稿: .field)
  *
- * 高 54.5dp / 圆角 22dp / 纯白底 / 无描边, 与药丸选择器完全同规格。
+ * 高 54.5dp / 圆角 22dp / 灰色底 / 无描边, 与药丸选择器完全同规格。
  */
 @Composable
 fun PillInput(
@@ -117,7 +123,7 @@ fun PillInput(
         modifier = modifier
             .height(PillSpec.FieldHeight)
             .clip(RoundedCornerShape(PillSpec.FieldRadius))
-            .background(ZionSurface, RoundedCornerShape(PillSpec.FieldRadius))
+            .background(PillSpec.FieldColor, RoundedCornerShape(PillSpec.FieldRadius))
     ) { innerTextField ->
         Box(
             modifier = Modifier
@@ -141,8 +147,8 @@ fun PillInput(
 /**
  * 药丸选择器 (设计稿: .field select)
  *
- * 与 [PillInput] 完全同规格: 高 54.5dp / 圆角 22dp / 纯白底 / **无描边**,
- * 右侧为设计稿的 chevron 下拉箭头。
+ * 与 [PillInput] 完全同规格: 高 54.5dp / 圆角 22dp / 灰色底 / **无描边**,
+ * 右侧为设计稿的 chevron 下拉箭头, 下拉菜单阴影很淡。
  */
 @Composable
 fun <T> PillSelect(
@@ -161,7 +167,7 @@ fun <T> PillSelect(
                 .fillMaxWidth()
                 .height(PillSpec.FieldHeight)
                 .clip(RoundedCornerShape(PillSpec.FieldRadius))
-                .background(ZionSurface, RoundedCornerShape(PillSpec.FieldRadius))
+                .background(PillSpec.FieldColor, RoundedCornerShape(PillSpec.FieldRadius))
                 .pressableScale(enabled = enabled, pressedScale = 0.985f) { expanded = true }
                 .padding(start = PillSpec.FieldPadding, end = 14.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -189,7 +195,7 @@ fun <T> PillSelect(
             onDismissRequest = { expanded = false },
             shape = RoundedCornerShape(20.dp),
             containerColor = ZionSurface,
-            shadowElevation = 10.dp
+            shadowElevation = PillSpec.DropdownShadow
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
@@ -209,7 +215,7 @@ fun <T> PillSelect(
                     modifier = Modifier
                         .padding(horizontal = 10.dp, vertical = 2.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(ZionSurface)
+                        .background(PillSpec.FieldColor)
                 )
             }
         }

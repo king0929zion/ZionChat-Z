@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -53,7 +52,6 @@ import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionActionIcon
-import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import org.koin.androidx.compose.koinViewModel
@@ -99,7 +97,7 @@ fun SettingMcpAddPage(vm: SettingVM = koinViewModel()) {
                     .height(40.dp)
                     .headerActionButtonShadow(RoundedCornerShape(20.dp))
                     .clip(RoundedCornerShape(20.dp))
-                    .background(ZionSurface, RoundedCornerShape(20.dp))
+                    .background(PillSpec.FieldColor, RoundedCornerShape(20.dp))
                     .pressableScale(enabled = valid, pressedScale = 0.95f) {
                         vm.updateSettings(
                             settings.copy(mcpServers = settings.mcpServers + config)
@@ -127,13 +125,13 @@ fun SettingMcpAddPage(vm: SettingVM = koinViewModel()) {
                 .padding(horizontal = 16.dp)
                 .settingsBottomInsets()
         ) {
-            // Enable 卡片 (设计稿 .enable: 高 62dp / 圆角 22.5dp / 纯白底)
+            // Enable 卡片 (设计稿 .enable: 高 62dp / 圆角 22.5dp / 灰色底)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(PillSpec.CardHeight)
                     .clip(RoundedCornerShape(PillSpec.CardRadius))
-                    .background(ZionSurface, RoundedCornerShape(PillSpec.CardRadius))
+                    .background(PillSpec.FieldColor, RoundedCornerShape(PillSpec.CardRadius))
                     .padding(start = 20.dp, end = 18.5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -339,7 +337,7 @@ private fun HeaderInput(
         modifier = modifier
             .height(41.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(ZionSurface)
+            .background(PillSpec.FieldColor)
     ) { innerTextField ->
         Box(
             modifier = Modifier

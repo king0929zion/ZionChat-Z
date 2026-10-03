@@ -1,3 +1,19 @@
+## v0.0.97
+
+- **输入区与按钮统一改为灰色**（`PillSpec.FieldColor` = `ZionSectionItem`），与其他设置页卡片风格一致：
+  - Add MCP / Add model service 的所有输入框、选择器、Enable 卡片、自定义请求头输入框
+  - Add MCP 右上角 Add 按钮
+- **选择器下拉菜单阴影大幅减弱**（10dp → 2dp），菜单项底色改为灰色
+- **Add model service 页面**：
+  - 移除底部「Create & enable」按钮
+  - 右上角相机按钮改为 **✅ 保存按钮**（点击即创建并启用服务后返回）
+  - 移除扫码预填功能及相关代码
+- **MCP 主页面 UI 重写**为项目统一的简约风格：
+  - 由 Material3 `LargeFlexibleTopAppBar` + `Card` 改为项目统一的 `SettingsPage` 骨架（`PageTopBar` + 大圆角 + 半透明模糊背景）
+  - 列表项改为灰色 20dp 圆角卡片：状态图标 + 名称 + 传输类型标签（SSE / Streamable HTTP）+ 启用状态圆点 + 删除按钮
+  - 错误信息、OAuth 授权、授权中取消等状态在卡片内简约呈现
+  - 右上角为导入 / 新建两个圆形操作按钮，空列表时显示居中空状态文案
+
 ## v0.0.96
 
 - 修复 v0.0.95 编译错误：`PillSelect` 内文本改用 `Row` 作用域以支持 `weight`，保证选择器文本与箭头正确对齐
