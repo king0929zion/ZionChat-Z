@@ -217,7 +217,7 @@ private fun ProviderSetting.copyWithBaseUrl(url: String): ProviderSetting = when
 
 private const val ProviderDetailPageConfig = "config"
 private const val ProviderDetailPageModels = "models"
-private val ProviderDetailContentTopPadding = PageTopBarContentTopPadding + 12.dp
+private val ProviderDetailContentTopPadding = PageTopBarContentTopPadding
 private val ProviderDetailGroupColor = Color(0xFFF1F1F1)
 
 @Composable
@@ -505,7 +505,7 @@ private fun SettingProviderConfigPage(
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(top = ProviderDetailContentTopPadding, bottom = 24.dp)
+            .padding(bottom = 24.dp)
             .padding(horizontal = 16.dp),
     ) {
         SectionLabel(text = "Service name")
@@ -553,7 +553,19 @@ private fun SettingProviderConfigPage(
             value = apiKeyValue,
             onValueChange = { onProviderChange(provider.copyWithApiKey(it)) },
             placeholder = "Enter a new API Key...",
-            keyboardType = KeyboardType.Password
+            keyboardType = KeyboardType.Password,
+            singleLine = false,
+            minHeight = 96.dp
+        )
+
+        // 多 Key 轮询说明 (每行一个 Key, 请求时自动轮换)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Multiple keys: enter one key per line, requests rotate automatically.",
+            fontSize = 12.sp,
+            fontFamily = SourceSans3,
+            color = ZionTextSecondary,
+            modifier = Modifier.padding(start = 4.5.dp)
         )
 
         // Add key 按钮 (设计稿 .add-key: 无内容时禁用灰显)
@@ -583,6 +595,11 @@ private fun SettingProviderConfigPage(
 
         // 底部 Key 状态行 (设计稿 .footer)
         Spacer(modifier = Modifier.height(20.dp))
+        val keyCount = apiKeyValue.split("[\\s,]+".toRegex())
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .size
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -591,10 +608,10 @@ private fun SettingProviderConfigPage(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = if (apiKeyValue.isBlank()) {
-                    "No key configured"
-                } else {
-                    "1 key configured"
+                text = when (keyCount) {
+                    0 -> "No key configured"
+                    1 -> "1 key configured"
+                    else -> "$keyCount keys configured · Round-robin"
                 },
                 fontSize = 14.sp,
                 fontFamily = SourceSans3,

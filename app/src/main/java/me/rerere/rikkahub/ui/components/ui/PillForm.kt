@@ -5,7 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.rerere.rikkahub.ui.theme.SourceSans3
@@ -109,6 +110,7 @@ fun PillInput(
     keyboardType: KeyboardType = KeyboardType.Text,
     singleLine: Boolean = true,
     enabled: Boolean = true,
+    minHeight: Dp = PillSpec.FieldHeight,
 ) {
     BasicTextField(
         value = value,
@@ -123,15 +125,17 @@ fun PillInput(
         cursorBrush = SolidColor(ZionTextPrimary),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         modifier = modifier
-            .height(PillSpec.FieldHeight)
+            .defaultMinSize(minHeight = minHeight)
             .clip(RoundedCornerShape(PillSpec.FieldRadius))
             .background(PillSpec.FieldColor, RoundedCornerShape(PillSpec.FieldRadius))
     ) { innerTextField ->
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = PillSpec.FieldPadding),
-            contentAlignment = Alignment.CenterStart
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = minHeight)
+                .padding(horizontal = PillSpec.FieldPadding)
+                .padding(vertical = if (singleLine) 0.dp else 14.dp),
+            contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart
         ) {
             if (value.isEmpty() && placeholder.isNotEmpty()) {
                 Text(

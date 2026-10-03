@@ -1,3 +1,11 @@
+## v0.1.0
+
+- **多Key 轮询**：供应商详情页 API Key 支持多行输入（每行一个 Key），自动复用内置 `KeyRoulette` 按 LRU 轮换选用；底部状态栏显示真实数量（`3 keys configured · Round-robin`），并在字段下给出多 Key 用法说明
+- **修复供应商详情页顶部大片空白**：移除了外层 Box 与内层 Column 重复叠加的顶部留白（原本合计 216dp）
+- **Model services 页供应商图标**去掉白色圆角底，改为浅灰色底
+- **全局页面顶部留白加大**：`PageTopBarContentTopPadding` 96dp → 112dp，解决顶栏按钮与主内容贴得太近的问题（MCP 页等所有设置页/助手页同步生效）
+- `PillInput` 新增 `minHeight` 参数并支持多行模式（多行时顶部对齐、留出上下内边距）
+
 ## v0.0.99
 
 - 修复 v0.0.98 的 12 处编译错误：

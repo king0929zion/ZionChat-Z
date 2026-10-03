@@ -191,7 +191,7 @@ private fun ProviderServiceRow(
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(ZionSurface, RoundedCornerShape(12.dp)),
+                .background(ZionGrayLighter, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             AutoAIIcon(

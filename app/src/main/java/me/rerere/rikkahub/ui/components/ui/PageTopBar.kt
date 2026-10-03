@@ -44,7 +44,13 @@ import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 
-val PageTopBarContentTopPadding: Dp = 96.dp
+/**
+ * 页面内容相对顶栏的顶部留白
+ *
+ * 顶栏实际高度 = 状态栏 inset + 16dp * 2 + 40dp 按钮, 在无状态栏 inset 的设备上约 72dp。
+ * 96dp 在带刘海的机型上会显得贴边, 这里额外留出 16dp 呼吸空间。
+ */
+val PageTopBarContentTopPadding: Dp = 112.dp
 
 fun Modifier.headerActionButtonShadow(shape: Shape = CircleShape): Modifier = this.shadow(
     elevation = 20.dp,
