@@ -1,7 +1,6 @@
 package me.rerere.rikkahub.ui.pages.setting
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -109,17 +107,10 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                 ProviderServiceRow(
                     iconName = provider.name,
                     title = provider.name,
-                    enabled = provider.enabled,
                     onClick = {
                         navController.navigate(
                             Screen.SettingProviderDetail(providerId = provider.id.toString())
                         )
-                    },
-                    badges = buildList {
-                        add(ProviderBadge(label = "Token"))
-                        if (!provider.enabled) {
-                            add(ProviderBadge(label = stringResource(R.string.setting_provider_page_disabled)))
-                        }
                     }
                 )
             }
@@ -138,8 +129,7 @@ fun SettingProviderPage(vm: SettingVM = koinViewModel()) {
                         navController.navigate(
                             Screen.SettingProviderAdd(apiType = preset.name)
                         )
-                    },
-                    badges = listOf(ProviderBadge(label = "Token"))
+                    }
                 )
             }
         }
@@ -166,16 +156,10 @@ private fun AddProviderActionButton(
     }
 }
 
-private data class ProviderBadge(
-    val label: String,
-)
-
 @Composable
 private fun ProviderServiceRow(
     iconName: String,
     title: String,
-    enabled: Boolean = true,
-    badges: List<ProviderBadge>,
     onClick: () -> Unit,
 ) {
     Row(
@@ -197,7 +181,7 @@ private fun ProviderServiceRow(
             AutoAIIcon(
                 name = iconName,
                 modifier = Modifier.size(24.dp),
-                color = Color.Transparent
+                color = ZionTextSecondary
             )
         }
 
@@ -206,20 +190,11 @@ private fun ProviderServiceRow(
             fontSize = 17.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = SourceSans3,
-            color = if (enabled) ZionTextPrimary else ZionTextSecondary,
+            color = ZionTextPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            badges.forEach { badge ->
-                ProviderOutlineBadge(label = badge.label)
-            }
-        }
 
         Icon(
             imageVector = ZionAppIcons.ChevronRight,
@@ -230,23 +205,4 @@ private fun ProviderServiceRow(
     }
 }
 
-@Composable
-private fun ProviderOutlineBadge(label: String) {
-    Box(
-        modifier = Modifier
-            .height(22.dp)
-            .background(ZionGrayLighter, RoundedCornerShape(11.dp))
-            .border(1.dp, ZionTextPrimary, RoundedCornerShape(11.dp))
-            .padding(horizontal = 10.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            fontFamily = SourceSans3,
-            fontWeight = FontWeight.Medium,
-            color = ZionTextPrimary,
-            maxLines = 1
-        )
-    }
-}
+

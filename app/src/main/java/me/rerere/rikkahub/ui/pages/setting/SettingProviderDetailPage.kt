@@ -505,8 +505,7 @@ private fun SettingProviderConfigPage(
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(bottom = 24.dp)
-            .padding(horizontal = 16.dp),
+            .padding(bottom = 24.dp),
     ) {
         SectionLabel(text = "Service name")
         PillInput(

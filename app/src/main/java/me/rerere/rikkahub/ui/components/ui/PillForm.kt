@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
-import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 
@@ -58,7 +57,7 @@ object PillSpec {
     val FieldColor = ZionSectionItem
 
     /** 下拉菜单阴影高度 (尽量淡) */
-    val DropdownShadow = 2.dp
+    val DropdownShadow = 1.dp
     /** 字段高度 (设计稿 .field) */
     val FieldHeight = 54.5.dp
 
@@ -199,8 +198,8 @@ fun <T> PillSelect(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            shape = RoundedCornerShape(20.dp),
-            containerColor = ZionSurface,
+            shape = RoundedCornerShape(PillSpec.FieldRadius),
+            containerColor = PillSpec.FieldColor,
             shadowElevation = PillSpec.DropdownShadow
         ) {
             options.forEach { option ->
@@ -218,10 +217,7 @@ fun <T> PillSelect(
                             color = ZionTextPrimary
                         )
                     },
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp, vertical = 2.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(PillSpec.FieldColor)
+                    modifier = Modifier.background(Color.Transparent)
                 )
             }
         }

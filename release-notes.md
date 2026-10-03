@@ -1,3 +1,10 @@
+## v0.1.1
+
+- **修复供应商详情页左右边距过大**：移除外层 Box 与内层 Column 重复叠加的 16dp 横向内边距（实际左右各 32dp，现为 16dp）
+- **选择器颜色统一**：下拉菜单底色改为与输入框一致的灰色，菜单项不再「白底套灰块」，整体一个颜色；阴影进一步减弱（2dp → 1dp）
+- **Model services 页供应商图标**统一为灰色（`ZionTextSecondary`），与外层浅灰底更协调
+- **去掉 Model services 页的「Token」「Disabled」标识**，列表行只保留图标 + 名称 + 右箭头
+
 ## v0.1.0
 
 - **多Key 轮询**：供应商详情页 API Key 支持多行输入（每行一个 Key），自动复用内置 `KeyRoulette` 按 LRU 轮换选用；底部状态栏显示真实数量（`3 keys configured · Round-robin`），并在字段下给出多 Key 用法说明
