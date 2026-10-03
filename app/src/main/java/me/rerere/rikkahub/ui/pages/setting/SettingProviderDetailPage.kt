@@ -100,7 +100,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFilter
@@ -155,6 +154,7 @@ import me.rerere.rikkahub.ui.theme.ZionGrayLight
 import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
 import me.rerere.rikkahub.ui.theme.ZionSurface
+import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import me.rerere.rikkahub.utils.UiState
@@ -487,12 +487,13 @@ private fun SettingProviderConfigPage(
     var useResponseApi by remember(provider) {
         mutableStateOf((provider as? ProviderSetting.OpenAI)?.useResponseApi ?: false)
     }
-    val openAiSelectEnabled = apiTypeOption.isOpenAiCompatible()
+    val openAiSelectEnabled = apiTypeOption.isOpenAiCompatible
     val apiKeyValue = provider.apiKeyValue()
+    val baseUrlValue = provider.baseUrlValue()
 
     fun applyType(newType: ProviderApiTypeOption) {
         val currentDefault = apiTypeOption.defaultBaseUrl
-        if (provider.baseUrl.isBlank() || provider.baseUrl == currentDefault) {
+        if (baseUrlValue.isBlank() || baseUrlValue == currentDefault) {
             onProviderChange(
                 provider.copyWithBaseUrl(newType.defaultBaseUrl).withAlwaysEnabledDefaults()
             )
@@ -539,7 +540,7 @@ private fun SettingProviderConfigPage(
 
         SectionLabel(text = "Base URL")
         PillInput(
-            value = provider.baseUrlValue(),
+            value = baseUrlValue,
             onValueChange = {
                 onProviderChange(provider.copyWithBaseUrl(it).withAlwaysEnabledDefaults())
             },
@@ -969,7 +970,6 @@ private fun ModelList(
     }
 }
 
-@Composable
 /**
  * 模型详细设置表单 (设计稿: model-settings)
  *

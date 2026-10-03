@@ -1,3 +1,13 @@
+## v0.0.99
+
+- 修复 v0.0.98 的 12 处编译错误：
+  - 去除重复的 `KeyboardType` import（导入冲突）
+  - 补回缺失的 `SourceSans3` import
+  - `isOpenAiCompatible` 改为属性访问（去掉误加的函数括号）
+  - `ProviderSetting.baseUrl` 密封类访问改用 `baseUrlValue()` 扩展
+  - 修正 `ModelSettingsForm` 前多余的 `@Composable` 注解
+  - 补回 `ModelList` 结尾缺失的函数闭合括号
+
 ## v0.0.98
 
 - **供应商详情页重写**（设计稿 model-service-edit）：药丸表单 Service name / API type / OpenAI API / Base URL / API Key；新增灰色禁用态「Add key」按钮、底部 Key 状态行（No key configured / 1 key configured + 删除）、白色 26dp 圆角 Models 入口卡片（含模型数量副标题）
