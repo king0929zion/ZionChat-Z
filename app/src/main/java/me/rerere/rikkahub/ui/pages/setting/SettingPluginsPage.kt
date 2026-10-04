@@ -40,7 +40,6 @@ import me.rerere.rikkahub.data.plugin.PluginStore
 import me.rerere.rikkahub.data.plugin.StorePluginMcpSync
 import me.rerere.rikkahub.data.plugin.TelegramPluginConfig
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
-import me.rerere.rikkahub.ui.components.ui.PluginSystemSwitch
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController

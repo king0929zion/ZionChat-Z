@@ -1,3 +1,7 @@
+## v0.1.7
+
+- 修复 v0.1.6 的 2 处编译错误：移除同包类 `PluginSystemSwitch` 的多余import、修正 `PluginStorePage` 中残留的 Lucide 全限定名
+
 ## v0.1.6
 
 - 修复 v0.1.5 的 39 处编译错误：补全 Lucide 图标的逐个 import（`Lucide` 对象需每个图标单独 import），并将 5 个不存在的图标名替换为官方名称（AirVent→Wind、CircleSlash→CircleX、Server→Database、FileInput→FileDown、Box→Package）

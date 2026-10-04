@@ -75,7 +75,7 @@ fun PluginStorePage(vm: SettingVM = koinViewModel()) {
                 StoreCard(
                     iconContent = {
                         androidx.compose.material3.Icon(
-                            imageVector = me.rerere.rikkahub.ui.icons.Lucide.Wind,
+                            imageVector = Lucide.Wind,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(15.dp)
