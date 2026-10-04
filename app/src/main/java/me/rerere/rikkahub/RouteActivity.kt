@@ -104,6 +104,7 @@ import me.rerere.rikkahub.ui.pages.setting.SettingMcpPage
 import me.rerere.rikkahub.ui.pages.setting.SettingModelPage
 import me.rerere.rikkahub.ui.pages.setting.SettingPage
 import me.rerere.rikkahub.ui.pages.setting.SettingPluginsPage
+import me.rerere.rikkahub.ui.pages.setting.SettingModelDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderDetailPage
 import me.rerere.rikkahub.ui.pages.setting.SettingProviderPage
 import me.rerere.rikkahub.ui.pages.setting.SettingSearchPage
@@ -460,6 +461,13 @@ class RouteActivity : ComponentActivity() {
                                 SettingMcpPage()
                             }
 
+                            entry<Screen.SettingModelDetail> { key ->
+                                SettingModelDetailPage(
+                                    providerId = key.providerId,
+                                    modelId = key.modelId
+                                )
+                            }
+
                             entry<Screen.SettingPlugins> {
                                 SettingPluginsPage()
                             }
@@ -676,6 +684,12 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data class SettingProviderAdd(val apiType: String = "") : Screen
+
+    @Serializable
+    data class SettingModelDetail(
+        val providerId: String,
+        val modelId: String,
+    ) : Screen
 
     @Serializable
     data object SettingPlugins : Screen

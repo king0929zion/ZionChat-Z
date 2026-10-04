@@ -1,15 +1,5 @@
 package me.rerere.rikkahub.ui.pages.setting
 
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.Package01
-import me.rerere.hugeicons.stroke.Connect
-import me.rerere.hugeicons.stroke.ArrowDown01
-import me.rerere.hugeicons.stroke.Add01
-import me.rerere.hugeicons.stroke.Refresh03
-import me.rerere.hugeicons.stroke.Tools
-import me.rerere.hugeicons.stroke.Share01
-import me.rerere.hugeicons.stroke.Delete01
-import me.rerere.hugeicons.stroke.Cancel01
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -110,8 +100,11 @@ import kotlinx.coroutines.launch
 import me.rerere.ai.provider.BuiltInTools
 import me.rerere.ai.provider.BalanceOption
 import me.rerere.ai.provider.Modality
+import com.composables.icons.lucide.Lucide
 import me.rerere.ai.provider.Model
+import com.composables.icons.lucide.Lucide
 import me.rerere.ai.provider.ModelAbility
+import com.composables.icons.lucide.Lucide
 import me.rerere.ai.provider.ModelType
 import me.rerere.ai.provider.ProviderManager
 import me.rerere.ai.provider.ProviderSetting
@@ -285,7 +278,7 @@ fun SettingProviderDetailPage(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             Icon(
-                                imageVector = HugeIcons.Add01,
+                                imageVector = Lucide.Plus,
                                 contentDescription = stringResource(R.string.setting_provider_page_add_model),
                                 tint = ZionTextPrimary,
                                 modifier = Modifier.size(20.dp)
@@ -737,11 +730,20 @@ private fun SettingProviderModelPage(
     showAddDialog: Boolean,
     onDismissAddDialog: () -> Unit
 ) {
+    val navController = LocalNavController.current
     ModelList(
         providerSetting = provider,
         onUpdateProvider = onEdit,
         showAddDialog = showAddDialog,
-        onDismissAddDialog = onDismissAddDialog
+        onDismissAddDialog = onDismissAddDialog,
+        onEditModelDetail = { model ->
+            navController.navigate(
+                Screen.SettingModelDetail(
+                    providerId = provider.id.toString(),
+                    modelId = model.id.toString(),
+                )
+            )
+        }
     )
 }
 
@@ -750,7 +752,8 @@ private fun ModelList(
     providerSetting: ProviderSetting,
     onUpdateProvider: (ProviderSetting) -> Unit,
     showAddDialog: Boolean,
-    onDismissAddDialog: () -> Unit
+    onDismissAddDialog: () -> Unit,
+    onEditModelDetail: (Model) -> Unit,
 ) {
     val providerManager = koinInject<ProviderManager>()
     var refreshTick by remember(providerSetting) { mutableStateOf(0) }
@@ -831,7 +834,7 @@ private fun ModelList(
                             }
                         }
                     ) {
-                        Icon(HugeIcons.ArrowDown01, null)
+                        Icon(Lucide.ChevronDown, null)
                     }
                 }
             ) {
@@ -925,7 +928,7 @@ private fun ModelList(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         Icon(
-                            imageVector = HugeIcons.Refresh03,
+                            imageVector = Lucide.RefreshCw,
                             contentDescription = stringResource(R.string.setting_provider_page_refresh_models),
                             tint = ZionTextPrimary,
                             modifier = Modifier.size(18.dp)
@@ -986,6 +989,7 @@ private fun ModelList(
                         onEdit = { editedModel ->
                             onUpdateProvider(providerSetting.editModel(editedModel))
                         },
+                        onEditDetail = { onEditModelDetail(item) },
                         parentProvider = providerSetting,
                         modifier = Modifier
                             .longPressDraggableHandle()
@@ -1013,7 +1017,7 @@ private fun ModelList(
  * 暂不展示。
  */
 @Composable
-private fun ModelSettingsForm(
+internal fun ModelSettingsForm(
     model: Model,
     onModelChange: (Model) -> Unit,
     isEdit: Boolean,
@@ -1247,7 +1251,7 @@ private fun AddModelButton(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    HugeIcons.Add01,
+                    Lucide.Plus,
                     contentDescription = stringResource(R.string.setting_provider_page_add_model)
                 )
                 AnimatedVisibility(expanded) {
@@ -1279,7 +1283,7 @@ private fun AddModelButton(
                             }
                         }
                     ) {
-                        Icon(HugeIcons.ArrowDown01, null)
+                        Icon(Lucide.ChevronDown, null)
                     }
                 }
             ) {
@@ -1471,9 +1475,9 @@ private fun ModelPicker(
                                     }
                                 ) {
                                     if (selectedModels.any { model -> model.modelId == it.modelId }) {
-                                        Icon(HugeIcons.Cancel01, null)
+                                        Icon(Lucide.X, null)
                                     } else {
-                                        Icon(HugeIcons.Add01, null)
+                                        Icon(Lucide.Plus, null)
                                     }
                                 }
                             }
@@ -1666,6 +1670,7 @@ private fun ModelCard(
     modifier: Modifier = Modifier,
     onDelete: () -> Unit,
     onEdit: (Model) -> Unit,
+    onEditDetail: () -> Unit,
     parentProvider: ProviderSetting
 ) {
     val dialogState = useEditState<Model> {
@@ -1707,7 +1712,7 @@ private fun ModelCard(
                             },
                             modifier = Modifier.align(Alignment.CenterStart)
                         ) {
-                            Icon(HugeIcons.Cancel01, null)
+                            Icon(Lucide.X, null)
                         }
                         Text(
                             text = stringResource(R.string.setting_provider_page_edit_model),
@@ -1783,7 +1788,7 @@ private fun ModelCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            HugeIcons.Delete01,
+                            Lucide.Trash2,
                             contentDescription = stringResource(R.string.chat_page_delete),
                             tint = Color.White,
                             modifier = Modifier.size(22.dp)
@@ -1800,7 +1805,7 @@ private fun ModelCard(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { dialogState.open(model.copy()) },
+                .clickable { onEditDetail() },
             shape = RoundedCornerShape(16.dp),
             color = ZionSectionItem
         ) {
@@ -1979,14 +1984,14 @@ private fun ProviderOverrideSettings(
                                 showProviderConfig = true
                             }
                         ) {
-                            Icon(HugeIcons.Tools, contentDescription = "Edit override")
+                            Icon(Lucide.Wrench, contentDescription = "Edit override")
                         }
                         IconButton(
                             onClick = {
                                 onUpdateProviderOverride(null)
                             }
                         ) {
-                            Icon(HugeIcons.Cancel01, contentDescription = "Remove override")
+                            Icon(Lucide.X, contentDescription = "Remove override")
                         }
                     }
                 }
@@ -2004,7 +2009,7 @@ private fun ProviderOverrideSettings(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(HugeIcons.Add01, contentDescription = null)
+                Icon(Lucide.Plus, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(stringResource(R.string.setting_provider_page_add_provider_override))
             }
