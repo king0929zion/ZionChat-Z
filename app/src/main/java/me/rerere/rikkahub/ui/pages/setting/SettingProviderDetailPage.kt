@@ -102,9 +102,7 @@ import me.rerere.ai.provider.BalanceOption
 import me.rerere.ai.provider.Modality
 import com.composables.icons.lucide.Lucide
 import me.rerere.ai.provider.Model
-import com.composables.icons.lucide.Lucide
 import me.rerere.ai.provider.ModelAbility
-import com.composables.icons.lucide.Lucide
 import me.rerere.ai.provider.ModelType
 import me.rerere.ai.provider.ProviderManager
 import me.rerere.ai.provider.ProviderSetting

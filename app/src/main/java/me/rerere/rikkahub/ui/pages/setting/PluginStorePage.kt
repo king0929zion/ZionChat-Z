@@ -1,5 +1,6 @@
 package me.rerere.rikkahub.ui.pages.setting
 
+import com.composables.icons.lucide.Lucide
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,17 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.plugin.PluginStore
 import me.rerere.rikkahub.data.plugin.StorePluginMcpSync
-import me.rerere.rikkahub.data.plugin.StorePluginSpec
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.pressableScale
@@ -75,7 +73,7 @@ fun PluginStorePage(vm: SettingVM = koinViewModel()) {
                 StoreCard(
                     iconContent = {
                         androidx.compose.material3.Icon(
-                            imageVector = me.rerere.rikkahub.ui.icons.ZionAppIcons.Sun,
+                            imageVector = me.rerere.rikkahub.ui.icons.Lucide.AirVent,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(15.dp)

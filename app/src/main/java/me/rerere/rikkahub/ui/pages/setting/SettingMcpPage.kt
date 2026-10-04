@@ -1,5 +1,6 @@
 package me.rerere.rikkahub.ui.pages.setting
 
+import com.composables.icons.lucide.Lucide
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -74,17 +75,6 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import me.rerere.ai.core.InputSchema
-import me.rerere.hugeicons.HugeIcons
-import me.rerere.hugeicons.stroke.Add01
-import me.rerere.hugeicons.stroke.AlertCircle
-import me.rerere.hugeicons.stroke.ArrowDown01
-import me.rerere.hugeicons.stroke.ArrowUp01
-import me.rerere.hugeicons.stroke.Delete01
-import me.rerere.hugeicons.stroke.FileImport
-import me.rerere.hugeicons.stroke.McpServer
-import me.rerere.hugeicons.stroke.MessageBlocked
-import me.rerere.hugeicons.stroke.View
-import me.rerere.hugeicons.stroke.ViewOff
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.ai.mcp.McpCommonOptions
@@ -106,7 +96,6 @@ import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.hooks.EditState
 import me.rerere.rikkahub.ui.hooks.EditStateContent
 import me.rerere.rikkahub.ui.hooks.useEditState
-import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionGrayLighter
@@ -149,12 +138,12 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HeaderActionButton(
                     onClick = { showImportDialog = true },
-                    icon = HugeIcons.FileImport,
+                    icon = Lucide.FileInput,
                     contentDescription = stringResource(R.string.setting_mcp_page_import_title),
                 )
                 HeaderActionButton(
                     onClick = { navController.navigate(Screen.SettingMcpAdd) },
-                    icon = ZionAppIcons.Plus,
+                    icon = Lucide.Plus,
                     contentDescription = "Add",
                 )
             }
@@ -294,7 +283,7 @@ private fun McpServerItem(
             ) {
                 when (status) {
                     McpStatus.Idle -> Icon(
-                        imageVector = HugeIcons.MessageBlocked,
+                        imageVector = Lucide.CircleSlash,
                         contentDescription = null,
                         tint = ZionTextSecondary,
                         modifier = Modifier.size(17.dp)
@@ -308,14 +297,14 @@ private fun McpServerItem(
                         )
 
                     McpStatus.Connected -> Icon(
-                        imageVector = HugeIcons.McpServer,
+                        imageVector = Lucide.Server,
                         contentDescription = null,
                         tint = ZionTextPrimary,
                         modifier = Modifier.size(17.dp)
                     )
 
                     is McpStatus.Error, McpStatus.NeedsAuthorization -> Icon(
-                        imageVector = HugeIcons.AlertCircle,
+                        imageVector = Lucide.CircleAlert,
                         contentDescription = null,
                         tint = Color(0xFFD9342B),
                         modifier = Modifier.size(17.dp)
@@ -369,7 +358,7 @@ private fun McpServerItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = HugeIcons.Delete01,
+                    imageVector = Lucide.Trash2,
                     contentDescription = stringResource(R.string.delete),
                     tint = ZionTextSecondary,
                     modifier = Modifier.size(15.dp)
@@ -808,7 +797,7 @@ private fun McpCommonOptionsConfigure(
                                 trailingIcon = {
                                     IconButton(onClick = { headerValueVisible = !headerValueVisible }) {
                                         Icon(
-                                            if (headerValueVisible) HugeIcons.ViewOff else HugeIcons.View,
+                                            if (headerValueVisible) Lucide.EyeOff else Lucide.Eye,
                                             contentDescription = null
                                         )
                                     }
@@ -832,7 +821,7 @@ private fun McpCommonOptionsConfigure(
                             )
                         }) {
                             Icon(
-                                HugeIcons.Delete01,
+                                Lucide.Trash2,
                                 contentDescription = stringResource(R.string.setting_mcp_page_delete_header)
                             )
                         }
@@ -858,7 +847,7 @@ private fun McpCommonOptionsConfigure(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
-                        HugeIcons.Add01,
+                        Lucide.Plus,
                         contentDescription = stringResource(R.string.setting_mcp_page_add_header)
                     )
                     Spacer(Modifier.width(4.dp))
@@ -991,7 +980,7 @@ private fun McpToolCard(
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
-                        if (expanded) HugeIcons.ArrowUp01 else HugeIcons.ArrowDown01,
+                        if (expanded) Lucide.ChevronUp else Lucide.ChevronDown,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )

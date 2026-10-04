@@ -1,7 +1,7 @@
 package me.rerere.rikkahub.ui.pages.setting
 
+import com.composables.icons.lucide.Lucide
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -29,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.plugin.PluginStore
 import me.rerere.rikkahub.data.plugin.StorePluginConfig
 import me.rerere.rikkahub.data.plugin.StorePluginMcpSync
@@ -39,7 +37,6 @@ import me.rerere.rikkahub.ui.components.ui.SectionLabel
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
-import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
@@ -105,7 +102,7 @@ fun PluginDetailPage(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = ZionAppIcons.Globe,
+                    imageVector = Lucide.Globe,
                     contentDescription = null,
                     tint = if (installed && config.enabled) Color.White else ZionTextPrimary,
                     modifier = Modifier.size(20.dp)

@@ -1,5 +1,6 @@
 package me.rerere.rikkahub.ui.pages.setting
 
+import com.composables.icons.lucide.Lucide
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,7 +40,6 @@ import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.LocalToaster
-import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
 import me.rerere.rikkahub.ui.theme.ZionGrayLight
 import me.rerere.rikkahub.ui.theme.ZionGrayLighter
@@ -123,7 +123,7 @@ fun SettingAcRemotePluginPage(vm: SettingVM = koinViewModel()) {
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Icon(
-                        imageVector = ZionAppIcons.Info,
+                        imageVector = Lucide.Info,
                         contentDescription = null,
                         tint = ZionTextSecondary,
                         modifier = Modifier.size(18.dp)
@@ -164,7 +164,7 @@ fun SettingAcRemotePluginPage(vm: SettingVM = koinViewModel()) {
                 ) {
                     // -
                     RoundRemoteButton(
-                        icon = ZionAppIcons.Settings,
+                        icon = Lucide.Minus,
                         contentDescription = "降低温度",
                         onClick = {
                             update {
@@ -197,7 +197,7 @@ fun SettingAcRemotePluginPage(vm: SettingVM = koinViewModel()) {
                     }
                     // +
                     RoundRemoteButton(
-                        icon = ZionAppIcons.Plus,
+                        icon = Lucide.Plus,
                         contentDescription = "升高温度",
                         onClick = {
                             update {

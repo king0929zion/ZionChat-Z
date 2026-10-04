@@ -1,3 +1,10 @@
+## v0.1.5
+
+- **模型配置改为独立页面**：从供应商模型列表点击模型卡片直接进入独立的 Model Settings 页面（`Screen.SettingModelDetail`），右上角 ✅ 保存后写回供应商；新增路由与入口
+- **插件中心按项目统一风格重写**：列表行改为标准的灰色 20dp 圆角卡片 + 60dp 行高 + 分区小标题，图标块与卡片同灰系，空/非开关行统一使用右箭头
+- **图标迁移至 Lucide**：供应商详情、模型配置、插件中心、插件商店、插件详情、空调遥控、MCP 页面共7 个页面的图标全部改用项目已集成的 Lucide 图标库（`com.composables:icons-lucide`），移除对应的 hugeicons 依赖
+- 修复 v0.1.5 编译错误：清理脚本误插入的重复 `Lucide` import
+
 ## v0.1.4
 
 - **新增 GitHub Copilot 默认供应商**：直接使用 GitHub Copilot 订阅，无需单独 API Key

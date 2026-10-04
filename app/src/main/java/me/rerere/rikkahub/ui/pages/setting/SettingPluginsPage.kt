@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,40 +17,40 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import me.rerere.rikkahub.R
+import com.composables.icons.lucide.Lucide
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.plugin.AcRemoteConfig
 import me.rerere.rikkahub.data.plugin.PluginStore
-import me.rerere.rikkahub.data.plugin.StorePluginSpec
+import me.rerere.rikkahub.data.plugin.StorePluginMcpSync
 import me.rerere.rikkahub.data.plugin.TelegramPluginConfig
 import me.rerere.rikkahub.ui.components.ui.PageTopBarContentTopPadding
+import me.rerere.rikkahub.ui.components.ui.PluginSystemSwitch
 import me.rerere.rikkahub.ui.components.ui.SettingsPage
 import me.rerere.rikkahub.ui.components.ui.pressableScale
 import me.rerere.rikkahub.ui.context.LocalNavController
-import me.rerere.rikkahub.ui.icons.ZionAppIcons
 import me.rerere.rikkahub.ui.theme.SourceSans3
-import me.rerere.rikkahub.ui.theme.ZionGrayLight
+import me.rerere.rikkahub.ui.theme.ZionGrayLighter
 import me.rerere.rikkahub.ui.theme.ZionSectionItem
-import me.rerere.rikkahub.ui.theme.ZionSurface
 import me.rerere.rikkahub.ui.theme.ZionTextPrimary
 import me.rerere.rikkahub.ui.theme.ZionTextSecondary
 import org.koin.androidx.compose.koinViewModel
 
+private val PluginCardGray = ZionSectionItem
+
 /**
  * 插件中心
  *
- * 三个分区: Enabled plugins (已启用) / Plugin Store (商店入口) / Installed (已安装 N 个插件)
+ * 三个分区: Enabled plugins (已启用) / Plugin Store (商店入口) / Installed (已安装 N 个插件)。
+ * 视觉沿用项目统一列表行: 灰色 20dp 圆角卡片 + 60dp 行高 + Lucide 图标。
  */
 @Composable
 fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
@@ -57,29 +58,29 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val pluginSettings = settings.pluginSettings
 
-    val installedStorePlugins = remember(pluginSettings) {
-        PluginStore.PLUGINS.filter { pluginSettings.store.isInstalled(it.id) }
-    }
+    val installedStorePlugins = PluginStore.PLUGINS.filter { pluginSettings.store.isInstalled(it.id) }
+    val enabledStorePlugins =
+        installedStorePlugins.filter { pluginSettings.store.configOf(it.id)?.enabled == true }
 
     SettingsPage(
-        title = stringResource(R.string.plugins_page_title),
+        title = "Plugins",
         onBack = { navController.popBackStack() },
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            contentPadding = PaddingValues(
                 top = PageTopBarContentTopPadding,
-                bottom = 24.dp,
+                bottom = 28.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             // ---------------- Enabled plugins ----------------
             item("enabledHeader") {
-                SectionHeader(text = "Enabled plugins")
+                SectionHeaderText("Enabled plugins")
             }
             item("enabledTelegram") {
                 PluginRow(
-                    icon = { PluginTelegramLogo() },
+                    icon = { PluginIcon { Icon(Lucide.Send, null, Modifier.size(18.dp)) } },
                     title = "Telegram",
                     subtitle = telegramSubtitle(pluginSettings.telegram),
                     checked = pluginSettings.telegram.enabled,
@@ -98,10 +99,10 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
             if (pluginSettings.acRemote.enabled) {
                 item("enabledAcRemote") {
                     PluginRow(
-                        icon = { PluginAcRemoteLogo() },
+                        icon = { PluginIcon { Icon(Lucide.AirVent, null, Modifier.size(18.dp)) } },
                         title = "空调红外遥控",
                         subtitle = acRemoteSubtitle(pluginSettings.acRemote),
-                        checked = pluginSettings.acRemote.enabled,
+                        checked = true,
                         onCheckedChange = { enabled ->
                             vm.updateSettings(
                                 settings.copy(
@@ -115,31 +116,29 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
                     )
                 }
             }
-            installedStorePlugins
-                .filter { pluginSettings.store.configOf(it.id)?.enabled == true }
-                .forEach { spec ->
-                    item("enabled_${spec.id}") {
-                        PluginRow(
-                            icon = { PluginLetterLogo(letter = spec.name.firstOrNull()?.toString() ?: "P") },
-                            title = spec.name,
-                            subtitle = spec.category,
-                            checked = true,
-                            onCheckedChange = { enabled ->
-                                val config = pluginSettings.store.configOf(spec.id) ?: return@PluginRow
-                                vm.updateSettings(
-                                    me.rerere.rikkahub.data.plugin.StorePluginMcpSync.apply(
-                                        settings, spec, config.copy(enabled = enabled)
-                                    )
+            enabledStorePlugins.forEach { spec ->
+                item("enabled_${spec.id}") {
+                    PluginRow(
+                        icon = { PluginIcon { Icon(Lucide.Box, null, Modifier.size(18.dp)) } },
+                        title = spec.name,
+                        subtitle = spec.category,
+                        checked = true,
+                        onCheckedChange = { enabled ->
+                            val config = pluginSettings.store.configOf(spec.id) ?: return@PluginRow
+                            vm.updateSettings(
+                                StorePluginMcpSync.apply(
+                                    settings, spec, config.copy(enabled = enabled)
                                 )
-                            },
-                            onClick = { navController.navigate(Screen.PluginDetail(spec.id)) },
-                        )
-                    }
+                            )
+                        },
+                        onClick = { navController.navigate(Screen.PluginDetail(spec.id)) },
+                    )
                 }
+            }
 
             // ---------------- Plugin Store ----------------
             item("storeHeader") {
-                SectionHeader(text = "Plugin Store")
+                SectionHeaderText("Plugin Store")
             }
             item("storeEntry") {
                 PluginStoreEntryRow(
@@ -149,32 +148,30 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
 
             // ---------------- Installed ----------------
             item("installedHeader") {
-                SectionHeader(
-                    text = "Installed — ${2 + installedStorePlugins.size} plugins"
-                )
+                SectionHeaderText("Installed — ${2 + installedStorePlugins.size} plugins")
             }
             item("installedTelegram") {
                 PluginRow(
-                    icon = { PluginTelegramLogo() },
+                    icon = { PluginIcon { Icon(Lucide.Send, null, Modifier.size(18.dp)) } },
                     title = "Telegram",
-                    subtitle = "Bot / Telegram 插件",
+                    subtitle = "Bot 接入",
                     onClick = { navController.navigate(Screen.SettingTelegramPlugin) },
                 )
             }
             item("installedAcRemote") {
                 PluginRow(
-                    icon = { PluginAcRemoteLogo() },
+                    icon = { PluginIcon { Icon(Lucide.AirVent, null, Modifier.size(18.dp)) } },
                     title = "空调红外遥控",
-                    subtitle = "Built-in / 红外遥控插件",
+                    subtitle = "Built-in 红外遥控",
                     onClick = { navController.navigate(Screen.SettingAcRemotePlugin) },
                 )
             }
             installedStorePlugins.forEach { spec ->
                 item("installed_${spec.id}") {
                     PluginRow(
-                        icon = { PluginLetterLogo(letter = spec.name.firstOrNull()?.toString() ?: "P") },
+                        icon = { PluginIcon { Icon(Lucide.Box, null, Modifier.size(18.dp)) } },
                         title = spec.name,
-                        subtitle = "MCP / ${spec.category}",
+                        subtitle = "MCP · ${spec.category}",
                         onClick = { navController.navigate(Screen.PluginDetail(spec.id)) },
                     )
                 }
@@ -196,18 +193,33 @@ private fun acRemoteSubtitle(config: AcRemoteConfig): String = when {
     else -> "${config.temperature}°C · 待机"
 }
 
+/** 分区小标题 */
 @Composable
-private fun SectionHeader(text: String) {
+private fun SectionHeaderText(text: String) {
     Text(
         text = text,
         fontSize = 13.sp,
-        fontWeight = FontWeight.Medium,
         fontFamily = SourceSans3,
         color = ZionTextSecondary,
-        modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 2.dp)
+        modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 2.dp)
     )
 }
 
+/** 插件图标块 (与卡片同灰系, 图形为 Lucide 灰图标) */
+@Composable
+private fun PluginIcon(content: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(ZionGrayLighter),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(modifier = Modifier.size(18.dp)) { content() }
+    }
+}
+
+/** 插件列表行 (项目统一卡片样式) */
 @Composable
 private fun PluginRow(
     icon: @Composable () -> Unit,
@@ -223,9 +235,9 @@ private fun PluginRow(
             .padding(horizontal = 16.dp)
             .height(60.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(ZionSurface)
+            .background(PluginCardGray, RoundedCornerShape(20.dp))
             .pressableScale(pressedScale = 0.98f, onClick = onClick)
-            .padding(horizontal = 16.dp),
+            .padding(start = 14.dp, end = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
@@ -233,11 +245,12 @@ private fun PluginRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                fontSize = 15.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = SourceSans3,
                 color = ZionTextPrimary,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = subtitle,
@@ -245,28 +258,32 @@ private fun PluginRow(
                 fontFamily = SourceSans3,
                 color = ZionTextSecondary,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         if (onCheckedChange != null && checked != null) {
-            PluginSystemSwitch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
+            PluginSystemSwitch(checked = checked, onCheckedChange = onCheckedChange)
+        } else {
+            Icon(
+                imageVector = Lucide.ChevronRight,
+                contentDescription = null,
+                tint = ZionTextSecondary,
+                modifier = Modifier.size(16.dp)
             )
         }
     }
 }
 
+/** 商店入口行 (黑色强调卡片) */
 @Composable
-private fun PluginStoreEntryRow(
-    onClick: () -> Unit,
-) {
+private fun PluginStoreEntryRow(onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .height(60.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(ZionTextPrimary)
+            .background(ZionTextPrimary, RoundedCornerShape(20.dp))
             .pressableScale(pressedScale = 0.98f, onClick = onClick)
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -275,89 +292,30 @@ private fun PluginStoreEntryRow(
         Box(
             modifier = Modifier
                 .size(32.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(10.dp))
                 .background(Color.White),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "S",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = SourceSans3,
-                color = ZionTextPrimary,
+            Icon(
+                imageVector = Lucide.Store,
+                contentDescription = null,
+                tint = ZionTextPrimary,
+                modifier = Modifier.size(18.dp)
             )
         }
         Text(
             text = "Plugin Store",
-            fontSize = 15.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = SourceSans3,
             color = Color.White,
             modifier = Modifier.weight(1f)
         )
         Icon(
-            imageVector = ZionAppIcons.ChevronRight,
+            imageVector = Lucide.ChevronRight,
             contentDescription = null,
             tint = Color.White,
             modifier = Modifier.size(16.dp)
         )
-    }
-}
-
-// ------------------------- 图标 -------------------------
-
-@Composable
-private fun PluginTelegramLogo() {
-    PluginIconTile {
-        Icon(
-            painter = painterResource(R.drawable.ic_plugin_telegram),
-            contentDescription = "Telegram",
-            tint = Color.White,
-            modifier = Modifier.size(16.dp)
-        )
-    }
-}
-
-@Composable
-private fun PluginAcRemoteLogo() {
-    PluginIconTile {
-        Icon(
-            imageVector = ZionAppIcons.Sun,
-            contentDescription = "AC Remote",
-            tint = Color.White,
-            modifier = Modifier.size(16.dp)
-        )
-    }
-}
-
-@Composable
-private fun PluginLetterLogo(
-    letter: String,
-    dark: Boolean = false,
-) {
-    PluginIconTile(dark = dark) {
-        Text(
-            text = letter,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = SourceSans3,
-            color = if (dark) ZionTextPrimary else Color.White,
-        )
-    }
-}
-
-@Composable
-private fun PluginIconTile(
-    dark: Boolean = false,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(32.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (dark) ZionGrayLight else Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        content()
     }
 }
