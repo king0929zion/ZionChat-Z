@@ -173,8 +173,8 @@ internal fun CopilotLoginSection(
                     modifier = Modifier.weight(1f),
                     onClick = {
                         scope.launch {
-                            runCatching {
-                                if (loggedIn) {
+                            try {
+                                val credential = if (loggedIn) {
                                     copilotAuth.currentCredential(provider.id)
                                 } else {
                                     val info = copilotAuth.startDeviceFlow()
@@ -184,21 +184,19 @@ internal fun CopilotLoginSection(
                                         deviceCode = info.deviceCode,
                                         intervalSeconds = info.intervalSeconds,
                                         expiresInSeconds = info.expiresInSeconds,
-                                        onPending = { polling = true },
                                     )
-                                    val credential =
-                                        copilotAuth.completeLogin(provider.id, githubToken)
-                                    loggedIn = true
-                                    deviceCode = null
-                                    polling = false
-                                    onLoggedIn(credential)
+                                    copilotAuth.completeLogin(provider.id, githubToken)
                                 }
-                            }.onSuccess { credential ->
-                                if (credential != null) {
-                                    onLoggedIn(credential)
-                                    toaster.show("已连接 GitHub Copilot", type = ToastType.Success)
+                                if (credential == null) {
+                                    toaster.show("尚未登录 GitHub Copilot", type = ToastType.Error)
+                                    return@launch
                                 }
-                            }.onFailure { error ->
+                                loggedIn = true
+                                deviceCode = null
+                                polling = false
+                                onLoggedIn(credential)
+                                toaster.show("已连接 GitHub Copilot", type = ToastType.Success)
+                            } catch (error: Exception) {
                                 polling = false
                                 deviceCode = null
                                 toaster.show(

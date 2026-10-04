@@ -78,7 +78,7 @@ class CopilotAuthManager(
             ),
         )
         val json = parseJson(body)
-        throwIfError(json)
+        json.throwIfError()
         val flow = DeviceFlowResponse(
             deviceCode = json.string("device_code")
                 ?: error("GitHub 未返回 device_code"),
