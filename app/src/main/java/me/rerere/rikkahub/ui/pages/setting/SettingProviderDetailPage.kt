@@ -115,6 +115,7 @@ import me.rerere.ai.provider.ModelAbility
 import me.rerere.ai.provider.ModelType
 import me.rerere.ai.provider.ProviderManager
 import me.rerere.ai.provider.ProviderSetting
+import me.rerere.ai.provider.providers.copilot.isCopilot
 import me.rerere.ai.provider.TextGenerationParams
 import me.rerere.ai.registry.ModelRegistry
 import me.rerere.ai.ui.UIMessage
@@ -191,25 +192,25 @@ enum class ProviderApiTypeOption(
         get() = this == OPENAI || this == COMPATIBLE
 }
 
-private fun ProviderSetting.apiKeyValue(): String = when (this) {
+internal fun ProviderSetting.apiKeyValue(): String = when (this) {
     is ProviderSetting.OpenAI -> apiKey
     is ProviderSetting.Claude -> apiKey
     is ProviderSetting.Google -> apiKey
 }
 
-private fun ProviderSetting.copyWithApiKey(key: String): ProviderSetting = when (this) {
+internal fun ProviderSetting.copyWithApiKey(key: String): ProviderSetting = when (this) {
     is ProviderSetting.OpenAI -> copy(apiKey = key)
     is ProviderSetting.Claude -> copy(apiKey = key)
     is ProviderSetting.Google -> copy(apiKey = key)
 }
 
-private fun ProviderSetting.baseUrlValue(): String = when (this) {
+internal fun ProviderSetting.baseUrlValue(): String = when (this) {
     is ProviderSetting.OpenAI -> baseUrl
     is ProviderSetting.Claude -> baseUrl
     is ProviderSetting.Google -> baseUrl
 }
 
-private fun ProviderSetting.copyWithBaseUrl(url: String): ProviderSetting = when (this) {
+internal fun ProviderSetting.copyWithBaseUrl(url: String): ProviderSetting = when (this) {
     is ProviderSetting.OpenAI -> copy(baseUrl = url)
     is ProviderSetting.Claude -> copy(baseUrl = url)
     is ProviderSetting.Google -> copy(baseUrl = url)
@@ -548,30 +549,44 @@ private fun SettingProviderConfigPage(
             keyboardType = KeyboardType.Uri
         )
 
-        SectionLabel(text = "API Key")
-        PillInput(
-            value = apiKeyValue,
-            onValueChange = { onProviderChange(provider.copyWithApiKey(it)) },
-            placeholder = "Enter a new API Key...",
-            keyboardType = KeyboardType.Password,
-            singleLine = false
-        )
+        // GitHub Copilot: 设备码登录, 无需手填 API Key
+        if (provider.isCopilot()) {
+            CopilotLoginSection(
+                provider = provider,
+                onProviderChange = onProviderChange,
+                onLoggedIn = { credential ->
+                    onProviderChange(
+                        provider.copyWithBaseUrl(credential.baseUrl)
+                            .copyWithApiKey(credential.token)
+                            .withAlwaysEnabledDefaults()
+                    )
+                },
+            )
+        } else {
+            SectionLabel(text = "API Key")
+            PillInput(
+                value = apiKeyValue,
+                onValueChange = { onProviderChange(provider.copyWithApiKey(it)) },
+                placeholder = "Enter a new API Key...",
+                keyboardType = KeyboardType.Password,
+                singleLine = false
+            )
 
-        // 多 Key 轮询说明 (每行一个 Key, 请求时自动轮换)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Multiple keys: enter one key per line, requests rotate automatically.",
-            fontSize = 12.sp,
-            fontFamily = SourceSans3,
-            color = ZionTextSecondary,
-            modifier = Modifier.padding(start = 4.5.dp)
-        )
+            // 多 Key 轮询说明 (每行一个 Key, 请求时自动轮换)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Multiple keys: enter one key per line, requests rotate automatically.",
+                fontSize = 12.sp,
+                fontFamily = SourceSans3,
+                color = ZionTextSecondary,
+                modifier = Modifier.padding(start = 4.5.dp)
+            )
 
-        // Add key 按钮 (设计稿 .add-key: 无内容时禁用灰显)
-        Spacer(modifier = Modifier.height(16.dp))
-        val canApplyKey = apiKeyValue.isNotBlank()
-        Box(
-            modifier = Modifier
+            // Add key 按钮 (设计稿 .add-key: 无内容时禁用灰显)
+            Spacer(modifier = Modifier.height(16.dp))
+            val canApplyKey = apiKeyValue.isNotBlank()
+            Box(
+                modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)
                 .clip(RoundedCornerShape(25.dp))
@@ -628,6 +643,7 @@ private fun SettingProviderConfigPage(
                         .padding(horizontal = 6.dp, vertical = 3.dp)
                 )
             }
+        }
         }
 
         // Models 入口卡片 (设计稿 .models-card)

@@ -17,6 +17,7 @@ import me.rerere.rikkahub.data.ai.TranslationHandler
 import me.rerere.rikkahub.data.ai.transformers.TemplateTransformer
 import me.rerere.rikkahub.data.api.RikkaHubAPI
 import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.copilot.CopilotAuthManager
 import me.rerere.rikkahub.data.sync.BackupManager
 import me.rerere.rikkahub.data.db.AppDatabaseFactory
 import me.rerere.rikkahub.data.db.AppDatabase
@@ -187,7 +188,11 @@ val dataSourceModule = module {
     }
 
     single {
-        ProviderManager(client = get(), context = get())
+        CopilotAuthManager(context = get(), client = get())
+    }
+
+    single {
+        ProviderManager(client = get(), context = get(), copilotTokenProvider = get())
     }
 
     single { BackupManager(context = get(), database = get(), settingsStore = get(), json = get()) }

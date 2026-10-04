@@ -2,6 +2,9 @@ package me.rerere.ai.provider
 
 import android.content.Context
 import me.rerere.ai.provider.providers.claude.ClaudeProvider
+import me.rerere.ai.provider.providers.copilot.CopilotProvider
+import me.rerere.ai.provider.providers.copilot.CopilotTokenProvider
+import me.rerere.ai.provider.providers.copilot.isCopilot
 import me.rerere.ai.provider.providers.google.GoogleProvider
 import me.rerere.ai.provider.providers.openai.OpenAIProvider
 import okhttp3.OkHttpClient
@@ -9,15 +12,27 @@ import okhttp3.OkHttpClient
 /**
  * Provider管理器，负责注册和获取Provider实例
  */
-class ProviderManager(client: OkHttpClient, context: Context) {
+class ProviderManager(
+    client: OkHttpClient,
+    context: Context,
+    copilotTokenProvider: CopilotTokenProvider? = null,
+) {
     // 存储已注册的Provider实例
     private val providers = mutableMapOf<String, Provider<*>>()
 
     init {
         // 注册默认Provider
-        registerProvider("openai", OpenAIProvider(client, context))
+        val openAIProvider = OpenAIProvider(client, context)
+        registerProvider("openai", openAIProvider)
         registerProvider("google", GoogleProvider(client, context))
         registerProvider("claude", ClaudeProvider(client, context))
+        // GitHub Copilot: OpenAI 兼容 + 短时效令牌刷新
+        if (copilotTokenProvider != null) {
+            registerProvider(
+                "copilot",
+                CopilotProvider(openAIProvider, copilotTokenProvider)
+            )
+        }
     }
 
     /**
@@ -49,7 +64,14 @@ class ProviderManager(client: OkHttpClient, context: Context) {
     fun <T : ProviderSetting> getProviderByType(setting: T): Provider<T> {
         @Suppress("UNCHECKED_CAST")
         return when (setting) {
-            is ProviderSetting.OpenAI -> getProvider("openai")
+            // GitHub Copilot 复用 OpenAI 协议, 但需要刷新短时效令牌
+            is ProviderSetting.OpenAI ->
+                if (setting.isCopilot() && providers.containsKey("copilot")) {
+                    getProvider("copilot")
+                } else {
+                    getProvider("openai")
+                }
+
             is ProviderSetting.Google -> getProvider("google")
             is ProviderSetting.Claude -> getProvider("claude")
         } as Provider<T>

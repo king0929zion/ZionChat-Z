@@ -9,7 +9,9 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import me.rerere.ai.provider.BalanceOption
+import me.rerere.ai.provider.CustomHeader
 import me.rerere.ai.provider.ProviderSetting
+import me.rerere.ai.provider.providers.copilot.COPILOT_CUSTOM_HEADERS
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
 import kotlin.uuid.Uuid
@@ -43,6 +45,27 @@ private val ALL_DEFAULT_PROVIDERS = listOf(
         apiKey = "",
         enabled = true,
         builtIn = true
+    ),
+    ProviderSetting.OpenAI(
+        id = Uuid.parse("7f4c2a91-6b3e-4d5f-9a17-2c8e4b1d7f30"),
+        name = "GitHub Copilot",
+        baseUrl = "https://api.individual.githubcopilot.com",
+        apiKey = "",
+        enabled = false,
+        builtIn = true,
+        customHeaders = COPILOT_CUSTOM_HEADERS.map { (name, value) ->
+            CustomHeader(name = name, value = value)
+        },
+        description = {
+            Text(
+                text = "使用你的 GitHub Copilot 订阅, 无需单独的 API Key。" +
+                    "在详情页点击「Login with GitHub」, 按提示在浏览器输入设备码完成授权," +
+                    "授权后会自动拉取账号可用模型。"
+            )
+        },
+        shortDescription = {
+            Text("使用 GitHub Copilot 订阅, 设备码登录")
+        },
     ),
     ProviderSetting.OpenAI(
         id = Uuid.parse("1b1395ed-b702-4aeb-8bc1-b681c4456953"),
