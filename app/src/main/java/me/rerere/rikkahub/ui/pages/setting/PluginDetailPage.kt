@@ -1,6 +1,7 @@
 package me.rerere.rikkahub.ui.pages.setting
 
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Globe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

@@ -1,6 +1,9 @@
 package me.rerere.rikkahub.ui.pages.setting
 
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Info
+import com.composables.icons.lucide.Minus
+import com.composables.icons.lucide.Plus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

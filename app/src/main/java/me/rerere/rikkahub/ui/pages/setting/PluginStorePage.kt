@@ -1,6 +1,8 @@
 package me.rerere.rikkahub.ui.pages.setting
 
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Wind
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -73,7 +75,7 @@ fun PluginStorePage(vm: SettingVM = koinViewModel()) {
                 StoreCard(
                     iconContent = {
                         androidx.compose.material3.Icon(
-                            imageVector = me.rerere.rikkahub.ui.icons.Lucide.AirVent,
+                            imageVector = me.rerere.rikkahub.ui.icons.Lucide.Wind,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(15.dp)

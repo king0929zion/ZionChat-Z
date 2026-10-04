@@ -1,6 +1,19 @@
 package me.rerere.rikkahub.ui.pages.setting
 
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Database
+import com.composables.icons.lucide.FileDown
+import com.composables.icons.lucide.CircleX
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.ChevronUp
+import com.composables.icons.lucide.CircleAlert
+
+import com.composables.icons.lucide.Eye
+import com.composables.icons.lucide.EyeOff
+
+import com.composables.icons.lucide.Plus
+
+import com.composables.icons.lucide.Trash2
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -138,7 +151,7 @@ fun SettingMcpPage(vm: SettingVM = koinViewModel()) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HeaderActionButton(
                     onClick = { showImportDialog = true },
-                    icon = Lucide.FileInput,
+                    icon = Lucide.FileDown,
                     contentDescription = stringResource(R.string.setting_mcp_page_import_title),
                 )
                 HeaderActionButton(
@@ -283,7 +296,7 @@ private fun McpServerItem(
             ) {
                 when (status) {
                     McpStatus.Idle -> Icon(
-                        imageVector = Lucide.CircleSlash,
+                        imageVector = Lucide.CircleX,
                         contentDescription = null,
                         tint = ZionTextSecondary,
                         modifier = Modifier.size(17.dp)
@@ -297,7 +310,7 @@ private fun McpServerItem(
                         )
 
                     McpStatus.Connected -> Icon(
-                        imageVector = Lucide.Server,
+                        imageVector = Lucide.Database,
                         contentDescription = null,
                         tint = ZionTextPrimary,
                         modifier = Modifier.size(17.dp)

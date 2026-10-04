@@ -27,6 +27,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Wind
+import com.composables.icons.lucide.Package
+
+
+import com.composables.icons.lucide.ChevronRight
+import com.composables.icons.lucide.Send
+import com.composables.icons.lucide.Store
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.plugin.AcRemoteConfig
 import me.rerere.rikkahub.data.plugin.PluginStore
@@ -99,7 +106,7 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
             if (pluginSettings.acRemote.enabled) {
                 item("enabledAcRemote") {
                     PluginRow(
-                        icon = { PluginIcon { Icon(Lucide.AirVent, null, Modifier.size(18.dp)) } },
+                        icon = { PluginIcon { Icon(Lucide.Wind, null, Modifier.size(18.dp)) } },
                         title = "空调红外遥控",
                         subtitle = acRemoteSubtitle(pluginSettings.acRemote),
                         checked = true,
@@ -119,7 +126,7 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
             enabledStorePlugins.forEach { spec ->
                 item("enabled_${spec.id}") {
                     PluginRow(
-                        icon = { PluginIcon { Icon(Lucide.Box, null, Modifier.size(18.dp)) } },
+                        icon = { PluginIcon { Icon(Lucide.Package, null, Modifier.size(18.dp)) } },
                         title = spec.name,
                         subtitle = spec.category,
                         checked = true,
@@ -160,7 +167,7 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
             }
             item("installedAcRemote") {
                 PluginRow(
-                    icon = { PluginIcon { Icon(Lucide.AirVent, null, Modifier.size(18.dp)) } },
+                    icon = { PluginIcon { Icon(Lucide.Wind, null, Modifier.size(18.dp)) } },
                     title = "空调红外遥控",
                     subtitle = "Built-in 红外遥控",
                     onClick = { navController.navigate(Screen.SettingAcRemotePlugin) },
@@ -169,7 +176,7 @@ fun SettingPluginsPage(vm: SettingVM = koinViewModel()) {
             installedStorePlugins.forEach { spec ->
                 item("installed_${spec.id}") {
                     PluginRow(
-                        icon = { PluginIcon { Icon(Lucide.Box, null, Modifier.size(18.dp)) } },
+                        icon = { PluginIcon { Icon(Lucide.Package, null, Modifier.size(18.dp)) } },
                         title = spec.name,
                         subtitle = "MCP · ${spec.category}",
                         onClick = { navController.navigate(Screen.PluginDetail(spec.id)) },

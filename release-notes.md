@@ -1,3 +1,7 @@
+## v0.1.6
+
+- 修复 v0.1.5 的 39 处编译错误：补全 Lucide 图标的逐个 import（`Lucide` 对象需每个图标单独 import），并将 5 个不存在的图标名替换为官方名称（AirVent→Wind、CircleSlash→CircleX、Server→Database、FileInput→FileDown、Box→Package）
+
 ## v0.1.5
 
 - **模型配置改为独立页面**：从供应商模型列表点击模型卡片直接进入独立的 Model Settings 页面（`Screen.SettingModelDetail`），右上角 ✅ 保存后写回供应商；新增路由与入口

@@ -101,6 +101,12 @@ import me.rerere.ai.provider.BuiltInTools
 import me.rerere.ai.provider.BalanceOption
 import me.rerere.ai.provider.Modality
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.ChevronDown
+import com.composables.icons.lucide.Plus
+import com.composables.icons.lucide.RefreshCw
+import com.composables.icons.lucide.Trash2
+import com.composables.icons.lucide.Wrench
+import com.composables.icons.lucide.X
 import me.rerere.ai.provider.Model
 import me.rerere.ai.provider.ModelAbility
 import me.rerere.ai.provider.ModelType
