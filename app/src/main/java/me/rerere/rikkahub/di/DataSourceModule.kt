@@ -7,6 +7,7 @@ import io.ktor.http.HttpHeaders
 import io.pebbletemplates.pebble.PebbleEngine
 import kotlinx.serialization.json.Json
 import me.rerere.ai.provider.ProviderManager
+import me.rerere.ai.provider.providers.copilot.CopilotTokenProvider
 import me.rerere.common.http.AcceptLanguageBuilder
 import me.rerere.rikkahub.BuildConfig
 import me.rerere.rikkahub.data.ai.AIRequestInterceptor
@@ -189,6 +190,12 @@ val dataSourceModule = module {
 
     single {
         CopilotAuthManager(context = get(), client = get())
+    }
+
+    // 接口绑定: ProviderManager 按接口 CopilotTokenProvider 解析,
+    // Koin 不会自动把具体类映射到其实现的接口, 必须显式注册 (缺失会启动即崩)
+    single<CopilotTokenProvider> {
+        get<CopilotAuthManager>()
     }
 
     single {

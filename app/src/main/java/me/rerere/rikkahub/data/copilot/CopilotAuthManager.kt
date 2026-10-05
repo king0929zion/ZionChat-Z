@@ -293,9 +293,10 @@ class CopilotAuthManager(
         /**
          * VS Code Copilot Chat 的公开 OAuth client id (base64 编码仅为避免
          * 仓库中的密钥扫描误报, 并非安全措施)。
+         * 解码结果: Iv1.b507a08c87ecfe98
          */
         private val CLIENT_ID: String =
-            String(android.util.Base64.decode("U1hXeC5iNTA3YTA4Yzg4N2VjZmU5OA==", 0))
+            String(android.util.Base64.decode("SXYxLmI1MDdhMDhjODdlY2ZlOTg=", 0))
 
         private const val PREFS_NAME = "copilot_auth"
         private const val SLOW_DOWN_STEP_MS = 5_000L

@@ -1,3 +1,8 @@
+## v0.1.8
+
+- **修复启动即崩溃** (v0.1.4 引入): Koin 注册 `CopilotAuthManager` 时只绑定了具体类, 而 `ProviderManager` 按接口 `CopilotTokenProvider` 解析, 触发 `NoDefinitionFoundException`, 启动链 (RikkaHubApp → TelegramPluginService → ProviderManager) 直接崩溃。已显式补充接口绑定
+- 修复 Copilot 设备码登录的 client_id: 手写 base64 有误导致解码为乱码 (设备码流程必然失败), 已改回正确值并本地验证解码结果
+
 ## v0.1.7
 
 - 修复 v0.1.6 的 2 处编译错误：移除同包类 `PluginSystemSwitch` 的多余import、修正 `PluginStorePage` 中残留的 Lucide 全限定名
